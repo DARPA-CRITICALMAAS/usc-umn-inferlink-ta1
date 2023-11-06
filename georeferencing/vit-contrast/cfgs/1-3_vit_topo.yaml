@@ -1,0 +1,16 @@
+train_input_path: /scratch.global/chen7924/MN_Topo_3000/train
+test_input_path: /scratch.global/chen7924/MN_Topo_3000/test 
+full_input_path: /home/yaoyi/shared/critical-maas/topomaps/MN_Topo
+positives_dict_path: data/mn_topomap_pairs_90OR90.pickle
+model_save_path: weights/1-3_vit_topo/epoch_100
+results_save_path: outputs/1-3
+checkpoint_path: weights/1-3_vit_topo/epoch_90 #turn on for eval
+distances_mtx_path: outputs/1-3/distances.npy #turn on for eval
+
+start_epoch: 0
+epochs: 100
+
+log_wandb: False #turn off for eval
+wandb_project: 'Critical-MAAS_Georef'
+wandb_entity: kcompute
+wandb_run_name: ViT_Topo_1-3
