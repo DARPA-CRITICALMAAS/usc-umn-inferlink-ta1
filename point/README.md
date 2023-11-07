@@ -21,8 +21,8 @@ This code is to generate dataset for object detection.
 Input dir: TA1 feature extraction training directory
 Output dir: cropped images patches with each BB and class (txt) 
 
-Set the cropping size 1024*1024, and if there are points contained in the mask, draw a BB with them and add idx of class
-BB size = 60*60
+Set the cropping size 1024 by 1024, and if there are points contained in the mask, draw a BB with them and add idx of class
+BB size = 60 by 60
 
 Cropped output image/txt name format:
 - e.g. MAPSHEETNAME_HN_WH.jpg and MAPSHEETNAME_HN_WH.txt
