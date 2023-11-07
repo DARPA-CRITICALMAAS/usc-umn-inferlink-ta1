@@ -26,15 +26,9 @@ pip install -r requirements.txt
 
 ### Extracting with a Pre-trained Model
 
-We provide the link to our pre-trained model used for one-click procedure in `\LOAM\checkpoints\checkpoint_epoch2.pth_link.txt`, or access here to [Google Drive](https://drive.google.com/file/d/16N-2NbtqLSNCU83J5Iyw4Ca8A2f7aIqi/view?usp=sharing).
+We provide the link to our pre-trained model used for inference in `\LOAM\checkpoints\checkpoint_epoch2.pth_link.txt`, or access here to [Google Drive](https://drive.google.com/file/d/16N-2NbtqLSNCU83J5Iyw4Ca8A2f7aIqi/view?usp=sharing).
 
 Setup `targeted_map.csv` for the index to the targeted raster maps, and run the following to exploit the pre-trained polygon-recognition model for extracting polygonal features from raster maps.
-
-```
-python loam_handler.py --data_dir --data_groundtruth_dir --solutiona_dir --targeted_map_list targeted_map.csv
-```
-
-or with some custom settings:
 
 ```
 python loam_handler.py --data_dir xxx --solutiona_dir xxx --targeted_map_list targeted_map.csv
