@@ -1,69 +1,22 @@
-# Relationformer: A Unified Framework for Image-to-Graph Generation
+# LDTR: Linear Object Detection Transformer for Accurate Graph Generation by Learning the N-hop Connectivity Information
 
-## Requirements
-* CUDA>=9.2
-* PyTorch>=1.7.1
+## LDTR's goal is to detect linear objects in the topographic or geological maps
 
-For other system requirements please follow
+## Docker imagery to train/testing LDTR
+**Here is the command to run the docker imagery**
 
-```bash
-pip install -r requirements.txt
-```
+<code>sudo nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 pytorch/pytorch:1.2-cuda10.0-cudnn7-devel</code>
 
-### Compiling CUDA operators
-```bash
-cd ./models/ops
-python setup.py install
-```
+## Testing Data Generation
 
+<code> python generate_test_data.py </code>
 
-## Code Usage
+## Use LDTR to detect desired linear objects on a single map
 
-## 1. Dataset preparation
+<code> python test_darpa_map_conflation_shapely_mask_output_schema.py --cuda_visible_device 0 --config ./configs/usgs_railroads.yaml --checkpoint /path/to/trained_model/checkpoint_epoch.pt </code>
 
-Please download [20 US Cities dataset](https://github.com/songtaohe/Sat2Graph/tree/master/prepare_dataset) and organize them as following:
+Please update './configs/usgs_railroads.yaml' for the path to the testing images 
 
-```
-code_root/
-└── data/
-    └── 20cities/
-```
+## Use LDTR to detect desired linear objects on maps from a folder
 
-After downloading the dataset run the following script to preprocess and prepare the data for training
-```
-python generate_data.py
-```
-
-## 2. Training
-
-#### 2.1 Prepare config file
-
-The config file can be found at `.configs/road_rgb_2D.yaml`. Make custom changes if necessary.
-
-#### 2.2.a Training on multiple-GPU (e.g. 3 GPUs)
-
-For example, the command for training Relationformer is following:
-
-```bash
-python train.py --config configs/road_rgb_2D.yaml --cuda_visible_device 0 1 2 --nproc_per_node 3
-```
-
-<!-- #### 2.2.b Training on slurm cluster (e.g. 3 GPUs)
-
-If you are using slurm cluster, you can simply run the following command to train on 1 node:
-
-```bash
-srun -u --nodelist worker-1 --gres=gpu:3 -c 16 python train.py --config configs/synth_3D.yaml --nproc_per_node=3
-``` -->
-
-## 3. Evaluation
-
-Once you have the config file and trained model of Relation, run following command to evaluate it on test set:
-
-```bash
-python test.py --config configs/road_rgb_2D.yaml --checkpoint ./trained_weights/last_checkpoint.pt
-```
-
-## 4. Interactive notebook
-
-Please find the `debug_relationformer.ipynb` for interactive evaluation and visualization
+<code> python test_maps_from_folder.py --cuda_visible_device 0 --test_dir /path/to/map/folder --config ./configs/usgs_railroads.yaml --checkpoint /path/to/trained_model/checkpoint_epoch.pt </code>
