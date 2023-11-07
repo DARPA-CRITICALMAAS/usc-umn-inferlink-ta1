@@ -5,7 +5,7 @@ For extracting point symbol classes whihc are seen during the training process, 
 More information about the model, please refer to <a href='https://github.com/ultralytics/ultralytics'> this </a>
 
 ### model/run_yolo8.py 
-This scirpt includes training, validating and prediction process running following command 
+This scirpt includes training, validating and prediction process by running following command 
 ```
 python model/run_yolo8.py
 ```
