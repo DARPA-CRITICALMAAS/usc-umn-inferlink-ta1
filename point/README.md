@@ -1,10 +1,16 @@
-## Point symbol extraction based on object detection approach 
+# Point symbol extraction based on object detection approach 
 
-### Model 
+## Model 
 For extracting point symbol classes whihc are seen during the training process, we leveraged YOLOv8 object detection model.
-More information about the model can be found <a href='https://github.com/ultralytics/ultralytics'> here </a>
+More information about the model, please refer to <a href='https://github.com/ultralytics/ultralytics'> this </a>
 
-### Data preporcessing 
+### model/run_yolo8.py 
+This scirpt includes training, validating and prediction process running following command 
+```
+python model/run_yolo8.py
+```
+
+## Data preporcessing 
 We pre-processed the data for formatting as an input of the YOLOv8 object detection model
 
 
