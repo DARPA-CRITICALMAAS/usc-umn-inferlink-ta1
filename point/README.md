@@ -9,6 +9,7 @@ This scirpt includes training, validating and prediction process running followi
 ```
 python model/run_yolo8.py
 ```
+Make sure to place the dataset and configuration file in the right path  
 
 ## Data preporcessing 
 We pre-processed the data for formatting as an input of the YOLOv8 object detection model
