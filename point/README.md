@@ -11,7 +11,7 @@ python model/run_yolo8.py
 ```
 Make sure to place the dataset and configuration file in the right path  
 
-<br>
+
 ## 2.Data preporcessing 
 
 
