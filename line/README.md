@@ -7,7 +7,7 @@
 
 *** Pull ldtr docker image from docker-hub
 
-<code> nvidia-docker pull weiweiduan/ldtr_pytorch:versions
+<code> nvidia-docker pull weiweiduan/ldtr_pytorch:version0
 
 *** Run ldtr docker image
 <code> nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 ldtr_pytorch:version0</code>
