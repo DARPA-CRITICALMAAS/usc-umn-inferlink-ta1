@@ -10,7 +10,6 @@
 <code>docker nvidia-docker pull weiweiduan/ldtr_pytorch:versions
 
 *** Run ldtr docker image
-
 <code>sudo nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 ldtr_pytorch:version0</code>
 
 ## Testing Data Generation
