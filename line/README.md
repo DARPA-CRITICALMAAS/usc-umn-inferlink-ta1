@@ -1,11 +1,15 @@
 # LDTR: Linear Object Detection Transformer for Accurate Graph Generation by Learning the N-hop Connectivity Information
 
-## LDTR's goal is to detect linear objects in the topographic or geological maps
+## LDTR's goal is to detect linear objects from the topographic or geological maps
 
 ## Docker imagery to train/testing LDTR
 **Here is the command to run the docker imagery**
 
-<code>sudo nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 pytorch/pytorch:1.2-cuda10.0-cudnn7-devel</code>
+***Pull ldtr docker image from docker-hub
+<code>docker nvidia-docker pull weiweiduan/ldtr_pytorch:versions
+
+*** Run ldtr docker image
+<code>sudo nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 ldtr_pytorch:version0</code>
 
 ## Testing Data Generation
 
