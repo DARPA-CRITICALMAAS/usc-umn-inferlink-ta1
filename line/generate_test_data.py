@@ -1,4 +1,5 @@
 import pdb
+import cv2
 import math
 import imageio
 import pyvista
@@ -83,16 +84,8 @@ def save_input(path, patch, patch_seg, patch_coord, patch_edge, idx):
         patch_edge ([type]): [description]
     """
     region_id, img_x, img_y = idx
-    imageio.imwrite(path+'raw/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_data.png', patch.astype('uint8'))
-    imageio.imwrite(path+'seg/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_seg.png', patch_seg.astype('uint8'))
-    
-    # vertices, faces, _, _ = marching_cubes_lewiner(patch)
-    # vertices = vertices/np.array(patch.shape)
-    # faces = np.concatenate((np.int32(3*np.ones((faces.shape[0],1))), faces), 1)
-    
-    # mesh = pyvista.PolyData(vertices)
-    # mesh.faces = faces.flatten()
-    # mesh.save(path+'mesh/sample_'+str(idx).zfill(4)+'_segmentation.stl')
+    imageio.imwrite(path+'/raw/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_data.png', patch.astype('uint8'))
+    imageio.imwrite(path+'/seg/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_seg.png', patch_seg.astype('uint8'))
     
     if patch_coord != []:
         patch_edge = np.concatenate((np.int32(2*np.ones((patch_edge.shape[0],1))), patch_edge), 1)
@@ -102,7 +95,7 @@ def save_input(path, patch, patch_seg, patch_coord, patch_edge, idx):
         mesh = pyvista.PolyData(np.transpose(np.array([[],[],[]])))
         mesh.lines = np.array([]) #None
     # print(patch_edge.shape)
-    mesh.save(path+'vtp/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_graph.vtp')
+    mesh.save(path+'/vtp/sample_'+str(region_id)+'_'+str(img_x)+'_'+str(img_y)+'_graph.vtp')
 
 
 def patch_extract(save_path, image, seg, mesh, indice, device=None):
@@ -132,19 +125,15 @@ def patch_extract(save_path, image, seg, mesh, indice, device=None):
     # Center Crop based on foreground
 
     for i, start in enumerate(list(np.array(ind).reshape(2,-1).T)):
-#         start = np.array((start[0],start[1],0))
         start = np.array((start[1],start[0],0))
         end = start + np.array(patch_size)-1 -2*np.array(pad)
         
         patch = np.pad(image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :],\
                        ((pad_h,pad_h),(pad_w,pad_w),(0,0)), mode='constant')
-#         patch = np.pad(image[start[1]:start[1]+p_h, start[0]:start[0]+p_w, :], ((pad_h,pad_h),(pad_w,pad_w),(0,0)))
         patch_list = [patch]
 
         patch_seg = np.pad(seg[start[0]:start[0]+p_h, start[1]:start[1]+p_w,],\
                            ((pad_h,pad_h),(pad_w,pad_w)), mode='constant')
-#         patch_seg = np.pad(seg[start[1]:start[1]+p_h, start[0]:start[0]+p_w,], ((pad_h,pad_h),(pad_w,pad_w)))
-#         print('patch_seg: ', patch_seg.shape, np.unique(patch_seg))
         seg_list = [patch_seg]
 
         # collect all the nodes
@@ -152,10 +141,8 @@ def patch_extract(save_path, image, seg, mesh, indice, device=None):
 
         clipped_mesh = mesh.clip_box(bounds, invert=False)
         patch_coordinates = np.float32(np.asarray(clipped_mesh.points))
-#         print('patch_coordinates: ', patch_coordinates)
         patch_edge = clipped_mesh.cells[np.sum(clipped_mesh.celltypes==1)*2:].reshape(-1,3)
-#         print('patch_edge shape: ', patch_edge.shape)
-#         print('patch_edge: ', patch_edge)
+
         patch_coord_ind = np.where((np.prod(patch_coordinates>=start, 1)*np.prod(patch_coordinates<=end, 1))>0.0)
         patch_coordinates = patch_coordinates[patch_coord_ind[0], :]  # all coordinates inside the patch
         patch_edge = [tuple(l) for l in patch_edge[:,1:] if l[0] in patch_coord_ind[0] and l[1] in patch_coord_ind[0]]
@@ -177,7 +164,7 @@ def patch_extract(save_path, image, seg, mesh, indice, device=None):
             patch_edge_list = [patch_edge]#.to(device))
 
             mod_patch_coord_list, mod_patch_edge_list = prune_patch(patch_coord_list, patch_edge_list)
-    #         print('prune: ', mod_patch_coord_list)
+
             # save data
             for patch, patch_seg, patch_coord, patch_edge in zip(patch_list, seg_list, mod_patch_coord_list, mod_patch_edge_list):
                 if patch_seg.shape[0] != patch_size[0] or patch_seg.shape[1] != patch_size[0]:
@@ -246,64 +233,56 @@ def prune_patch(patch_coord_list, patch_edge_list):
     return mod_patch_coord_list, mod_patch_edge_list
 
 
-# indrange_test = [5, 7, 11] # louisville wt test patches
-# indrange_test = [10, 13, 32, 34, 8, 16] # bray wt test patches
-# indrange_test = [26,37,8,15,22,28] # bray rr test patches
-# indrange_test = [27,6,16] # louisville rr test patches
-indrange_test = [43]
-
 if __name__ == "__main__":
-    root_dir = "/data/weiweidu/criticalmaas_data/validation_fault_line"
+    from argparse import ArgumentParser
+    
+    parser = ArgumentParser()
+    parser.add_argument('--map_dir', type=str, default='/data/weiweidu/criticalmaas_data/validation_fault_line',
+                       help='the path to the folder storing the test maps')
+    
+    parser.add_argument('--output_dir', type=str, default='/data/weiweidu/criticalmaas_data')
+    
+    args = parser.parse_args()
+    
+    root_dir = args.map_dir
     
     image_id = 1
-    test_path = './data/darpa/fault_lines/OR_Carlton_g256_s100/'
+    test_path = args.output_dir
     if not os.path.isdir(test_path):
         os.makedirs(test_path)
-        os.makedirs(test_path+'/seg')
-        os.makedirs(test_path+'/vtp')
-        os.makedirs(test_path+'/raw')
-#     else:
-#         raise Exception("Test folder is non-empty")
-
-    print('Preparing Test Data')
-
+    
     raw_files = []
     seg_files = []
     vtk_files = []
+    output_dirs = []
     
-    '''
-    AK_Dillingham, AK_Kechumstuk, CA_Elsinore, 
-    AK_Hughes, AR_StJoe, AZ_GrandCanyon, 
-    AZ_PipeSpring, CA_NV_DeathValley, CO_Alamosa
-    MN, OR_Camas, OR_Carlton
-    '''
+    for root, dirs, files in os.walk(root_dir):
+        for f_name in files:
+            map_name, fmt = f_name.split('.')
+            if '_line' in map_name or '_poly' in map_name or '_pt' in map_name or fmt != 'tif':
+                continue
+            output_dir = os.path.join(test_path, map_name+'_g256_s100')
+            output_dirs.append(output_dir)
+            if not os.path.isdir(output_dir):
+                os.makedirs(output_dir)
+                os.makedirs(output_dir+'/seg')
+                os.makedirs(output_dir+'/vtp')
+                os.makedirs(output_dir+'/raw')
+            else:
+                print(f'--- Test images are generated in {output_dir} ---')
+                continue
 
-    map_names = ['OR_Carlton'] 
-    
-    for root, dirs, files in os.walk(root_dir, topdown=False):
-        for name in map_names:
-            for f in files:
-                fmt = f.split('.')[1]
-# #                 print(f)
-# #                 if 'scarp_line' in f and 'png' == fmt and name in f:
-                if 'fault_line' in f and 'png' == fmt and name in f:
-                    seg_files.append(os.path.join(root, f))
-                elif 'png' == fmt and name in f:
-                    raw_files.append(os.path.join(root, name))
-                elif 'p' == fmt and name in f:
-                    vtk_files.append(os.path.join(root, f))    
-    print(len(seg_files), len(raw_files), len(vtk_files))      
+            if os.path.exists(os.path.join(root, f_name)):
+                raw_files.append(os.path.join(root, f_name))
+                    
+    print(f'the number of test maps = {len(raw_files)}')      
     
     for i, ind in enumerate((raw_files)):
-        print(ind, raw_files[i], seg_files[i])
-        try:
-            sat_img = imageio.imread(raw_files[i]+".png")
-        except:
-            sat_img = imageio.imread(raw_files[i]+".jpg")
-
-#         with open(vtk_files[i], 'rb') as f:
-#             graph = pickle.load(f)
-#         node_array, edge_array = convert_graph(graph)
+        map_path = ind.split('/')[-1]
+        map_name = map_path.split('.')[0]
+        print(f'Preparing Test Data for {map_name}')
+#         sat_img = imageio.imread(raw_files[i])
+        sat_img = cv2.imread(raw_files[i])
         node_array, edge_array = np.array([]), np.array([])
         if node_array.size == 0:
             node_array = np.array([[2050, 2050], [2070, 2070]]).astype('float32')
@@ -317,6 +296,5 @@ if __name__ == "__main__":
         patch_edge = np.concatenate((np.int32(2*np.ones((edge_array.shape[0],1))), edge_array), 1)
         mesh.lines = patch_edge.flatten()
 
-#         patch_extract(test_path, sat_img, gt_seg, mesh, ind)
-        patch_extract(test_path, sat_img, gt_seg, mesh, map_names[i])
+        patch_extract(output_dirs[i], sat_img, gt_seg, mesh, map_name)
 
