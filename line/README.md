@@ -14,7 +14,7 @@
 
 ## Testing Data Generation
 
-<code> python generate_test_data.py </code>
+<code> python generate_test_data.py --map_dir 'path/to/test_maps' --output_dir 'path/to/cropped_test_images' </code>
 
 ## Use LDTR to detect desired linear objects on a single map
 
