@@ -151,88 +151,19 @@ def patch_extract(save_path, image, seg, mesh, indice, device=None):
         temp = [np.where(patch_coord_ind[0] == ind) for ind in temp]  # remap the edge indices according to the new order
         patch_edge = np.array(temp).reshape(-1,2)  # reshape the edge list into previous format
             
-        if patch_coordinates.shape[0] < 2 or patch_edge.shape[0] < 1:
-            if patch_seg.shape[0] != patch_size[0] or patch_seg.shape[1] != patch_size[0]:
-                continue
-            for patch, patch_seg in zip(patch_list, seg_list):
-                save_input(save_path, patch, patch_seg, [], [], [indice, start[0], start[1]])
         
-        else:
-            # concatenate final variables
-            patch_coordinates = (patch_coordinates-start+np.array(pad))/np.array(patch_size)
-            patch_coord_list = [patch_coordinates]#.to(device))
-            patch_edge_list = [patch_edge]#.to(device))
-
-            mod_patch_coord_list, mod_patch_edge_list = prune_patch(patch_coord_list, patch_edge_list)
-
-            # save data
-            for patch, patch_seg, patch_coord, patch_edge in zip(patch_list, seg_list, mod_patch_coord_list, mod_patch_edge_list):
-                if patch_seg.shape[0] != patch_size[0] or patch_seg.shape[1] != patch_size[0]:
-                    continue
-                
-                save_input(save_path, patch, patch_seg, patch_coord, patch_edge, [indice, start[0], start[1]])
-
-def prune_patch(patch_coord_list, patch_edge_list):
-    """[summary]
-
-    Args:
-        patch_list ([type]): [description]
-        patch_coord_list ([type]): [description]
-        patch_edge_list ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    mod_patch_coord_list = []
-    mod_patch_edge_list = []
-
-    for coord, edge in zip(patch_coord_list, patch_edge_list):
-
-        # find largest graph segment in graph and in skeleton and see if they match
-        dist_adj = np.zeros((coord.shape[0], coord.shape[0]))
-        dist_adj[edge[:,0], edge[:,1]] = np.sum((coord[edge[:,0],:]-coord[edge[:,1],:])**2, 1)
-        dist_adj[edge[:,1], edge[:,0]] = np.sum((coord[edge[:,0],:]-coord[edge[:,1],:])**2, 1)
-
-        # straighten the graph by removing redundant nodes
-        start = True
-        node_mask = np.ones(coord.shape[0], dtype=np.bool)
-        while start:
-            degree = (dist_adj > 0).sum(1)
-            deg_2 = list(np.where(degree==2)[0])
-            if len(deg_2) == 0:
-                start = False
-            for n, idx in enumerate(deg_2):
-                deg_2_neighbor = np.where(dist_adj[idx,:]>0)[0]
-
-                p1 = coord[idx,:]
-                p2 = coord[deg_2_neighbor[0],:]
-                p3 = coord[deg_2_neighbor[1],:]
-                l1 = p2-p1
-                l2 = p3-p1
-                node_angle = angle(l1,l2)*180 / math.pi
-                if node_angle > 160:
-                    node_mask[idx]=False
-                    dist_adj[deg_2_neighbor[0], deg_2_neighbor[1]] = np.sum((p2-p3)**2)
-                    dist_adj[deg_2_neighbor[1], deg_2_neighbor[0]] = np.sum((p2-p3)**2)
-
-                    dist_adj[idx, deg_2_neighbor[0]] = 0.0
-                    dist_adj[deg_2_neighbor[0], idx] = 0.0
-                    dist_adj[idx, deg_2_neighbor[1]] = 0.0
-                    dist_adj[deg_2_neighbor[1], idx] = 0.0
-                    break
-                elif n==len(deg_2)-1:
-                    start = False
-
-        new_coord = coord[node_mask,:]
-        new_dist_adj = dist_adj[np.ix_(node_mask, node_mask)]
-        new_edge = np.array(np.where(np.triu(new_dist_adj)>0)).T
-
-        mod_patch_coord_list.append(new_coord)
-        mod_patch_edge_list.append(new_edge)
-
-    return mod_patch_coord_list, mod_patch_edge_list
-
-
+        if patch_seg.shape[0] != patch_size[0] or patch_seg.shape[1] != patch_size[0]:
+            continue
+        for patch, patch_seg in zip(patch_list, seg_list):
+            save_input(save_path, patch, patch_seg, [], [], [indice, start[0], start[1]])
+        
+def check_path(path):
+    try:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"The path '{path}' does not exist.")
+    except FileNotFoundError as e:
+        print(e)
+        
 if __name__ == "__main__":
     from argparse import ArgumentParser
     
@@ -245,6 +176,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     root_dir = args.map_dir
+    
+    check_path(root_dir)
     
     image_id = 1
     test_path = args.output_dir
@@ -259,7 +192,7 @@ if __name__ == "__main__":
     for root, dirs, files in os.walk(root_dir):
         for f_name in files:
             map_name, fmt = f_name.split('.')
-            if '_line' in map_name or '_poly' in map_name or '_pt' in map_name or fmt != 'tif':
+            if (fmt != 'tif' and fmt != 'png') or '_poly' in map_name or '_line' in map_name or '_pt' in map_name:
                 continue
             output_dir = os.path.join(test_path, map_name+'_g256_s100')
             output_dirs.append(output_dir)
@@ -270,10 +203,12 @@ if __name__ == "__main__":
                 os.makedirs(output_dir+'/raw')
             else:
                 print(f'--- Test images are generated in {output_dir} ---')
-                continue
 
             if os.path.exists(os.path.join(root, f_name)):
+                print(os.path.join(root, f_name))
                 raw_files.append(os.path.join(root, f_name))
+            else:
+                print(f'--- {map_name} does not exist in {root}')
                     
     print(f'the number of test maps = {len(raw_files)}')      
     
@@ -281,16 +216,14 @@ if __name__ == "__main__":
         map_path = ind.split('/')[-1]
         map_name = map_path.split('.')[0]
         print(f'Preparing Test Data for {map_name}')
-#         sat_img = imageio.imread(raw_files[i])
         sat_img = cv2.imread(raw_files[i])
         node_array, edge_array = np.array([]), np.array([])
         if node_array.size == 0:
             node_array = np.array([[2050, 2050], [2070, 2070]]).astype('float32')
             edge_array = np.array([[0, 1]])
-        if seg_files == []:    
-            gt_seg = np.zeros(sat_img.shape[:2])
-        else:    
-            gt_seg = imageio.imread(seg_files[i])
+  
+        gt_seg = np.zeros(sat_img.shape[:2])
+        
         patch_coord = np.concatenate((node_array, np.int32(np.zeros((node_array.shape[0],1)))), 1)
         mesh = pyvista.PolyData(patch_coord)
         patch_edge = np.concatenate((np.int32(2*np.ones((edge_array.shape[0],1))), edge_array), 1)
