@@ -17,6 +17,7 @@ parser.add_argument('--config',
                     help='config file (.yml) containing the hyper-parameters for training. '
                          'If None, use the nnU-Net config. See /config for examples.')
 parser.add_argument('--checkpoint', default=None, help='checkpoint of the model to test.')
+parser.add_argument('--line_feature_name', default='fault_line', type=str, help='the name of line feature')
 parser.add_argument('--device', default='cuda',
                         help='device to use for training')
 parser.add_argument('--cuda_visible_device', nargs='*', type=int, default=[3],
@@ -138,14 +139,14 @@ def construct_graph(args, map_content_mask):
     config = dict2obj(config)
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, args.cuda_visible_device))
     
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join('/data/weiweidu/criticalmaas_data/validation', args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
+    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
+    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s100')
     if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s64')
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + '_fault_line_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
     
     import torch
     from monai.data import DataLoader
@@ -252,19 +253,19 @@ def predict_png(args):
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
 
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join('/data/weiweidu/criticalmaas_data/validation', args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
+    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
+    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s100')
     if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s64')
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + '_fault_line_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
     
     map_name = config.DATA.TEST_MAP_PATH.split('/')[-1][:-4]
-#     print(args.map_name, map_name, config.DATA.TEST_DATA_PATH)
-    map_content_mask_path = \
-        '/data/weiweidu/criticalmaas_data/updated_cropped_map_mask_validation/{}_expected_crop_region.tif'.format(map_name)
+
+    map_content_mask_path = os.path.join(args.map_bound_dir, f'{map_name}_expected_crop_region.tif')
+
     map_content_mask = cv2.imread(map_content_mask_path, 0)
     
     lines = construct_graph(args, map_content_mask)
@@ -276,7 +277,7 @@ def predict_png(args):
         node1, node2 = [int(node1[0]), int(node1[1])], [int(node2[0]), int(node2[1])]
 #         cv2.line(pred_png, (node1[0], node1[1]), (node2[0], node2[1]), (255,255,255), 1)
         cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 1)
-    save_path = './pred_maps/{}.png'.format(config.DATA.PRED_MAP_NAME)
+    save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
 
@@ -287,27 +288,34 @@ def predict_shp(args):
     with open(args.config) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join('/data/weiweidu/criticalmaas_data/validation', args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+                                         
+    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
+    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
+    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s100')
     if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join('/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines', \
+        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
                                              args.map_name[:-4]+'_g256_s64')
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + '_fault_line_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
     
     map_name = config.DATA.TEST_MAP_PATH.split('/')[-1][:-4]
-    map_content_mask_path = \
-        '/data/weiweidu/criticalmaas_data/updated_cropped_map_mask_validation/{}_expected_crop_region.tif'.format(map_name)
+
+    map_content_mask_path = os.path.join(args.map_bound_dir, f'{map_name}_expected_crop_region.tif')
+
     map_content_mask = cv2.imread(map_content_mask_path, 0)
+                                         
     lines = construct_graph(args, map_content_mask)
     nodup_lines = rm_dup_lines(lines)
     print('num of lines = ', len(nodup_lines))
-    merged_lines = integrate_lines(nodup_lines)
-    shp_path = './pred4shp/{}.shp'.format(config.DATA.PRED_MAP_NAME)
-#     write_shp_in_imgcoord_output_schema(shp_path, lines, config.DATA.TEST_TIF_PATH)
-    write_shp_in_imgcoord_output_schema(shp_path, merged_lines, config.DATA.TEST_TIF_PATH)
-    print('*** save the predicted shapefile in {} ***'.format(shp_path))
+    
+    shp_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.shp'
+    if len(nodup_lines) > 0:
+        merged_lines = integrate_lines(nodup_lines)
+    #     write_shp_in_imgcoord_output_schema(shp_path, lines, config.DATA.TEST_TIF_PATH)
+        write_shp_in_imgcoord_output_schema(shp_path, merged_lines, config.DATA.TEST_TIF_PATH)
+        print('*** save the predicted shapefile in {} ***'.format(shp_path))
+    else:
+        write_shp_in_imgcoord_output_schema(shp_path, nodup_lines, config.DATA.TEST_TIF_PATH)
     
 #     import geopandas
 #     geojson_path = './pred4shp/{}.geojson'.format(config.DATA.PRED_MAP_NAME[:-5])
