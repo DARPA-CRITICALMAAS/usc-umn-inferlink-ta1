@@ -5,11 +5,15 @@
 
 ### Create from Separate Steps
 
-Install pytesseract.
+1. Install pytesseract on the device.
 
+2. Download the mapKurator output geojson(s) from [GoogleDrive](https://docs.google.com/document/d/1mtaGmaNTCy5ybuC0YABqSzoZQAWOCNqHBWbg7moZ0Eo/edit?usp=sharing).
+
+3. Run or manually install the listed libraries in requirement.txt.
 ```
 pip install -r requirement.txt
 ```
+
 
 
 ## Usage
@@ -28,3 +32,7 @@ python map_legend_segmentation.py --input_image xxx.tif --output_dir xxx --prepr
 --input_area_segmentation: (str, optional) path to the map area segmentation output tif.
 --input_legend_segmentation: (str, optional) path to the map legend segmentation output tif. This tif shall be a binary mask that highlights polygon/line/point legend areas.
 ```
+
+Please ignore the error messages regarding indexes in Step (2/9) if there are any.
+
+The time spent for this approach depends on the complexity (i.e., the number of legend items, the amount of texts, and the layouts) of the map.
