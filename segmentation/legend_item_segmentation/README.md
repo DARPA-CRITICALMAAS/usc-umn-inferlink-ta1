@@ -5,6 +5,8 @@
 
 ### Create from Separate Steps
 
+Install pytesseract.
+
 ```
 pip install -r requirement.txt
 ```
