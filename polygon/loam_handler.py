@@ -1,7 +1,5 @@
 
 import os
-import metadata_preprocessing
-import metadata_postprocessing
 
 
 cwd_flag = False
@@ -35,8 +33,12 @@ def main():
     printing_auxiliary_information = str_to_bool(args.printing_auxiliary_information)
     preprocessing_recoloring = str_to_bool(args.preprocessing_recoloring)
     model_inference = str_to_bool(args.model_inference)
+    performance_evaluation - str_to_bool(args.performance_evaluation)
 
     if model_inference == False:
+        import metadata_preprocessing
+        import metadata_postprocessing
+        
         metadata_preprocessing.metadata_preprocessing(
             input_data_dir = data_dir,
             input_data_boundary_dir = data_groundtruth_dir,
@@ -79,6 +81,7 @@ def main():
             input_targeted_map_file = 'targeted_map.csv',
             input_map_source_dir = data_dir,
             input_groundtruth_dir = data_groundtruth_dir
+            input_performance_evaluation = performance_evaluation
         )
 
 
@@ -96,6 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('--printing_auxiliary_information', type=str, default='True')
     parser.add_argument('--preprocessing_recoloring', type=str, default='True')
     parser.add_argument('--model_inference', type=str, default='False')
+    parser.add_argument('--performance_evaluation', type=str, default='False')
 
     args = parser.parse_args()
     
