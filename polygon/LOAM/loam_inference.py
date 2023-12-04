@@ -1031,84 +1031,85 @@ def model_testing():
 
 
         ''' Conduct performance evaluation '''
-        print(str(len(os.listdir(args['output_merged'])))+' images to be evaluated with groundtruth... ')
+        if performance_evaluation == True:
+            print(str(len(os.listdir(args['output_merged'])))+' images to be evaluated with groundtruth... ')
 
-        info_set = []
-        for prediction_merged in os.listdir(args['output_merged']):
-            prediction_name = os.fsdecode(prediction_merged)
-            prediction_filename = os.path.join(args['output_merged'], prediction_name)
+            info_set = []
+            for prediction_merged in os.listdir(args['output_merged']):
+                prediction_name = os.fsdecode(prediction_merged)
+                prediction_filename = os.path.join(args['output_merged'], prediction_name)
 
-            map_name = '_'.join(prediction_name.split('_')[:-3])
-            label_name = prediction_name.split('_')[-3]
+                map_name = '_'.join(prediction_name.split('_')[:-3])
+                label_name = prediction_name.split('_')[-3]
 
-            map_filename = os.path.join(map_source_dir, map_name+str('.tif')) # Path to the input dataset
-            label_filename = map_filename.replace('.tif','.json')
-            groundtruth_filename = os.path.join(groundtruth_dir, map_name+'_'+label_name+str('_poly.tif')) # Path to the corresponding groundtruth dataset
-            if os.path.isfile(groundtruth_filename) == False:
-                print('no groundturht provided... ', groundtruth_filename)
-                continue
+                map_filename = os.path.join(map_source_dir, map_name+str('.tif')) # Path to the input dataset
+                label_filename = map_filename.replace('.tif','.json')
+                groundtruth_filename = os.path.join(groundtruth_dir, map_name+'_'+label_name+str('_poly.tif')) # Path to the corresponding groundtruth dataset
+                if os.path.isfile(groundtruth_filename) == False:
+                    print('no groundturht provided... ', groundtruth_filename)
+                    continue
 
-            prediction_source_filename = os.path.join('data/cma/imgs', map_name+'_'+label_name+str('.png')) # Path to the output
+                prediction_source_filename = os.path.join('data/cma/imgs', map_name+'_'+label_name+str('.png')) # Path to the output
 
-            info_set_placeholder = []
-            info_set_placeholder.append(map_filename)
-            info_set_placeholder.append(label_filename)
-            info_set_placeholder.append(prediction_filename)
-            info_set_placeholder.append(groundtruth_filename)
-            info_set_placeholder.append(map_name)
-            info_set_placeholder.append(label_name)
+                info_set_placeholder = []
+                info_set_placeholder.append(map_filename)
+                info_set_placeholder.append(label_filename)
+                info_set_placeholder.append(prediction_filename)
+                info_set_placeholder.append(groundtruth_filename)
+                info_set_placeholder.append(map_name)
+                info_set_placeholder.append(label_name)
 
-            info_set_placeholder.append(prediction_source_filename)
-            # print(info_set_placeholder)
-            info_set.append(info_set_placeholder)
+                info_set_placeholder.append(prediction_source_filename)
+                # print(info_set_placeholder)
+                info_set.append(info_set_placeholder)
 
 
-        #runningtime_start=datetime.now()
-        performance_block = []
+            #runningtime_start=datetime.now()
+            performance_block = []
 
-        if os.path.isfile('output/performance_folded.csv') == False:
-            with open('output/performance_folded.csv','w') as fd:
-                fd.write('Fold,Map_Name,Key_Name,Precision,Recall,F1_Score\n')
-                fd.close()
+            if os.path.isfile('output/performance_folded.csv') == False:
+                with open('output/performance_folded.csv','w') as fd:
+                    fd.write('Fold,Map_Name,Key_Name,Precision,Recall,F1_Score\n')
+                    fd.close()
 
-        with tqdm(total=len(info_set), desc=f'Evaluation - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
-            for batch in range(0, math.ceil(len(info_set)/PROCESSES)):
-                batch_range = [PROCESSES*batch, min(PROCESSES*(batch+1), len(info_set))]
-                #print(batch_range)
+            with tqdm(total=len(info_set), desc=f'Evaluation - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
+                for batch in range(0, math.ceil(len(info_set)/PROCESSES)):
+                    batch_range = [PROCESSES*batch, min(PROCESSES*(batch+1), len(info_set))]
+                    #print(batch_range)
 
-                with multiprocessing.Pool(PROCESSES) as pool:
-                    #multiprocessing_results = [pool.apply_async(validation_evaluation_worker, (info_id,info_set[info_id],)) for info_id in range(0, len(info_set))]
-                    callback = pool.starmap_async(validation_evaluation_worker.validation_evaluation_worker, [(info_id, info_set[info_id], ) for info_id in range(batch_range[0], batch_range[1])]) # len(info_set)
-                    multiprocessing_results  = callback.get()
-                        
-                    for returned_info in multiprocessing_results:
-                        #map_name, legend_name, precision, recall, f_score = returned_info
-                        try:
-                            returned = returned_info
-                            map_name = returned[0]
-                            legend_name = returned[1]
-                            precision_0 = returned[2]
-                            recall_0 = returned[3]
-                            f_score_0 = returned[4]
-                            print(map_name, legend_name, precision_0, recall_0, f_score_0)
-                            performance_block.append(returned)
+                    with multiprocessing.Pool(PROCESSES) as pool:
+                        #multiprocessing_results = [pool.apply_async(validation_evaluation_worker, (info_id,info_set[info_id],)) for info_id in range(0, len(info_set))]
+                        callback = pool.starmap_async(validation_evaluation_worker.validation_evaluation_worker, [(info_id, info_set[info_id], ) for info_id in range(batch_range[0], batch_range[1])]) # len(info_set)
+                        multiprocessing_results  = callback.get()
+                            
+                        for returned_info in multiprocessing_results:
+                            #map_name, legend_name, precision, recall, f_score = returned_info
+                            try:
+                                returned = returned_info
+                                map_name = returned[0]
+                                legend_name = returned[1]
+                                precision_0 = returned[2]
+                                recall_0 = returned[3]
+                                f_score_0 = returned[4]
+                                print(map_name, legend_name, precision_0, recall_0, f_score_0)
+                                performance_block.append(returned)
 
-                            with open('output/performance_folded.csv','a') as fd:
-                                fd.write(str(k)+','+map_name+','+legend_name+','+str(precision_0)+','+str(recall_0)+','+str(f_score_0)+','+'\n')
-                                fd.close()
-                                pbar0.update(1)
-                        except:
-                            with open('output/performance_folded.csv','a') as fd:
-                                fd.write(str(k)+','+'error,error\n')
-                                fd.close()
-                                pbar0.update(1)
-                #if batch%5 == 0:
-                    #print('time_checkpoint('+str(batch)+'): ', datetime.now()-runningtime_start)
-                #print(performance_block)
-                performance_block = []
+                                with open('output/performance_folded.csv','a') as fd:
+                                    fd.write(str(k)+','+map_name+','+legend_name+','+str(precision_0)+','+str(recall_0)+','+str(f_score_0)+','+'\n')
+                                    fd.close()
+                                    pbar0.update(1)
+                            except:
+                                with open('output/performance_folded.csv','a') as fd:
+                                    fd.write(str(k)+','+'error,error\n')
+                                    fd.close()
+                                    pbar0.update(1)
+                    #if batch%5 == 0:
+                        #print('time_checkpoint('+str(batch)+'): ', datetime.now()-runningtime_start)
+                    #print(performance_block)
+                    performance_block = []
 
-        
-        print('time_checkpoint (model inferring, fold- '+str(k)+'): ', datetime.now()-runningtime_start_global)
+            
+            print('time_checkpoint (model inferring, fold- '+str(k)+'): ', datetime.now()-runningtime_start_global)
 
 
 
@@ -1141,6 +1142,7 @@ def run_testing():
 
 map_source_dir = ''
 groundtruth_dir = ''
+performance_evaluation = False
 
 def loam_inference(
         input_filtering_new_dataset = True,
@@ -1152,7 +1154,8 @@ def loam_inference(
         input_training_needed = False,
         input_targeted_map_file = 'targeted_map.csv',
         input_map_source_dir = 'H:/Research/LOAM/Data/testing',
-        input_groundtruth_dir = 'H:/Research/LOAM/Data/testing_groundtruth'
+        input_groundtruth_dir = 'H:/Research/LOAM/Data/testing_groundtruth',
+        input_performance_evaluation = False
 ):
     global filtering_new_dataset
     global filtering_threshold
@@ -1164,6 +1167,7 @@ def loam_inference(
     global targeted_map_file
     global map_source_dir
     global groundtruth_dir
+    global performance_evaluation
 
     filtering_new_dataset = input_filtering_new_dataset
     filtering_threshold = input_filtering_threshold
@@ -1175,6 +1179,7 @@ def loam_inference(
     targeted_map_file = input_targeted_map_file
     map_source_dir = input_map_source_dir
     groundtruth_dir = input_groundtruth_dir
+    performance_evaluation = input_performance_evaluation
 
     run_testing()
 
