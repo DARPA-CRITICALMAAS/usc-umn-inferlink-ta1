@@ -21,6 +21,7 @@ def main():
     global generate_boundary_extraction
     global printing_auxiliary_information
     global preprocessing_recoloring
+    global performance_evaluation
 
     global cwd_flag
 
@@ -80,7 +81,7 @@ def main():
             input_training_needed = False,
             input_targeted_map_file = 'targeted_map.csv',
             input_map_source_dir = data_dir,
-            input_groundtruth_dir = data_groundtruth_dir
+            input_groundtruth_dir = data_groundtruth_dir,
             input_performance_evaluation = performance_evaluation
         )
 
