@@ -14,27 +14,49 @@ from einops import rearrange
 import pickle
 
 import torch
-from transformers import AutoImageProcessor, ViTMAEConfig, ViTMAEModel
+from transformers import (AutoImageProcessor, ViTMAEConfig, ViTMAEModel,
+                            ResNetModel, ViTModel,
+                            ResNetConfig)
 from transformers.trainer_utils import get_last_checkpoint
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.optim import AdamW
+import torchvision.models as models
+import torch.nn.functional as F
 
 def main(args):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    model_config = ViTMAEConfig()
-    if args.checkpoint_path is not None:
-        model = ViTMAEModel.from_pretrained(args.checkpoint_path)
+    if args.model_type == 'resnet':
+        model_config = ResNetConfig()
+        model = ResNetModel.from_pretrained("microsoft/resnet-50")
     else:
-        model = ViTMAEModel.from_pretrained("facebook/vit-mae-base")
-    model_name = "facebook/vit-mae-base"
-    processor = AutoImageProcessor.from_pretrained(model_name)
+        model_config = ViTMAEConfig()
+        if args.checkpoint_path is not None:
+            model = ViTMAEModel.from_pretrained(args.checkpoint_path)
+        else:
+            model = ViTMAEModel.from_pretrained("facebook/vit-mae-base")
     model.to(device)
-
-    train_dataset = TripletDataset(args.train_input_path, positives_dict = args.positives_dict_path,
+    
+    if args.topo_only:
+        train_dataset = TripletDataset(args.topo_train_input_path, positives_dict = args.positives_dict_path,
                             anchor_transform = normal_transform, target_transform = normal_transform)
-    test_dataset = ImageDataset(args.full_input_path,
+        topo_dataset = ImageDataset(args.topo_full_input_path,
                             transform = normal_transform, valid_files_path = args.positives_dict_path)
+    else:
+        with open(args.positives_dict_path, 'rb') as handle:
+            match_dict = pickle.load(handle)
+            valid_keys = match_dict.keys()
+            flattened_values = [item for sublist in match_dict.values() for item in sublist]
+            valid_geo_files = [y + '.tif' for y in valid_keys]
+            valid_topo_files = [z + '.tif' for z in flattened_values]
+        train_dataset = TripletDataset(args.topo_full_input_path, geo_root = args.geo_train_input_path, 
+                                positives_dict = args.positives_dict_path,
+                                anchor_transform = normal_transform, target_transform = normal_transform)
+        topo_dataset = ImageDataset(args.topo_full_input_path,
+                                transform = normal_transform, valid_files_list = valid_topo_files)
+        geo_dataset = ImageDataset(args.geo_test_input_path,
+                                transform = normal_transform, valid_files_list = valid_geo_files) 
+      
     train_indices, val_indices = split_train_val(train_dataset)
 
     train_sampler = SubsetRandomSampler(train_indices)
@@ -44,8 +66,11 @@ def main(args):
                                            sampler=train_sampler)
     val_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
                                             sampler=val_sampler)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size)
-    testset = os.listdir(args.test_input_path)
+    topo_loader = torch.utils.data.DataLoader(topo_dataset, batch_size=args.batch_size)
+    if not args.topo_only:
+        geo_loader = torch.utils.data.DataLoader(geo_dataset, batch_size=args.batch_size)
+    else:
+        testset = os.listdir(args.test_input_path)
 
     optimizer = AdamW(model.parameters(), lr = args.learning_rate)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
@@ -59,6 +84,7 @@ def main(args):
 
     if args.eval_only:
         args.start_epoch = args.epochs
+    best_val_loss = float('inf')
     for epoch in range(args.start_epoch, args.epochs):
         if args.log_wandb:
             log_writer.set_step(epoch * num_training_steps_per_epoch)
@@ -66,50 +92,90 @@ def main(args):
             log_writer = None
         train_stats = train_one_epoch(train_loader, 
                 model, optimizer, device,
-                args, log_writer)
+                args, log_writer, model_base = args.model_type)
         val_stats = train_one_epoch(val_loader, 
                 model, optimizer, device,
-                args, log_writer, val_flag = True)
+                args, log_writer, val_flag = True, 
+                model_base = args.model_type)
         train_loss = train_stats['[Epoch] train_loss']
         val_loss = val_stats['[Epoch] val_loss']
         scheduler.step(val_loss)
         print(f'Epoch: {epoch}, Training Loss: {train_loss}, Validation Loss: {val_loss}')
 
-        if epoch % args.checkpoint_freq == 0:
-            save_path = os.path.join(args.model_save_path, 'epoch_' + str(epoch))
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            save_path = os.path.join(args.model_save_path, 'best-val_model')
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
             model.save_pretrained(save_path)
-    if not args.eval_only:
-        save_path = os.path.join(args.model_save_path, 'epoch_' + str(args.epochs))
-        if not os.path.exists(save_path):
-            os.mkdir(save_path)
-        model.save_pretrained(args.model_save_path)
+    sys.exit()
     print('Beginning Evaluation')
-    evaluate(test_loader, model, model_config, args.positives_dict_path, device,
-                testset, len(testset), args.batch_size, len(test_dataset), args.results_save_path,
-                embeddings_array = args.distances_mtx_path, top_k = args.top_k)
+    if args.model_type == 'vit-mae':
+        best_pt = os.path.join(args.model_save_path, 'best-val_model')
+        if not os.path.exists(best_pt):
+            model = ViTModel.from_pretrained('facebook/vit-mae-base').to(device)
+        else:
+            model = ViTModel.from_pretrained(best_pt).to(device)
+    else:
+        best_pt = os.path.join(args.model_save_path, 'best-val_model')
+        if not os.path.exists(best_pt):
+            model = ResNetModel.from_pretrained("microsoft/resnet-50").to(device)
+        else:
+            model = ResNetModel.from_pretrained(best_pt).to(device)
+    if args.topo_only:
+        evaluate_topo(topo_loader, model, model_config, args.positives_dict_path, device,
+                    testset, len(testset), args.batch_size, len(topo_dataset), args.results_save_path,
+                    embeddings_array = args.topo_distances_mtx_path, top_k = args.top_k)
+    else:
+        evaluate_geo_topo(topo_loader, geo_loader, model, model_config, args.positives_dict_path, device,
+                            args.batch_size, len(topo_dataset), len(geo_dataset), args.results_save_path,
+                            topo_embeddings_array = args.topo_distances_mtx_path, geo_embeddings_array = args.geo_distances_mtx_path,
+                            top_k = args.top_k, model_base = args.model_type)
 
 def train_one_epoch(train_loader, 
             model, optimizer, device,
-            args, log_writer, val_flag = False):
+            args, log_writer, val_flag = False, model_base = 'vit-mae'):
     for step, (anchor, positive, negative) in enumerate(train_loader):
         anchor = anchor.to(device)
         positive = positive.to(device)
         negative = negative.to(device)
         if val_flag:
             model.eval()
-
             with torch.no_grad():
-                anchor_outputs = model(anchor).last_hidden_state
-                positive_outputs = model(positive).last_hidden_state
-                negative_outputs = model(negative).last_hidden_state
+                if model_base == 'vit-mae':
+                    anchor_outputs = model(anchor).last_hidden_state
+                    anchor_outputs = anchor_outputs[:, -1, :]
+                    positive_outputs = model(positive).last_hidden_state
+                    positive_outputs = positive_outputs[:, -1, :]
+                    negative_outputs = model(negative).last_hidden_state
+                    negative_outputs = negative_outputs[:, -1, :]
+                else:
+                    anchor_outputs = model(anchor).last_hidden_state
+                    anchor_outputs = F.adaptive_avg_pool2d(anchor_outputs, (1, 1)).view(anchor_outputs.size(0), -1)
+                    positive_outputs = model(positive).last_hidden_state
+                    positive_outputs = F.adaptive_avg_pool2d(positive_outputs, (1, 1)).view(positive_outputs.size(0), -1)
+                    negative_outputs = model(negative).last_hidden_state
+                    negative_outputs = F.adaptive_avg_pool2d(negative_outputs, (1, 1)).view(negative_outputs.size(0), -1)
         else:
             model.train()
         
-            anchor_outputs = model(anchor).last_hidden_state
-            positive_outputs = model(positive).last_hidden_state
-            negative_outputs = model(negative).last_hidden_state
+            if model_base == 'vit-mae':
+                    anchor_outputs = model(anchor).last_hidden_state
+                    anchor_outputs = anchor_outputs[:, -1, :]
+                    positive_outputs = model(positive).last_hidden_state
+                    positive_outputs = positive_outputs[:, -1, :]
+                    negative_outputs = model(negative).last_hidden_state
+                    negative_outputs = negative_outputs[:, -1, :]
+            else:
+                anchor_outputs = model(anchor).last_hidden_state
+                anchor_outputs = F.adaptive_avg_pool2d(anchor_outputs, (1, 1)).view(anchor_outputs.size(0), -1)
+                positive_outputs = model(positive).last_hidden_state
+                positive_outputs = F.adaptive_avg_pool2d(positive_outputs, (1, 1)).view(positive_outputs.size(0), -1)
+                negative_outputs = model(negative).last_hidden_state
+                negative_outputs = F.adaptive_avg_pool2d(negative_outputs, (1, 1)).view(negative_outputs.size(0), -1)
+        print('anchor outputs: ', anchor_outputs)
+        print('positive outputs: ', positive_outputs)
+        print('negative outputs: ', negative_outputs)
 
         loss = triplet_loss((anchor_outputs, positive_outputs, negative_outputs))
         
@@ -129,7 +195,7 @@ def train_one_epoch(train_loader,
         
         return {'[Epoch] ' + k: loss for k, loss in loss_dict.items()}
 
-def evaluate(test_loader, model, model_config, positives_dict_path, device,
+def evaluate_topo(test_loader, model, model_config, positives_dict_path, device,
                 testset, testset_size, batch_size, total_size, output_path,
                 log_writer = None, embeddings_array = None, top_k = 1):
     model.eval()
@@ -213,6 +279,119 @@ def evaluate(test_loader, model, model_config, positives_dict_path, device,
     if embeddings_array is None:
         np.save(np_path, all_embeddings)
 
+def evaluate_geo_topo(topo_loader, geo_loader, model, model_config, positives_dict_path, device,
+                batch_size, topo_size, geo_size, output_path,
+                log_writer = None, topo_embeddings_array = None, geo_embeddings_array = None, top_k = 1,
+                model_base = 'vit-mae'):
+    model.eval()
+    topo_anchor_names = []
+    geo_anchor_names = []
+    if model_base == 'vit-mae':
+        embed_size = model_config.hidden_size
+    else:
+        embed_size = model_config.hidden_sizes[-1]
+    topo_embeddings = torch.zeros((topo_size, embed_size)).to(device)
+    geo_embeddings = torch.zeros((geo_size, embed_size)).to(device)
+    if topo_embeddings_array is not None:
+        print('Loading saved embeddings')
+        for step, (anchor, anchor_name) in enumerate(topo_loader):
+            topo_anchor_names.extend(anchor_name)
+        topo_embeddings = np.load(topo_embeddings_array)
+        print(topo_embeddings.shape)
+        geo_embeddings = np.load(geo_embeddings_array)
+        print(geo_embeddings.shape)
+    else:
+        for step, (anchor, anchor_name) in enumerate(topo_loader):
+            topo_anchor_names.extend(anchor_name)
+            with torch.no_grad():
+                if model_base == 'vit-mae':
+                    embedding = model(anchor.to(device)).last_hidden_state
+                    embedding = embedding[:, -1, :] #get the last hidden state of the cls
+                else:
+                    output = model(anchor.to(device)).last_hidden_state
+                    embedding = F.adaptive_avg_pool2d(output, (1, 1)).view(output.size(0), -1)
+                    # embedding = rearrange(embedding, 'b n d -> b (n d)')
+                    embedding = embedding
+                start_step = step * batch_size
+                end_step = start_step + embedding.shape[0]
+                indices = torch.tensor([x for x in range(start_step, end_step)]).long().to(device)
+                topo_embeddings[indices, :] = embedding
+
+        for step, (anchor, anchor_name) in enumerate(geo_loader):
+            geo_anchor_names.extend(anchor_name)
+            with torch.no_grad():
+                if model_base == 'vit-mae':
+                    embedding = model(anchor.to(device)).last_hidden_state
+                    embedding = embedding[:, -1, :] 
+                else:
+                    output = model(anchor.to(device)).last_hidden_state
+                    embedding = F.adaptive_avg_pool2d(output, (1, 1)).view(output.size(0), -1)
+                    embedding = embedding
+                start_step = step * batch_size
+                end_step = start_step + embedding.shape[0]
+                indices = torch.tensor([x for x in range(start_step, end_step)]).long().to(device)
+                geo_embeddings[indices, :] = embedding
+        #see whether closest match is correct
+        topo_embeddings = topo_embeddings.cpu().detach()
+        geo_embeddings = geo_embeddings.cpu().detach()
+    
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    if topo_embeddings_array is None:
+        topo_np_path = os.path.join(output_path, 'topo_embeddings.npy')
+        np.save(topo_np_path, topo_embeddings)
+    if geo_embeddings_array is None:
+        geo_np_path = os.path.join(output_path, 'geo_embeddings.npy')
+        np.save(geo_np_path, geo_embeddings)
+
+    distances = euclidean_distances(geo_embeddings, topo_embeddings)
+    correct = {}
+    exact_pairs = {}
+    incorrect = {}
+    nonpaired = {}
+    nonpaired_num = 0
+    num_correct = 0
+    with open(positives_dict_path, 'rb') as handle:
+        positives_dict = pickle.load(handle)
+    
+    for index, entry in enumerate(distances):
+        geo_anchor = geo_anchor_names[index]
+        geo_filename = geo_anchor.split('/')[-1]
+        
+        mins = np.argsort(distances[index])[0:top_k]
+        closest_maps = [topo_anchor_names[x] for x in mins]
+        clean_anchor_name = geo_filename.split('.')[0]
+        clean_closest_maps = [x.split('/')[-1].split('.')[0] for x in closest_maps]
+        if clean_anchor_name not in positives_dict.keys():
+            nonpaired_num += 1
+            nonpaired[clean_anchor_name] = clean_closest_maps
+            continue
+        correct_flag = False
+        for clean_closest_map in clean_closest_maps:
+            if clean_closest_map in positives_dict[clean_anchor_name]:
+                num_correct += 1
+                correct_flag = True
+                exact_pairs[clean_anchor_name] = clean_closest_map
+                correct[clean_anchor_name] = clean_closest_maps
+        if not correct_flag:
+            incorrect[clean_anchor_name] = clean_closest_maps
+        
+    accuracy = num_correct / (geo_size-nonpaired_num) * 100
+    print('Accuracy: ', accuracy)
+
+    correct_path = os.path.join(output_path, str(top_k) + 'correct.pkl')
+    incorrect_path = os.path.join(output_path, str(top_k) + 'incorrect.pkl')
+    nonpaired_path = os.path.join(output_path, str(top_k) + 'nonpaired.pkl')
+    exact_pairs_path = os.path.join(output_path, str(top_k) + 'exact_pairs.pkl')
+
+    with open(correct_path, 'wb') as f_corr:
+        pickle.dump(correct, f_corr)
+    with open(incorrect_path, 'wb') as f_incorr:
+        pickle.dump(incorrect, f_incorr)
+    with open(nonpaired_path, 'wb') as f_nonpair:
+        pickle.dump(nonpaired, f_nonpair)
+    with open(exact_pairs_path, 'wb') as f_exact_pair:
+        pickle.dump(exact_pairs, f_exact_pair)
 
 def split_train_val(dataset, train_pct=0.8, val_pct = 0.2, 
                             random_seed = 42, shuffle_dataset=True):
@@ -232,14 +411,22 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Topo ViT pre-training script')
 
-    parser.add_argument('--train_input_path', type=str, help='dataset path')
-    parser.add_argument('--full_input_path', type=str, help='full dataset')
-    parser.add_argument('--test_input_path', type=str, help='test input path')
+    #Input data paths
+    parser.add_argument('--topo_only', default= False, type=bool, help='Turn on if training topo to topo')
+    parser.add_argument('--topo_train_input_path', type=str, help='topo train dataset path')
+    parser.add_argument('--topo_full_input_path', type=str, help='full topomap dataset')
+    parser.add_argument('--test_input_path', type=str, help='topo test input path')
     parser.add_argument('--positives_dict_path', type=str, help='path to dictionary of anchors + positives')
     parser.add_argument('--model_save_path', type=str, help='model save path')
     parser.add_argument('--results_save_path', type=str, help='save path for correct + incorrect pairs')
-    parser.add_argument('--distances_mtx_path', type=str, help='save path for embedding matrix')
+    parser.add_argument('--topo_distances_mtx_path', type=str, help='save path for embedding matrix')
+    
+    #Only need these if we are training geo-topo, not topo-topo
+    parser.add_argument('--geo_distances_mtx_path', type=str, help='save path for embedding matrix')
+    parser.add_argument('--geo_train_input_path', type=str, help='geologic map train dataset path')
+    parser.add_argument('--geo_test_input_path', type=str, help='geologic map test dataset path')
 
+    parser.add_argument('--model_type', default='resnet', type=str, help='resnet, c_vit-mae, vit-mae')
     parser.add_argument('--batch_size', default= 64, type=int, help='batch size')
     parser.add_argument('--learning_rate', default= 1e-6, type=int, help='learning rate')
     parser.add_argument('--start_epoch', default= 0, type=int, help='start epoch')
@@ -251,7 +438,6 @@ if __name__ == '__main__':
     parser.add_argument('--wandb_project', type=str, help='wandb Project Name')
     parser.add_argument('--wandb_entity', type=str, help='wandb Entity Name')
     parser.add_argument('--wandb_run_name', type=str, help='wandb Run Name')
-    parser.add_argument('--checkpoint_freq', default= 10, type=int, help='Save checkpoint frequency')
     parser.add_argument('--checkpoint_path', type=str, help='checkpoint storage path')
     parser.add_argument('--eval_only', action='store_true')  
 

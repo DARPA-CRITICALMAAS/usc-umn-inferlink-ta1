@@ -80,11 +80,13 @@ def make_triplet_dataset(directory: str) -> List[Tuple[str,str,str]]:
             instances.append(triplet)
     return instances
 
-def make_triplet_dataset_from_dict(dict_path: str, root_dir: str, extension = '.tif'
+def make_triplet_dataset_from_dict_topo(dict_path: str, root_dir: str, extension = '.tif'
     ) -> List[Tuple[str,str,str]]:
     '''
     Assuming pairs are already in dict, for resizing images method
     :param dict_path: should point to a pickle dict in the format (map_name, list(positive_pair_map_names))
+        the map_name should be in pure format (aka just the filename, no root, no extension)
+    :root_dir: should point to a pickle dict in the format (map_name, list(positive_pair_map_names))
         the map_name should be in pure format (aka just the filename, no root, no extension)
     '''
     instances = []
@@ -113,9 +115,54 @@ def make_triplet_dataset_from_dict(dict_path: str, root_dir: str, extension = '.
 
             #choose a random negative 
             negative_file = random.choice(files)
-            while negative_file.split('.')[0] in positives:
+            while negative_file.split('/')[-1].split('.')[0] in positives:
                 negative_file = random.choice(files)
             full_negative_file = os.path.join(root, negative_file)
+            triplet = (full_anchor_file, full_positive_path, full_negative_file)
+            instances.append(triplet)
+    return instances
+
+def make_triplet_dataset_from_dict_geo(dict_path: str, geo_root_dir: str, topo_root_dir: str, 
+extension = '.tif'
+    ) -> List[Tuple[str,str,str]]:
+    '''
+    Assuming pairs are already in dict, for resizing images method
+    :param dict_path: should point to a pickle dict in the format (map_name, list(positive_pair_map_names))
+        the map_name should be in pure format (aka just the filename, no root, no extension)
+    :root_dir: should point to a pickle dict in the format (map_name, list(positive_pair_map_names))
+        the map_name should be in pure format (aka just the filename, no root, no extension)
+    '''
+    instances = []
+    geo_root = os.path.expanduser(geo_root_dir)
+    geo_files = os.listdir(geo_root)
+    topo_files = os.listdir(topo_root_dir)
+    # files = files[:100] #for speed, take out later
+
+    with open(dict_path, 'rb') as handle:
+        dict_pos = pickle.load(handle)
+    count = 0
+    for index, file in enumerate(geo_files):
+        anchor_name = file.split('/')[-1].split('.')[0]
+        full_anchor_file = os.path.join(geo_root, file)
+        try:
+            positives = dict_pos[anchor_name]
+        except:
+            print(f'Cannot train on {anchor_name} due to no positive pairs')
+            count += 1
+            continue
+        for positive_file in positives:
+            real_filename = positive_file + extension
+            full_positive_path = os.path.join(topo_root_dir, real_filename)
+            #check that positive path exists in our root
+            if not os.path.exists(full_positive_path):
+                print(f'Positive file {real_filename} does not exist in root directory')
+                continue
+
+            #choose a random negative 
+            negative_file = random.choice(topo_files)
+            while negative_file.split('/')[-1].split('.')[0] in positives:
+                negative_file = random.choice(topo_files)
+            full_negative_file = os.path.join(topo_root_dir, negative_file)
             triplet = (full_anchor_file, full_positive_path, full_negative_file)
             instances.append(triplet)
     return instances
@@ -150,6 +197,7 @@ class TripletDataset(VisionDataset):
     def __init__(
         self,
         root: str,
+        geo_root: str = None,
         positives_dict: str = None,
         anchor_transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
@@ -161,7 +209,11 @@ class TripletDataset(VisionDataset):
         self.target_transform = target_transform
         
         if positives_dict is not None: #this should be the default
-            self.samples = make_triplet_dataset_from_dict(positives_dict, root)
+            if geo_root is not None:
+                self.samples = make_triplet_dataset_from_dict_geo(positives_dict, geo_root, root)
+                print('Number of training samples: ', len(self.samples))
+            else:
+                self.samples = make_triplet_dataset_from_dict_topo(positives_dict, root)
         else:
             self.samples = make_triplet_dataset(root)
         self.cache = {}
@@ -188,14 +240,15 @@ class ImageDataset(VisionDataset):
         self,
         root: str,
         transform: Optional[Callable] = None,
-        valid_files_path=None,
+        valid_files_list=None,
     ) -> None:
         super(ImageDataset, self).__init__(root, transform=transform)
         self.transform = transform
-        if valid_files_path is not None:
-            with open(valid_files_path, 'rb') as handle:
-                valid_keys = pickle.load(handle).keys()
-                self.valid_files = [y + '.tif' for y in valid_keys]
+        if valid_files_list is not None:
+            # with open(valid_files_path, 'rb') as handle:
+            #     valid_keys = pickle.load(handle).keys()
+            #     self.valid_files = [y + '.tif' for y in valid_keys]
+            self.valid_files = valid_files_list
             self.samples = sorted([os.path.join(root, x) for x in os.listdir(root) if x in self.valid_files])
         else:
             self.samples = sorted([os.path.join(root, x) for x in os.listdir(root)])
