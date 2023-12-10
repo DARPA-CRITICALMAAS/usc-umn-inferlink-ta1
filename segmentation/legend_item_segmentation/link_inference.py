@@ -35,7 +35,7 @@ import map_area_segmenter
 
 
 
-def map_area_cropping(input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping):
+def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping):
     print('Working on input image:', input_image)
 
     if not os.path.exists(path_to_intermediate):
@@ -75,13 +75,13 @@ def map_area_cropping(input_image, path_to_intermediate, input_area_segmentation
 
 
 
-def text_spotting_with_pytesseract(input_image, path_to_intermediate):
+def text_spotting_with_pytesseract(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate, 'intermediate9')):
         os.makedirs(os.path.join(path_to_intermediate, 'intermediate9'))
     print('Step (1/9): Text spotting with pytesseract...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -161,13 +161,13 @@ def text_spotting_with_pytesseract(input_image, path_to_intermediate):
 
 
 
-def read_results_from_pytesseract(input_image, path_to_intermediate):
+def read_results_from_pytesseract(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate3'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate3')))
     print('Step (2/9): Processing results from pytesseract...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     mapkurator_source_name = os.path.join(path_to_intermediate, 'intermediate9', map_name.replace('.tif', '_tesseract_v2.geojson'))
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
@@ -347,13 +347,13 @@ def read_results_from_pytesseract(input_image, path_to_intermediate):
 
 
 
-def read_results_from_mapkurator(input_image, path_to_intermediate, path_to_mapkurator_output):
+def read_results_from_mapkurator(target_map_name, input_image, path_to_intermediate, path_to_mapkurator_output):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate3(2)'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate3(2)')))
     print('Step (3/9): Processing results from mapkurator...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     #mapkurator_source_name = os.path.join(path_to_mapkurator_output, map_name.replace('.tif', '.geojson'))
     mapkurator_source_name = path_to_mapkurator_output
     mapkurator_name = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_v2.geojson'))
@@ -538,13 +538,13 @@ def read_results_from_mapkurator(input_image, path_to_intermediate, path_to_mapk
 
 
 
-def map_key_extraction_polygon(input_image, path_to_intermediate):
+def map_key_extraction_polygon(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate4'))):
         os.makedirs(os.path.join(path_to_intermediate,  str('intermediate4')))
     print('Step (4/9): Extracting map keys (symbols) for polygon features...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -730,13 +730,13 @@ def map_key_extraction_polygon(input_image, path_to_intermediate):
 
 
 
-def linking_description_polygon(input_image, path_to_intermediate):
+def linking_description_polygon(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate,  str('intermediate5/'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate5/')))
     print('Step (5/9): Linking symbols to text descriptions for polygon map keys...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -890,11 +890,11 @@ def linking_description_polygon(input_image, path_to_intermediate):
 
 
 
-def searching_possible_description(input_image, path_to_intermediate):
+def searching_possible_description(target_map_name, input_image, path_to_intermediate):
     print('Step (6/9): Finding text descriptions possibly for point/ line features...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
     base_image = cv2.imread(basemap_name)
     base_image = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
@@ -1100,13 +1100,13 @@ def searching_possible_description(input_image, path_to_intermediate):
 
 
 
-def linking_description_pointline(input_image, path_to_intermediate):
+def linking_description_pointline(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate6'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate6')))
     print('Step (7/9): Linking text descriptions to symbols for point/ line map keys...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -1235,7 +1235,7 @@ def linking_description_pointline(input_image, path_to_intermediate):
 
 
     # ======
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -1351,13 +1351,13 @@ def linking_description_pointline(input_image, path_to_intermediate):
 
 
 
-def integrating_result(input_image, path_to_intermediate):
+def integrating_result(target_map_name, input_image, path_to_intermediate):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate7'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate7')))
     print('Step (8/9): Integrating results from previous steps...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = input_image
     base_image2 = cv2.imread(basemap_name)
     gray_mask = np.ones((base_image2.shape[0], base_image2.shape[1], base_image2.shape[2]), dtype='uint8')*50
@@ -1396,7 +1396,7 @@ def integrating_result(input_image, path_to_intermediate):
 
     # ======
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = input_image
     base_image2 = cv2.imread(basemap_name)
     base_image3 = cv2.cvtColor(base_image2, cv2.COLOR_BGR2RGB)
@@ -1495,7 +1495,7 @@ def integrating_result(input_image, path_to_intermediate):
     # ======
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = input_image
     base_image2 = cv2.imread(basemap_name)
     base_image3 = cv2.cvtColor(base_image2, cv2.COLOR_BGR2RGB)
@@ -1540,11 +1540,11 @@ def integrating_result(input_image, path_to_intermediate):
 
 
 
-def generating_geojson(input_image, path_to_intermediate):
+def generating_geojson(target_map_name, input_image, path_to_intermediate):
     print('Step (9/9): Preparing output json - Generating JSON file...')
 
 
-    map_name = input_image
+    map_name = target_map_name
     basemap_name = input_image
 
     legend_bounds_cand = []
@@ -1607,7 +1607,7 @@ def generating_geojson(input_image, path_to_intermediate):
 
 
 
-def adjusting_crs(input_image, path_to_intermediate, output_dir, postprocessing_for_crs):
+def adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir, postprocessing_for_crs):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -1615,7 +1615,7 @@ def adjusting_crs(input_image, path_to_intermediate, output_dir, postprocessing_
         print('Step (9/9): Preparing output json - Adjusting CRS...')
 
 
-        map_name = input_image
+        map_name = target_map_name
         basemap_name = input_image
 
         # convert the image to a binary raster .tif
@@ -1669,17 +1669,17 @@ def adjusting_crs(input_image, path_to_intermediate, output_dir, postprocessing_
 
 
 
-def start_linking(input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs):
-    map_area_cropping(input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping)
-    text_spotting_with_pytesseract(input_image, path_to_intermediate)
-    read_results_from_pytesseract(input_image, path_to_intermediate)
-    read_results_from_mapkurator(input_image, path_to_intermediate, path_to_mapkurator_output)
-    map_key_extraction_polygon(input_image, path_to_intermediate)
-    linking_description_polygon(input_image, path_to_intermediate)
-    searching_possible_description(input_image, path_to_intermediate)
-    linking_description_pointline(input_image, path_to_intermediate)
-    integrating_result(input_image, path_to_intermediate)
-    generating_geojson(input_image, path_to_intermediate)
-    adjusting_crs(input_image, path_to_intermediate, output_dir, postprocessing_for_crs)
+def start_linking(target_map_name, input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs):
+    map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping)
+    text_spotting_with_pytesseract(target_map_name, input_image, path_to_intermediate)
+    read_results_from_pytesseract(target_map_name, input_image, path_to_intermediate)
+    read_results_from_mapkurator(target_map_name, input_image, path_to_intermediate, path_to_mapkurator_output)
+    map_key_extraction_polygon(target_map_name, input_image, path_to_intermediate)
+    linking_description_polygon(target_map_name, input_image, path_to_intermediate)
+    searching_possible_description(target_map_name, input_image, path_to_intermediate)
+    linking_description_pointline(target_map_name, input_image, path_to_intermediate)
+    integrating_result(target_map_name, input_image, path_to_intermediate)
+    generating_geojson(target_map_name, input_image, path_to_intermediate)
+    adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir, postprocessing_for_crs)
 
 
