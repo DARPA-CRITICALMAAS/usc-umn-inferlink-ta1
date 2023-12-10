@@ -23,7 +23,11 @@ def main():
     preprocessing_for_cropping = str_to_bool(args.preprocessing_for_cropping)
     postprocessing_for_crs = str_to_bool(args.postprocessing_for_crs)
 
-    link_inference.start_linking(input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs)
+    path_list = input_image.replace('\\','/').split('/')
+    target_map_name = path_list[-1]
+    #target_map_name = os.path.splitext(path_list[-1])[0]
+
+    link_inference.start_linking(target_map_name, input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs)
 
 
 
