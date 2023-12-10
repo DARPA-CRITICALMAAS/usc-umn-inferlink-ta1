@@ -37,7 +37,6 @@ def main():
             map_preprocessing = True
 
 
-    '''
     metadata_preprocessing.metadata_preprocessing(
         input_path_to_tif = input_tif,
         input_path_to_json = input_json,
@@ -70,7 +69,6 @@ def main():
         input_groundtruth_dir = dir_to_groundtruth,
         input_performance_evaluation = performance_evaluation
     )
-    '''
 
 
     if os.path.isfile(path_to_legend_solution) == True:
