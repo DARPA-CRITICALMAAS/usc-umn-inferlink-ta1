@@ -220,7 +220,7 @@ def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_
     target_map_name = os.path.splitext(path_list[-1])[0]
 
     polygon_output_handler()
-    print('Vectorized outputs are settled...')
+    print('Vectorized outputs are settled at... ', dir_to_integrated_output)
 
 
 

@@ -62,18 +62,18 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     image_binary = np.copy(mask_box_legend)
     image_binary[mask_box_legend > 0] = 255
 
-    print(names)
+    ##print(names)
 
     # Find top left and bottom right coords for non-background pixels
     active_pixels = np.stack(np.where(image_binary))
     top_left = np.min(active_pixels, axis=1).astype(np.int32)
     bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
-    print(top_left, bottom_right)
+    ##print(top_left, bottom_right)
 
     box_diff_y = abs(bottom_right[0] - top_left[0])
     box_diff_x = abs(bottom_right[1] - top_left[1])
     #print(box_diff_x, box_diff_y)
-    print(img_legend_v1.shape)
+    ##print(img_legend_v1.shape)
 
 
     current_x_0 = int(img_legend_v0.shape[0]*4.0/16.0)
@@ -195,9 +195,9 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     box_diff_y = abs(bottom_right[0] - top_left[0])
     box_diff_x = abs(bottom_right[1] - top_left[1])
 
-    print('---')
-    print(top_left, bottom_right)
-    print(box_diff_x, box_diff_y)
+    ##print('---')
+    ##print(top_left, bottom_right)
+    ##print(box_diff_x, box_diff_y)
 
 
     
@@ -227,7 +227,7 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
             
             #threshold = max(0.0, np.nanmax(res) - 0.15)
             threshold = max(0.0, np.nanmax(res)*0.85)
-            print(np.nanmax(res), threshold)
+            ##print(np.nanmax(res), threshold)
 
             #this_image_space[res >= threshold] = 255
             this_image_space[this_image_space < 255*threshold] = 0
@@ -247,7 +247,7 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
 
             if np.sum(update_image_space) / sum_img_bound > 0.2:
                 threshold = max(0.0, np.nanmax(res))
-                print(np.nanmax(res), threshold)
+                ##print(np.nanmax(res), threshold)
 
                 #this_image_space[res >= threshold] = 255
                 this_image_space[this_image_space < 255*threshold] = 0
