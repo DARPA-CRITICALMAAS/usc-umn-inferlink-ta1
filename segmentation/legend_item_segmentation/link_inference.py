@@ -1610,13 +1610,12 @@ def generating_geojson(target_map_name, input_image, path_to_intermediate):
 def adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir, postprocessing_for_crs):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    
+    map_name = target_map_name
+    basemap_name = input_image
 
     if postprocessing_for_crs == True:
         print('Step (9/9): Preparing output json - Adjusting CRS...')
-
-
-        map_name = target_map_name
-        basemap_name = input_image
 
         # convert the image to a binary raster .tif
         raster = rasterio.open(basemap_name)
