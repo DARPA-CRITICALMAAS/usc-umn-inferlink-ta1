@@ -96,16 +96,20 @@ def setting_summary():
         print(' - Output for intermediate basemap => "' + solutiona_dir + 'intermediate7"')
         print(' - Output for intermediate extraction => "' + solutiona_dir + 'intermediate7(2)/(Map_Name)"')
         print(' - Output for cropped map => "' + solutiona_dir + 'intermediate6/cropped_map_mask" (Supporting point, line, polygon)')
+    '''
     if generate_boundary_groundtruth == True:
         print(' - Output for boundary groundtruth => "' + solutiona_dir + 'intermediate5/Groundtruth"')
     if generate_boundary_extraction == True:
         print(' - Output for boundary extraction => "' + solutiona_dir + 'intermediate5/Extraction"')
+    '''
 
     print('')
     print('*Adjustable (Set to "True" is highly recommended due to time complexity)')
     print(' - Multiprocessing => ' + str(split_multiprocessing))
     print(' - Simple preprocessing => ' + str(simple_preprocessing))
     print('')
+
+    '''
     print('*Adjustable (Set to "True" for only one time to process the basemap)')
     print(' - Crop basemap => ' + str(map_cropping) + '\t\t\t\t (set to "True" only if one needs to crop those maps that do not have polygon features)')
     print(' - Preprocess basemap => ' + str(map_preprocessing) + '\t\t\t (set to "True" to crop those maps that have polygon features at the same time)')
@@ -118,12 +122,13 @@ def setting_summary():
     print(' - Crop legend => ' + str(crop_legend) + ' (shall be "True")')
     print(' - Input DTM-smoothed basemap => ' + str(smoothing_map) + ' (shall be "False")')
     print(' - Generate text pattern probability => ' + str(generate_text_pattern_probability) + ' (shall be "False")')
+    '''
 
-    print('')
+    #print('')
     if split_multiprocessing == True:
         print('*Multiprocessing with '+str(PROCESSES)+' processes...')
 
-    print('================================================================================================================')
+    print('==============================================================================================================================================')
 
     if not os.path.exists(solutiona_dir):
         os.makedirs(solutiona_dir)
@@ -139,47 +144,79 @@ def specify_polygon():
 
 
     candidate_file_name_for_polygon = []
+    candidate_file_name_for_polygon_show = []
     poly_legend_counter = []
     #poly_legend_counter_v2 = []
 
 
     if os.path.isfile(path_to_json) == True:
-        print('As the format for gpkg is not determined, please provide json file in competition format to indicate the map key of a map at this stage.')
-        print('Will update to read the gpkg file once the format is determined...')
+        if '.geojson' in path_to_json:
+            poly_counter = 0
+            legend_counter = 0
+            poly_name_list = []
 
-        poly_counter = 0
-        legend_counter = 0
-        poly_name_list = []
+            with open(path_to_json) as f:
+                gj = json.load(f)
+            for this_gj in gj['features']:
+                this_property = this_gj['properties']
+                names = this_property['abbreviation']
+                if len(names) == 0:
+                    names = str(this_property['id'])+'_poly'
+                else:
+                    names = names+'_poly'
 
-        with open(path_to_json) as f:
-            gj = json.load(f)
-        for this_gj in gj['shapes']:
-            #print(this_gj)
-            names = this_gj['label']
-            features = this_gj['points']
-            
-            if '_poly' not in names and '_pt' not in names and '_line' not in names:
-                #print(names)
-                pass
-            if '_poly' not in names:
-                continue
-            if names not in poly_name_list:
                 poly_name_list.append(names)
-            legend_counter = legend_counter + 1
-            
-        if legend_counter > 0:
-            poly_counter = poly_counter + 1
-            poly_legend_counter.append(len(poly_name_list))
-            #poly_legend_counter.append(legend_counter)
-            #poly_legend_counter_v2.append(len(poly_name_list))
-        
-        if poly_counter > 0:
-            candidate_file_name_for_polygon.append(target_map_name+'.json')
+                legend_counter = legend_counter + 1
 
+            if legend_counter > 0:
+                poly_counter = poly_counter + 1
+                poly_legend_counter.append(len(poly_name_list))
+
+            if poly_counter > 0:
+                candidate_file_name_for_polygon.append(target_map_name+'.json')
+                candidate_file_name_for_polygon_show.append(target_map_name)
+                
+        elif '.json' in path_to_json:
+            print('As the format for gpkg is not determined, please provide json file in competition format to indicate the map key of a map at this stage.')
+            print('Will update to read the gpkg file once the format is determined...')
+
+            poly_counter = 0
+            legend_counter = 0
+            poly_name_list = []
+
+            with open(path_to_json) as f:
+                gj = json.load(f)
+            for this_gj in gj['shapes']:
+                #print(this_gj)
+                names = this_gj['label']
+                features = this_gj['points']
+                
+                if '_poly' not in names and '_pt' not in names and '_line' not in names:
+                    #print(names)
+                    pass
+                if '_poly' not in names:
+                    continue
+                if names not in poly_name_list:
+                    poly_name_list.append(names)
+                legend_counter = legend_counter + 1
+                
+            if legend_counter > 0:
+                poly_counter = poly_counter + 1
+                poly_legend_counter.append(len(poly_name_list))
+                #poly_legend_counter.append(legend_counter)
+                #poly_legend_counter_v2.append(len(poly_name_list))
+            
+            if poly_counter > 0:
+                candidate_file_name_for_polygon.append(target_map_name+'.json')
+                candidate_file_name_for_polygon_show.append(target_map_name)
+        else:
+            print('Please provide either geojson (conforming with current schema) or json (conforming with competition schema) file...')
+            print('')
+            return False
 
 
     print('Total number of maps to extract: ', len(candidate_file_name_for_polygon))
-    print('Title of maps: ', candidate_file_name_for_polygon)
+    print('Title of maps: ', candidate_file_name_for_polygon_show)
     print('Number of keys: ', poly_legend_counter)
 
     
@@ -327,7 +364,7 @@ def worker_boundary_extraction():
                 print('Working on map:', target_map_name+'.tif')
                 file_path = path_to_tif
                 test_json = path_to_json
-                file_name_json = test_json.replace('.json', '.json')
+                file_name_json = test_json#.replace('.json', '.json')
                 
                 #print(test_json)
                 img000 = cv2.imread(file_path)
@@ -373,8 +410,8 @@ def worker_boundary_extraction():
 
                 with open(file_name_json) as f:
                     gj = json.load(f)
-                json_height = gj['imageHeight']
-                json_width = gj['imageWidth']
+                #json_height = gj['imageHeight']
+                #json_width = gj['imageWidth']
                 rescale_factor_0 = 1.0
                 rescale_factor_1 = 1.0
 
@@ -403,7 +440,31 @@ def worker_boundary_extraction():
                 
 
                 ### Legend is always not considered
-                if True:
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                        geoms = np.array(features)
+
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                        legend_mask[x_min:x_max, y_min:y_max] = 0
+                        img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                    img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                    img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                    img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                    img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+                elif '.json' in file_name_json:
                     for this_gj in gj['shapes']:
                         #print(this_gj)
                         names = this_gj['label']
@@ -450,36 +511,74 @@ def worker_boundary_extraction():
 
                 temp_legend_name = []
                 temp_legend_feature = []
-                for this_gj in gj['shapes']:
-                    #if '_poly' not in names:
-                        #continue
-                    #print(this_gj)
-                    names = this_gj['label']
-                    features = this_gj['points']
-                    
-                    if '_poly' not in names:
-                        continue
-                    if names in legend_name_check:
-                        continue
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
 
-                    ### Read json source for the legend
-                    geoms = np.array(features)
-                    y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
-                    y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
-                    x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
-                    x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
-
-                    img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
-                    img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
+                        this_property = this_gj['properties']
+                        names = this_property['abbreviation']
+                        if len(names) == 0:
+                            names = str(this_property['id'])+'_poly'
+                        else:
+                            names = names+'_poly'
 
 
-                    legend_name_check.append(names)
-                    legend_name.append(names.replace('_poly',''))
+                        geoms = np.array(features)
 
-                    temp_legend_name.append(names.replace('_poly',''))
-                    temp_legend_feature.append(img_legend)
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
 
-                    poly_counter = poly_counter+1
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
+                        img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
+
+
+                        legend_name_check.append(names)
+                        legend_name.append(names.replace('_poly',''))
+
+                        temp_legend_name.append(names.replace('_poly',''))
+                        temp_legend_feature.append(img_legend)
+
+                        poly_counter = poly_counter+1
+
+                elif '.json' in file_name_json:
+                    for this_gj in gj['shapes']:
+                        #if '_poly' not in names:
+                            #continue
+                        #print(this_gj)
+                        names = this_gj['label']
+                        features = this_gj['points']
+                        
+                        if '_poly' not in names:
+                            continue
+                        if names in legend_name_check:
+                            continue
+
+                        ### Read json source for the legend
+                        geoms = np.array(features)
+                        y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
+
+                        img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
+                        img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
+
+
+                        legend_name_check.append(names)
+                        legend_name.append(names.replace('_poly',''))
+
+                        temp_legend_name.append(names.replace('_poly',''))
+                        temp_legend_feature.append(img_legend)
+
+                        poly_counter = poly_counter+1
 
 
                     
@@ -551,8 +650,8 @@ def worker_boundary_extraction():
 
                 with open(file_name_json) as f:
                     gj = json.load(f)
-                json_height = gj['imageHeight']
-                json_width = gj['imageWidth']
+                #json_height = gj['imageHeight']
+                #json_width = gj['imageWidth']
                 rescale_factor_0 = 1.0
                 rescale_factor_1 = 1.0
 
@@ -581,7 +680,31 @@ def worker_boundary_extraction():
                 
 
                 ### Legend is always not considered
-                if True:
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                        geoms = np.array(features)
+
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                        legend_mask[x_min:x_max, y_min:y_max] = 0
+                        img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                    img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                    img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                    img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                    img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+                elif '.json' in file_name_json:
                     for this_gj in gj['shapes']:
                         #print(this_gj)
                         names = this_gj['label']
@@ -776,8 +899,8 @@ def worker_auxiliary_info():
 
                 with open(file_name_json) as f:
                     gj = json.load(f)
-                json_height = gj['imageHeight']
-                json_width = gj['imageWidth']
+                #json_height = gj['imageHeight']
+                #json_width = gj['imageWidth']
                 rescale_factor_0 = 1.0
                 rescale_factor_1 = 1.0
 
@@ -806,7 +929,31 @@ def worker_auxiliary_info():
                 
 
                 ### Legend is always not considered
-                if True:
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                        geoms = np.array(features)
+
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                        legend_mask[x_min:x_max, y_min:y_max] = 0
+                        img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                    img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                    img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                    img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                    img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+                elif '.json' in file_name_json:
                     for this_gj in gj['shapes']:
                         #print(this_gj)
                         names = this_gj['label']
@@ -854,15 +1001,31 @@ def worker_auxiliary_info():
 
 
 
-                for this_gj in gj['shapes']:
-                    #if '_poly' not in names:
-                        #continue
-                    #print(this_gj)
-                    names = this_gj['label']
-                    features = this_gj['points']
+                if '.geojson' in file_name_json:
+                    target_gj = gj['features']
+                elif '.json' in file_name_json:
+                    target_gj = gj['shapes']
+
+                for this_gj in target_gj:
+
+                    if '.geojson' in file_name_json:
+                        this_property = this_gj['properties']
+                        names = this_property['abbreviation']
+                        if len(names) == 0:
+                            names = str(this_property['id'])+'_poly'
+                        else:
+                            names = names+'_poly'
+
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                    elif '.json' in file_name_json:
+                        names = this_gj['label']
+                        features = this_gj['points']
                     
-                    if '_poly' not in names:
-                        continue
+                        if '_poly' not in names:
+                            continue
+                    
                     if names in legend_name_check:
                         continue
 
@@ -878,11 +1041,22 @@ def worker_auxiliary_info():
 
 
                     ### Read json source for the legend
-                    geoms = np.array(features)
-                    y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
-                    y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
-                    x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
-                    x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
+                    if '.geojson' in file_name_json:
+                        geoms = np.array(features)
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+                        
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+                    elif '.json' in file_name_json:
+                        geoms = np.array(features)
+                        y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
 
                     img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
                     img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
@@ -1045,7 +1219,7 @@ def worker_auxiliary_info():
                 #print(np.sort(rgb_dif[:, 2]))
 
                 #print('name')
-                concat_name = str(map_name)+'_'+str(legend_name)+'_poly'
+                concat_name = str(map_name)+'_'+str(legend_name)+'_poly' # naming convention?
                 #print(concat_name)
 
                 #print('H space')
@@ -1233,8 +1407,8 @@ def worker_recoloring():
 
                 with open(file_name_json) as f:
                     gj = json.load(f)
-                json_height = gj['imageHeight']
-                json_width = gj['imageWidth']
+                #json_height = gj['imageHeight']
+                #json_width = gj['imageWidth']
                 rescale_factor_0 = 1.0
                 rescale_factor_1 = 1.0
 
@@ -1263,7 +1437,31 @@ def worker_recoloring():
                 
 
                 ### Legend is always not considered
-                if True:
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                        geoms = np.array(features)
+
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                        legend_mask[x_min:x_max, y_min:y_max] = 0
+                        img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                    img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                    img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                    img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                    img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+                elif '.json' in file_name_json:
                     for this_gj in gj['shapes']:
                         #print(this_gj)
                         names = this_gj['label']
@@ -1310,15 +1508,31 @@ def worker_recoloring():
 
 
 
-                for this_gj in gj['shapes']:
-                    #if '_poly' not in names:
-                        #continue
-                    #print(this_gj)
-                    names = this_gj['label']
-                    features = this_gj['points']
+                if '.geojson' in file_name_json:
+                    target_gj = gj['features']
+                elif '.json' in file_name_json:
+                    target_gj = gj['shapes']
+
+                for this_gj in target_gj:
+
+                    if '.geojson' in file_name_json:
+                        this_property = this_gj['properties']
+                        names = this_property['abbreviation']
+                        if len(names) == 0:
+                            names = str(this_property['id'])+'_poly'
+                        else:
+                            names = names+'_poly'
+
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                    elif '.json' in file_name_json:
+                        names = this_gj['label']
+                        features = this_gj['points']
                     
-                    if '_poly' not in names:
-                        continue
+                        if '_poly' not in names:
+                            continue
+                    
                     if names in legend_name_check:
                         continue
 
@@ -1334,11 +1548,22 @@ def worker_recoloring():
 
 
                     ### Read json source for the legend
-                    geoms = np.array(features)
-                    y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
-                    y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
-                    x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
-                    x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
+                    if '.geojson' in file_name_json:
+                        geoms = np.array(features)
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+                        
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+                    elif '.json' in file_name_json:
+                        geoms = np.array(features)
+                        y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
 
                     img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
                     img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
@@ -1784,8 +2009,8 @@ def worker_recoloring():
 
                 with open(file_name_json) as f:
                     gj = json.load(f)
-                json_height = gj['imageHeight']
-                json_width = gj['imageWidth']
+                #json_height = gj['imageHeight']
+                #json_width = gj['imageWidth']
                 rescale_factor_0 = 1.0
                 rescale_factor_1 = 1.0
 
@@ -1814,7 +2039,31 @@ def worker_recoloring():
                 
 
                 ### Legend is always not considered
-                if True:
+                if '.geojson' in file_name_json:
+                    for this_gj in gj['features']:
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                        geoms = np.array(features)
+
+                        y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                        y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                        x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                        x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                        x_temp = x_min
+                        x_min = -x_max
+                        x_max = -x_temp
+
+                        #print(y_min, y_max, x_min, x_max)
+                        legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                        legend_mask[x_min:x_max, y_min:y_max] = 0
+                        img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                    img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                    img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                    img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                    img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+                elif '.json' in file_name_json:
                     for this_gj in gj['shapes']:
                         #print(this_gj)
                         names = this_gj['label']
@@ -1860,15 +2109,31 @@ def worker_recoloring():
                     os.makedirs(solutiona_dir+str('intermediate8(2)/')+str(map_name)+'/')
 
 
-                for this_gj in gj['shapes']:
-                    #if '_poly' not in names:
-                        #continue
-                    #print(this_gj)
-                    names = this_gj['label']
-                    features = this_gj['points']
+                if '.geojson' in file_name_json:
+                    target_gj = gj['features']
+                elif '.json' in file_name_json:
+                    target_gj = gj['shapes']
+
+                for this_gj in target_gj:
+
+                    if '.geojson' in file_name_json:
+                        this_property = this_gj['properties']
+                        names = this_property['abbreviation']
+                        if len(names) == 0:
+                            names = str(this_property['id'])+'_poly'
+                        else:
+                            names = names+'_poly'
+
+                        this_geometry = this_gj['geometry']
+                        features = this_geometry['coordinates']
+
+                    elif '.json' in file_name_json:
+                        names = this_gj['label']
+                        features = this_gj['points']
                     
-                    if '_poly' not in names:
-                        continue
+                        if '_poly' not in names:
+                            continue
+                    
                     if names in legend_name_check:
                         continue
 
@@ -1975,8 +2240,8 @@ def worker_main_component():
 
             with open(file_name_json) as f:
                 gj = json.load(f)
-            json_height = gj['imageHeight']
-            json_width = gj['imageWidth']
+            #json_height = gj['imageHeight']
+            #json_width = gj['imageWidth']
             rescale_factor_0 = 1.0
             rescale_factor_1 = 1.0
 
@@ -2005,7 +2270,31 @@ def worker_main_component():
             
 
             ### Legend is always not considered
-            if True:
+            if '.geojson' in file_name_json:
+                for this_gj in gj['features']:
+                    this_geometry = this_gj['geometry']
+                    features = this_geometry['coordinates']
+
+                    geoms = np.array(features)
+
+                    y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                    y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                    x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                    x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+
+                    x_temp = x_min
+                    x_min = -x_max
+                    x_max = -x_temp
+
+                    #print(y_min, y_max, x_min, x_max)
+                    legend_mask = np.ones((img_rb.shape[0], img_rb.shape[1]), dtype='uint8') *255
+                    legend_mask[x_min:x_max, y_min:y_max] = 0
+                    img_bound = cv2.bitwise_and(img_bound, legend_mask)
+                img_rb = cv2.bitwise_and(img_rb, img_rb, mask=img_bound)
+                img_ms = cv2.bitwise_and(img_ms, img_ms, mask=img_bound)
+                img_crop_gray = cv2.bitwise_and(img_crop_gray, img_crop_gray, mask=img_bound)
+                img_crop_black = cv2.bitwise_and(img_crop_black, img_crop_black, mask=img_bound)
+            elif '.json' in file_name_json:
                 for this_gj in gj['shapes']:
                     #print(this_gj)
                     names = this_gj['label']
@@ -2051,15 +2340,31 @@ def worker_main_component():
 
 
 
-            for this_gj in gj['shapes']:
-                #if '_poly' not in names:
-                    #continue
-                #print(this_gj)
-                names = this_gj['label']
-                features = this_gj['points']
+            if '.geojson' in file_name_json:
+                target_gj = gj['features']
+            elif '.json' in file_name_json:
+                target_gj = gj['shapes']
+
+            for this_gj in target_gj:
+
+                if '.geojson' in file_name_json:
+                    this_property = this_gj['properties']
+                    names = this_property['abbreviation']
+                    if len(names) == 0:
+                        names = str(this_property['id'])+'_poly'
+                    else:
+                        names = names+'_poly'
+
+                    this_geometry = this_gj['geometry']
+                    features = this_geometry['coordinates']
+
+                elif '.json' in file_name_json:
+                    names = this_gj['label']
+                    features = this_gj['points']
                 
-                if '_poly' not in names:
-                    continue
+                    if '_poly' not in names:
+                        continue
+                
                 if names in legend_name_check:
                     continue
 
@@ -2075,11 +2380,22 @@ def worker_main_component():
 
 
                 ### Read json source for the legend
-                geoms = np.array(features)
-                y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
-                y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
-                x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
-                x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
+                if '.geojson' in file_name_json:
+                    geoms = np.array(features)
+                    y_min = int(np.min(geoms[0], axis=0)[0]*rescale_factor_1)
+                    y_max = int(np.max(geoms[0], axis=0)[0]*rescale_factor_1)
+                    x_min = int(np.min(geoms[0], axis=0)[1]*rescale_factor_0)
+                    x_max = int(np.max(geoms[0], axis=0)[1]*rescale_factor_0)
+                    
+                    x_temp = x_min
+                    x_min = -x_max
+                    x_max = -x_temp
+                elif '.json' in file_name_json:
+                    geoms = np.array(features)
+                    y_min = int(np.min(geoms, axis=0)[0]*rescale_factor_1)
+                    y_max = int(np.max(geoms, axis=0)[0]*rescale_factor_1)
+                    x_min = int(np.min(geoms, axis=0)[1]*rescale_factor_0)
+                    x_max = int(np.max(geoms, axis=0)[1]*rescale_factor_0)
 
                 img_legend = np.zeros((x_max-x_min, y_max-y_min, 3), dtype='uint8')
                 img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])

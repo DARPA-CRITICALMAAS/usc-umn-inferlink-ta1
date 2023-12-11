@@ -67,7 +67,7 @@ def dir_setting():
         os.makedirs(target_dir_mask_small)
         os.makedirs(os.path.join(target_dir_mask_small, 'sup'))
 
-    shutil.copyfile('targeted_map.csv', 'LOAM_Intermediate/targeted_map.csv')
+    #shutil.copyfile('targeted_map.csv', 'LOAM_Intermediate/targeted_map.csv')
     shutil.copyfile(solution_dir+'intermediate9/auxiliary_info.csv', 'LOAM_Intermediate/data/auxiliary_info.csv')
 
     print('Set up directories in "LOAM_Intermediate/data"')
@@ -82,32 +82,57 @@ def file_summary():
 
 
     if os.path.isfile(path_to_json) == True:
-        print('As the format for gpkg is not determined, please provide json file in competition format to indicate the map key of a map at this stage.')
-        print('Will update to read the gpkg file once the format is determined...')
+        if '.geojson' in path_to_json:
+            poly_counter = 0
+            poly_name_list = []
 
-        poly_counter = 0
-        poly_name_list = []
+            with open(path_to_json) as f:
+                gj = json.load(f)
+            for this_gj in gj['features']:
+                this_property = this_gj['properties']
+                names = this_property['abbreviation']
+                if len(names) == 0:
+                    names = str(this_property['id'])+'_poly'
+                else:
+                    names = names+'_poly'
 
-        with open(path_to_json) as f:
-            gj = json.load(f)
-        for this_gj in gj['shapes']:
-            #print(this_gj)
-            names = this_gj['label']
-            features = this_gj['points']
-            
-            if '_poly' not in names and '_pt' not in names and '_line' not in names:
-                #print(names)
-                pass
-            if '_poly' not in names:
-                continue
-            if names not in poly_name_list:
                 poly_name_list.append(names)
-            poly_counter = poly_counter + 1
+                poly_counter = poly_counter + 1
 
-        if poly_counter > 0:
-            candidate_map_name_for_polygon.append(target_map_name)
-            candidate_legend_name_for_polygon.append(poly_name_list)
+            if poly_counter > 0:
+                candidate_map_name_for_polygon.append(target_map_name)
+                candidate_legend_name_for_polygon.append(poly_name_list)
+                
+        elif '.json' in path_to_json:
+            print('As the format for gpkg is not determined, please provide json file in competition format to indicate the map key of a map at this stage.')
+            print('Will update to read the gpkg file once the format is determined...')
 
+            poly_counter = 0
+            poly_name_list = []
+
+            with open(path_to_json) as f:
+                gj = json.load(f)
+            for this_gj in gj['shapes']:
+                #print(this_gj)
+                names = this_gj['label']
+                features = this_gj['points']
+                
+                if '_poly' not in names and '_pt' not in names and '_line' not in names:
+                    #print(names)
+                    pass
+                if '_poly' not in names:
+                    continue
+                if names not in poly_name_list:
+                    poly_name_list.append(names)
+                poly_counter = poly_counter + 1
+
+            if poly_counter > 0:
+                candidate_map_name_for_polygon.append(target_map_name)
+                candidate_legend_name_for_polygon.append(poly_name_list)
+        else:
+            print('Please provide either geojson (conforming with current schema) or json (conforming with competition schema) file...')
+            print('')
+            return False
 
 
 
@@ -207,6 +232,14 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
     dir_to_groundtruth = input_dir_to_groundtruth
     performance_evaluation = input_performance_evaluation
 
+    print('========================================== Setting of Metadata Postprocessing for Polygon Extraction ==========================================')
+    print('*Intput map tif for polygon extraction => "' + path_to_tif + '"')
+    print('*Intput map json for polygon extraction => "' + path_to_json + '"')
+
+    print('*Postprocessing input directory => "LOAM_Intermediate/Metadata_Preprocessing/"')
+    print('*Postprocessing output directory => "LOAM_Intermediate/data/"')
+
+    print('===============================================================================================================================================')
     run(crop_size)
 
 

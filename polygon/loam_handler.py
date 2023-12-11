@@ -25,6 +25,7 @@ def main():
         dir_to_intermediate = dir_to_intermediate+'/'
     #dir_to_solution = args.dir_to_solution
     dir_to_groundtruth = args.dir_to_groundtruth
+    set_json = args.set_json
     map_preprocessing = str_to_bool(args.map_area_segmentation)
     performance_evaluation = str_to_bool(args.performance_evaluation)
 
@@ -36,7 +37,10 @@ def main():
             print('The geojson file for area segmentation is not found, will proceed with area segmentation...')
             map_preprocessing = True
 
-
+    if set_json == False or os.path.isfile(input_json) == False:
+        input_json = path_to_legend_solution
+    
+    
     metadata_preprocessing.metadata_preprocessing(
         input_path_to_tif = input_tif,
         input_path_to_json = input_json,
@@ -55,7 +59,7 @@ def main():
         crop_size=256
     )
     
-
+    
     loam_inference.loam_inference(
         input_filtering_new_dataset = True,
         input_filtering_threshold = 0.33,
@@ -79,6 +83,7 @@ def main():
             input_dir_to_raster_polygon = 'LOAM_Intermediate/predict/cma/',
             input_dir_to_integrated_output = dir_to_integrated_output
         )
+    
 
 
 
@@ -87,7 +92,8 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path_to_tif', type=str, default='Input_Data/RI_Uxbridge.tif')
-    parser.add_argument('--path_to_json', type=str, default='Input_Data/RI_Uxbridge.json')
+    parser.add_argument('--path_to_json', type=str, default='')
+    #parser.add_argument('--path_to_json', type=str, default='Input_Data/RI_Uxbridge.json')
     parser.add_argument('--path_to_bound', type=str, default='')
     #parser.add_argument('--path_to_bound', type=str, default='Input_Data/RI_Uxbridge_expected_crop_region.geojson')
 
@@ -97,12 +103,13 @@ if __name__ == '__main__':
     parser.add_argument('--dir_to_intermediate', type=str, default='LOAM_Intermediate/Metadata_Preprocessing/')
     parser.add_argument('--dir_to_groundtruth', type=str, default='Data/validation_groundtruth')
 
+    parser.add_argument('--set_json', type=str, default='False')
     parser.add_argument('--map_area_segmentation', type=str, default='False')
     parser.add_argument('--performance_evaluation', type=str, default='False')
 
 
     # python loam_handler.py --path_to_tif Input_Data/RI_Uxbridge.tif --path_to_json Input_Data/RI_Uxbridge.json --map_area_segmentation True --performance_evaluation False
-    # python loam_handler.py --path_to_tif Input_Data/RI_Uxbridge.tif --path_to_json Input_Data/RI_Uxbridge.json --path_to_legend_solution Input_Data/RI_Uxbridge_PolygonType.geojson --performance_evaluation False
+    # python loam_handler.py --path_to_tif Input_Data/RI_Uxbridge.tif --path_to_legend_solution Input_Data/RI_Uxbridge_PolygonType.geojson
     
 
     args = parser.parse_args()
