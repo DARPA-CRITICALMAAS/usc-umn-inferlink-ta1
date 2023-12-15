@@ -297,11 +297,13 @@ def read_results_from_pytesseract(target_map_name, input_image, path_to_intermed
         candidate_text = ''
         for index_this_gid, row_this_gid in this_gid.iterrows():
             if len(candidate_text) == 0:
-                candidate_text = row_this_gid['text']
+                candidate_text = str(row_this_gid['text'])
             else:
-                candidate_text = candidate_text + ' ' + row_this_gid['text']
+                candidate_text = candidate_text + ' ' + str(row_this_gid['text'])
 
         if len(layer2[layer2['g_id']==gid]['g_geometry'].values) == 0:
+            continue
+        if len(candidate_text) > 500:
             continue
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer2[layer2['g_id']==gid]['g_geometry'].values[0]}])
         text_per_line = gpd.GeoDataFrame(pd.concat( [text_per_line, updated_record], ignore_index=True), crs=layer2.crs)
@@ -330,11 +332,13 @@ def read_results_from_pytesseract(target_map_name, input_image, path_to_intermed
         candidate_text = ''
         for index_this_gid, row_this_gid in this_gid.iterrows():
             if len(candidate_text) == 0:
-                candidate_text = row_this_gid['text']
+                candidate_text = str(row_this_gid['text'])
             else:
-                candidate_text = candidate_text + ' ' + row_this_gid['text']
+                candidate_text = candidate_text + ' ' + str(row_this_gid['text'])
 
         if len(layer4[layer4['g2_id']==gid]['g2_geometry'].values) == 0:
+            continue
+        if len(candidate_text) > 500:
             continue
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer4[layer4['g2_id']==gid]['g2_geometry'].values[0]}])
         text_combined_line = gpd.GeoDataFrame(pd.concat( [text_combined_line, updated_record], ignore_index=True), crs=layer4.crs)
@@ -488,11 +492,13 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
         candidate_text = ''
         for index_this_gid, row_this_gid in this_gid.iterrows():
             if len(candidate_text) == 0:
-                candidate_text = row_this_gid['text']
+                candidate_text = str(row_this_gid['text'])
             else:
-                candidate_text = candidate_text + ' ' + row_this_gid['text']
+                candidate_text = candidate_text + ' ' + str(row_this_gid['text'])
 
         if len(layer2[layer2['g_id']==gid]['g_geometry'].values) == 0:
+            continue
+        if len(candidate_text) > 500:
             continue
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer2[layer2['g_id']==gid]['g_geometry'].values[0]}])
         text_per_line = gpd.GeoDataFrame(pd.concat( [text_per_line, updated_record], ignore_index=True), crs=layer2.crs)
@@ -521,11 +527,13 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
         candidate_text = ''
         for index_this_gid, row_this_gid in this_gid.iterrows():
             if len(candidate_text) == 0:
-                candidate_text = row_this_gid['text']
+                candidate_text = str(row_this_gid['text'])
             else:
-                candidate_text = candidate_text + ' ' + row_this_gid['text']
+                candidate_text = candidate_text + ' ' + str(row_this_gid['text'])
 
         if len(layer4[layer4['g2_id']==gid]['g2_geometry'].values) == 0:
+            continue
+        if len(candidate_text) > 500:
             continue
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer4[layer4['g2_id']==gid]['g2_geometry'].values[0]}])
         text_combined_line = gpd.GeoDataFrame(pd.concat( [text_combined_line, updated_record], ignore_index=True), crs=layer4.crs)
@@ -670,6 +678,8 @@ def map_key_extraction_polygon(target_map_name, input_image, path_to_intermediat
 
         out_file_path0 = os.path.join(path_to_intermediate, 'intermediate4', map_name.replace('.tif', '_mask_map_key_highlighted.tif'))
         cv2.imwrite(out_file_path0, base_image2)
+
+        relaxation = relaxation + 1
 
 
 
@@ -929,7 +939,6 @@ def searching_possible_description(target_map_name, input_image, path_to_interme
         this_poly_mask = rasterio.features.rasterize([shapely.wkt.loads(linked_poly_description.loc[index]['text_geo1'])], out_shape=(base_image.shape[0], base_image.shape[1]))
         linked_text_description = cv2.bitwise_or(linked_text_description, this_poly_mask)
 
-    linked_text_description[linked_text_description > 0] = 255
     out_file_path0 = os.path.join(path_to_intermediate, 'intermediate5', map_name.replace('.tif', '_linked_polygon_description.tif'))
     cv2.imwrite(out_file_path0, linked_text_description)
 
@@ -976,41 +985,42 @@ def searching_possible_description(target_map_name, input_image, path_to_interme
     mean_change_per_column[mean_change_per_column != 0] = 255
     mean_change_point = np.where(mean_change_per_column > 0)[0]
 
-    if mean_change_point.shape[0] >= 2:
-        column_width_set = []
-        column_padding_set = []
-        for this_change in range(0, mean_change_point.shape[0], 2):
-            this_column_width = mean_change_point[this_change+1] - mean_change_point[this_change]
-            column_width_set.append(this_column_width)
-            if this_change > 0:
-                this_column_padding = mean_change_point[this_change] - mean_change_point[this_change-1]
-                column_padding_set.append(this_column_padding)
+    column_width_set = []
+    column_padding_set = []
+    added_column = 0
+    if mean_change_point.shape[0] > 0:
+        if mean_change_point.shape[0] >= 2:
+            for this_change in range(0, mean_change_point.shape[0], 2):
+                this_column_width = mean_change_point[this_change+1] - mean_change_point[this_change]
+                column_width_set.append(this_column_width)
+                if this_change > 0:
+                    this_column_padding = mean_change_point[this_change] - mean_change_point[this_change-1]
+                    column_padding_set.append(this_column_padding)
         column_width_set = np.array(column_width_set)
         column_padding_set = np.array(column_padding_set)
 
-
-    defined_column_width = np.mean(column_width_set)*0.8
-    defined_column_padding = np.mean(column_padding_set)
-    defined_columnn_threshold = int(defined_column_width * 0.15)
-
-
-    added_column = 0
-    for additional_column in range(1, 20):
-        this_column_x1 = max(mean_change_point) + defined_column_padding*additional_column + defined_columnn_threshold
-        this_column_x2 = max(mean_change_point) + defined_column_padding*additional_column + defined_column_width - defined_columnn_threshold
-        if this_column_x2 > mean_per_column.shape[0]:
-            break
-        mean_per_column[int(this_column_x1): int(this_column_x2)] = 255
-        added_column += 1
-
-    if mean_change_point.shape[0] >= 2:
-        for this_change in range(0, mean_change_point.shape[0], 2):
-            mean_per_column[mean_change_point[this_change]:mean_change_point[this_change]+defined_columnn_threshold] = 0
-            mean_per_column[mean_change_point[this_change+1]-defined_columnn_threshold:mean_change_point[this_change+1]+1] = 0
+        
+        defined_column_width = np.mean(column_width_set)*0.8
+        defined_column_padding = np.mean(column_padding_set)
+        defined_columnn_threshold = int(defined_column_width * 0.15)
 
 
+        for additional_column in range(1, 20):
+            this_column_x1 = max(mean_change_point) + defined_column_padding*additional_column + defined_columnn_threshold
+            this_column_x2 = max(mean_change_point) + defined_column_padding*additional_column + defined_column_width - defined_columnn_threshold
+            if this_column_x2 > mean_per_column.shape[0]:
+                break
+            mean_per_column[int(this_column_x1): int(this_column_x2)] = 255
+            added_column += 1
 
-    text_description_buffer[:, np.where(mean_per_column > 0)] = 255
+        if mean_change_point.shape[0] >= 2:
+            for this_change in range(0, mean_change_point.shape[0], 2):
+                mean_per_column[mean_change_point[this_change]:mean_change_point[this_change]+defined_columnn_threshold] = 0
+                mean_per_column[mean_change_point[this_change+1]-defined_columnn_threshold:mean_change_point[this_change+1]+1] = 0
+
+
+
+        text_description_buffer[:, np.where(mean_per_column > 0)] = 255
     out_file_path0 = os.path.join(path_to_intermediate, 'intermediate5', map_name.replace('.tif', '_candidate_polygon_description_v2.tif'))
     cv2.imwrite(out_file_path0, text_description_buffer)
 
@@ -1055,31 +1065,31 @@ def searching_possible_description(target_map_name, input_image, path_to_interme
     mean_change_per_column[mean_change_per_column != 0] = 255
     mean_change_point = np.where(mean_change_per_column > 0)[0]
 
-    if mean_change_point.shape[0] >= 2:
-        column_width_set = []
-        column_padding_set = []
-        for this_change in range(0, mean_change_point.shape[0], 2):
-            this_column_width = mean_change_point[this_change+1] - mean_change_point[this_change]
-            column_width_set.append(this_column_width)
-            if this_change > 0:
-                this_column_padding = mean_change_point[this_change] - mean_change_point[this_change-1]
-                column_padding_set.append(this_column_padding)
-        
+    column_width_set = []
+    column_padding_set = []
+    if mean_change_point.shape[0] > 0:
+        if mean_change_point.shape[0] >= 2:
+            for this_change in range(0, mean_change_point.shape[0], 2):
+                this_column_width = mean_change_point[this_change+1] - mean_change_point[this_change]
+                column_width_set.append(this_column_width)
+                if this_change > 0:
+                    this_column_padding = mean_change_point[this_change] - mean_change_point[this_change-1]
+                    column_padding_set.append(this_column_padding)
         column_width_set = np.array(column_width_set)
         column_padding_set = np.array(column_padding_set)
 
-    defined_column_width = np.mean(column_width_set)*0.8
-    defined_column_padding = np.mean(column_padding_set)
+        defined_column_width = np.mean(column_width_set)*0.8
+        defined_column_padding = np.mean(column_padding_set)
 
-    for additional_column in range(1, added_column+1):
-        this_column_x1 = max(mean_change_point) + defined_column_padding*additional_column
-        this_column_x2 = max(mean_change_point) + defined_column_padding*additional_column + defined_column_width
-        if this_column_x2 > mean_per_column.shape[0]:
-            break
-        mean_per_column[int(this_column_x1): int(this_column_x2)] = 255
+        for additional_column in range(1, added_column+1):
+            this_column_x1 = max(mean_change_point) + defined_column_padding*additional_column
+            this_column_x2 = max(mean_change_point) + defined_column_padding*additional_column + defined_column_width
+            if this_column_x2 > mean_per_column.shape[0]:
+                break
+            mean_per_column[int(this_column_x1): int(this_column_x2)] = 255
 
 
-    poly_key_buffer[:, np.where(mean_per_column > 0)] = 255
+        poly_key_buffer[:, np.where(mean_per_column > 0)] = 255
     out_file_path0 = os.path.join(path_to_intermediate, 'intermediate5', map_name.replace('.tif', '_candidate_polygon_key_v2.tif'))
     cv2.imwrite(out_file_path0, poly_key_buffer)
 
