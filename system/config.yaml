@@ -1,0 +1,46 @@
+MAP_NAME: 'AK_Dillingham'
+
+MAP_SEGMENT:
+    INPUT_PATH: '/data/weiweidu/criticalmaas_data/validation/AK_Dillingham.tif'
+    BINARY_OUTPUT_PATH: '/data/weiweidu/criticalmaas_data/validation_map_area_github/AK_Dillingham_expected_crop_region.tif'
+    JSON_OUTPUT_PATH: '/data/weiweidu/criticalmaas_data/validation_map_area_github/AK_Dillingham_expected_crop_region.json'
+    INTERMEDIATE_DIR: 'segmentation_intermediate_res'
+    
+MAP_LEGEND_SEGMENT:
+    INPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/input_samples'
+    OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/output_samples'
+    INTERMEDIATE_DIR: '/data/weiweidu/uncharted-ta1/pipelines/segmentation/intermediate_res'
+    MODEL_PATH: '/data/weiweidu/layoutlmv3_20230929'
+    
+LEGEND_ITEM_SEGMENT:
+    INPUT_PATH: '/data/weiweidu/criticalmaas_data/validation/AK_Dillingham.tif'
+    OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/legend_item_segmentation'
+    PREPROCESSING_FOR_CROPPING: True
+    POSTPROCESSING_FOR_CRS: False
+    MAPKURATOR_PATH: '/data/weiweidu/ta1-feature-validation/AK_Dillingham.geojson'
+    INTERMEDIATE_DIR: '/data/weiweidu/criticalmaas_data/github_test/legend_item_segmentation/intermediate_res'
+    
+LEGEND_ITEM_DESCRIPTION_EXTRACT:
+    MAP_DIR: '/data/weiweidu/criticalmaas_data/validation'
+    GPT_INPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/gpt_inputs'
+    GPT_OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/gpt_outputs'
+    INTERMEDIATE_DIR: '/data/weiweidu/criticalmaas_data/github_test/gpt_intermediate'
+    
+CROP_IMAGE_GENERATION:
+    MAP_DIR: '/data/weiweidu/criticalmaas_data/validation'
+    PATCH_SIZES: 256 1024
+    STRIDES: 256 256
+    OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/validation_cropped_thrust_fault_line_github'
+    
+    
+LINE_EXTRACTION:
+    CONFIG: '/data/weiweidu/criticalmaas_data/github_test/line/configs/usgs_railroads.yaml'
+    CHECKPOINT: '/data/weiweidu/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/thrust_fault_line_token110_distConn7_adjLoss20_6pos_4neg_10/models/checkpoint_epoch=200.pt'
+    PREDICT_RASTER: True
+    PREDICT_VECTOR: FALSE
+    LINE_FEATURE_NAME: 'thrust_fault_line'
+    TEST_TIF_MAP_DIR: '/data/weiweidu/criticalmaas_data/validation'
+    TEST_PNG_MAP_DIR: '/data/weiweidu/criticalmaas_data/validation_thrust_fault_line_github'
+    MAP_BOUND_DIR: '/data/weiweidu/criticalmaas_data/updated_cropped_map_mask_validation'
+    PREDICTION_DIR: '/data/weiweidu/criticalmaas_data/pred_thrust_fault_line_github'
+    
