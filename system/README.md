@@ -5,12 +5,10 @@ This is a brief description of the system design for CriticalMAAS project TA1 (e
 ## Introduction
 The diagram below illustrates the overall system pipeline. The blue and green boxes represent the inputs and outputs of the system, respectively. For example, the inputs are the USGS maps, including maps in the National Geologic Map Database (NGMDB) catalog. The outputs are geo-referenced maps, extracted features, map metadata, and more following the output schema agreed upon by all performers in TA1 and TA4. The white boxes in the diagram include modules for the feature extraction task, georeferencing task, as well as the map layout and metadata extraction. 
 
-![Alt text for the image](url_to_image1.jpg)
-*Figure 1: System Diagram.*
+<img src="figures/simplified_system_diagram_after_hackthon.png" alt="Figure 1: System Diagram." width="500"/>
 
 By December 31, the system includes the text spotting module, feature exatrction modules for both line and polygon, and map layout analysis module. The diagram below provides a visual representation of the current system.  
-![Alt text for the image](url_to_image1.jpg)
-*Figure 2: Current System Diagram.*
+<img src="figures/sample_simplified_system_diagram_after_hackthon_v4.png" alt="Figure 1: System Diagram." width="400"/>
 
 ## Directory Layout
 system/
