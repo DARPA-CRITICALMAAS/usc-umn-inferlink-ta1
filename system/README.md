@@ -8,7 +8,8 @@ The diagram below illustrates the overall system pipeline. The blue and green bo
 <img src="figures/simplified_system_diagram_after_hackthon.png" alt="Figure 1: System Diagram." width="500"/>
 
 By December 31, the system includes the text spotting module, feature exatrction modules for both line and polygon, and map layout analysis module. The diagram below provides a visual representation of the current system.  
-<img src="figures/sample_simplified_system_diagram_after_hackthon_v4.png" alt="Figure 1: System Diagram." width="400"/>
+
+<img src="figures/sample_simplified_system_diagram_after_hackthon_v4.png" alt="Figure 2: Current System Diagram." width="450"/>
 
 ## Directory Layout
 ```bash
