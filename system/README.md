@@ -11,6 +11,7 @@ By December 31, the system includes the text spotting module, feature exatrction
 <img src="figures/sample_simplified_system_diagram_after_hackthon_v4.png" alt="Figure 1: System Diagram." width="400"/>
 
 ## Directory Layout
+```bash
 system/
 │
 ├── input_maps/            #  Maps to process
@@ -27,7 +28,7 @@ system/
 ├── main.py                  # script to run the current system
 |
 └── README.md              # Project overview
-
+```
 ## Installation
 Please go to the modules' github to check the detailed installation instruction.
 
