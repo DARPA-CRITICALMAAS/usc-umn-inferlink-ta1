@@ -4,3 +4,5 @@
 # Ignore all files in any directory named temp
 temp/
 
+# Ignore all files in __pycache__ directory
+__pycache__/
