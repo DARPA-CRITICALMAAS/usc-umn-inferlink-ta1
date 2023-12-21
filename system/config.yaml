@@ -43,4 +43,8 @@ LINE_EXTRACTION:
     TEST_PNG_MAP_DIR: '/data/weiweidu/criticalmaas_data/validation_thrust_fault_line_github'
     MAP_BOUND_DIR: '/data/weiweidu/criticalmaas_data/updated_cropped_map_mask_validation'
     PREDICTION_DIR: '/data/weiweidu/criticalmaas_data/pred_thrust_fault_line_github'
+
+POLYGON_EXTRACTION:
+    INPUT_MAP_PATH: '/data/weiweidu/criticalmaas_data/validation/AK_Dillingham.tif'
+    OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/github_test/polygon_outputs'
     
