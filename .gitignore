@@ -1,3 +1,9 @@
+# Mac cruft
+.DS_Store
+
+# Ignore virtual environment support
+venv/
+
 # Ignore all .log files
 *.log
 
