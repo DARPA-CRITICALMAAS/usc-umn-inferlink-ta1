@@ -51,7 +51,7 @@ if __name__ == '__main__':
     
     run_command(legend_item_segment_command)
 
-    # GPT extracts pairs of symbol and descriptions in the map legend area
+    # GPT extracts pairs of symbols and descriptions in the map legend area
     legend_item_description_extract_command = f"python layout_segment_gpt4/gpt4_main.py --map_dir {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.MAP_DIR} --legend_json_path {config.MAP_LEGEND_SEGMENT.OUTPUT_DIR} --symbol_json_dir {config.LEGEND_ITEM_SEGMENT.OUTPUT_DIR} --map_name {config.MAP_NAME} --gpt4_input_dir {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_INPUT_DIR} --gpt4_output_dir {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --gpt4_intermediate_dir {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.INTERMEDIATE_DIR}"
     
     run_command(legend_item_description_extract_command)
@@ -62,6 +62,13 @@ if __name__ == '__main__':
     map_crop_command = f"python image_crop/map2patch.py --input_dir {config.CROP_IMAGE_GENERATION.MAP_DIR} --map_name {config.MAP_NAME} --patch_sizes {config.CROP_IMAGE_GENERATION.PATCH_SIZES} --strides {config.CROP_IMAGE_GENERATION.STRIDES} --output_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}"
     
     run_command(map_crop_command)
+
+    # ===============================================================
+    # text spotting
+    
+    text_spotting_command = f"python mapkurator/mapkurator-system/run_text_spotting.py --map_kurator_system_dir {config.MAPKURATOR.MAP_MAPKURATOR_SYSTEM_DIR} --input_dir_path {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g1000_s{config.CROP_IMAGE_GENERATION.STRIDES.split(' ')[0]}  --model_weight_path {config.MAPKURATOR.MODEL_WEIGHT_PATH} --expt_name mapKurator_test --module_text_spotting --text_spotting_model_dir {config.MAPKURATOR.TEXT_SPOTTING_MODEL_DIR} --spotter_model spotter_v2 --spotter_config {config.MAPKURATOR.SPOTTER_CONFIG} --spotter_expt_name test --module_img_geojson --output_folder {config.MAPKURATOR.OUTPUT_FOLDER}"
+    
+    run_command(text_spotting_command)
 
     # ===============================================================
     # map line extraction
