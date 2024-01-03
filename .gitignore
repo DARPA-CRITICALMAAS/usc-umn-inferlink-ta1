@@ -6,3 +6,6 @@ temp/
 
 # Ignore all files in __pycache__ directory
 __pycache__/
+
+# Ignore trained model files
+*.pth
