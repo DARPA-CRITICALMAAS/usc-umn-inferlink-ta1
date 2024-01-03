@@ -28,9 +28,17 @@ LEGEND_ITEM_DESCRIPTION_EXTRACT:
     
 CROP_IMAGE_GENERATION:
     MAP_DIR: '/data/weiweidu/criticalmaas_data/validation'
-    PATCH_SIZES: 256 1024
-    STRIDES: 256 256
+    PATCH_SIZES: 1000 256 1024 
+    STRIDES: 500 256 256
     OUTPUT_DIR: '/data/weiweidu/criticalmaas_data/validation_cropped_thrust_fault_line_github'
+
+MAPKURATOR:
+    MAP_MAPKURATOR_SYSTEM_DIR: '/data/weiweidu/criticalmaas_data/github_test/mapkurator/mapkurator-system/'
+    MODEL_WEIGHT_PATH: '/data/weiweidu/mapkurator/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth'
+    INPUT_DIR_PATH: '/data/weiweidu/criticalmaas_data/github_test/criticalmaas_data/github_test/output_crop/AK_Dillingham_g1000_s500/'
+    TEXT_SPOTTING_MODEL_DIR: '/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/'
+    SPOTTER_CONFIG: '/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml'
+    OUTPUT_FOLDER: '/data/weiweidu/criticalmaas_data/github_test/mapkurator/mapkurator-test-images/output/'
     
     
 LINE_EXTRACTION:
