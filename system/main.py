@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # ===============================================================
     # text spotting
     
-    text_spotting_command = f"python mapkurator/mapkurator-system/run_text_spotting.py --map_kurator_system_dir {config.MAPKURATOR.MAP_MAPKURATOR_SYSTEM_DIR} --input_dir_path {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g1000_s{config.CROP_IMAGE_GENERATION.STRIDES.split(' ')[0]}  --model_weight_path {config.MAPKURATOR.MODEL_WEIGHT_PATH} --expt_name mapKurator_test --module_text_spotting --text_spotting_model_dir {config.MAPKURATOR.TEXT_SPOTTING_MODEL_DIR} --spotter_model spotter_v2 --spotter_config {config.MAPKURATOR.SPOTTER_CONFIG} --spotter_expt_name test --module_img_geojson --output_folder {config.MAPKURATOR.OUTPUT_FOLDER}"
+    text_spotting_command = f"python mapkurator/run_text_spotting.py --map_kurator_system_dir {config.MAPKURATOR.MAP_MAPKURATOR_SYSTEM_DIR} --input_dir_path {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g1000_s{config.CROP_IMAGE_GENERATION.STRIDES.split(' ')[0]}  --model_weight_path {config.MAPKURATOR.MODEL_WEIGHT_PATH} --expt_name mapKurator_test --module_text_spotting --text_spotting_model_dir {config.MAPKURATOR.TEXT_SPOTTING_MODEL_DIR} --spotter_model spotter_v2 --spotter_config {config.MAPKURATOR.SPOTTER_CONFIG} --spotter_expt_name test --module_img_geojson --output_folder {config.MAPKURATOR.OUTPUT_FOLDER}"
     
     run_command(text_spotting_command)
 
