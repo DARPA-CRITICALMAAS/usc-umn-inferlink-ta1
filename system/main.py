@@ -73,7 +73,7 @@ if __name__ == '__main__':
     # ===============================================================
     # map line extraction
     
-    line_extract_command = f"python -W ignore ./line/test_maps_from_folder.py --config {config.LINE_EXTRACTION.CONFIG} --checkpoint {config.LINE_EXTRACTION.CHECKPOINT} --map_name {config.MAP_NAME} --predict_raster {config.LINE_EXTRACTION.PREDICT_RASTER} --predict_vector {config.LINE_EXTRACTION.PREDICT_VECTOR} --line_feature_name {config.LINE_EXTRACTION.LINE_FEATURE_NAME} --test_tif_map_dir {config.LINE_EXTRACTION.TEST_TIF_MAP_DIR} --test_png_map_dir {config.LINE_EXTRACTION.TEST_PNG_MAP_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR} --map_bound_dir {config.LINE_EXTRACTION.MAP_BOUND_DIR} --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR}"
+    line_extract_command = f"python -W ignore ./line/run_line_extraction.py --config {config.LINE_EXTRACTION.CONFIG} --checkpoint {config.LINE_EXTRACTION.CHECKPOINT} --map_name {config.MAP_NAME} --predict_raster {config.LINE_EXTRACTION.PREDICT_RASTER} --predict_vector {config.LINE_EXTRACTION.PREDICT_VECTOR} --map_legend_json {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR} --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR} --cuda_visible_device 3"
     
     run_command(line_extract_command)
 
