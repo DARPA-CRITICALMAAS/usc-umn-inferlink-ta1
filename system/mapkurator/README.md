@@ -7,8 +7,8 @@ Please refer to [MapKurator Doc](https://knowledge-computing.github.io/mapkurato
 The pretrained model is located at /home/spotter\_v2/PALEJUN/weights/synthmap\_pretrain/model_final.pth in the docker image.
 
 ## Running Command
-🔴 Please make sure that you set up the environment for MapKurator before running the command below
-🔴 Please use the MapKurator docker as the running environment
+🔴 Please make sure that you set up the environment for MapKurator before running the command below \
+🔴 Please use the MapKurator docker as the running environment \
 🔴 Please use the source codes for text spotting in this folder
 ```
 cd map_kurator_system
