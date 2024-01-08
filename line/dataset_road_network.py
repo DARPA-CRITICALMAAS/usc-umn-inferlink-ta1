@@ -64,51 +64,17 @@ class Sat2GraphDataLoader(Dataset):
         contrast_enhancer = ImageEnhance.Contrast(image_pil)
         image_data = contrast_enhancer.enhance(1.0)  # Adjust the factor (1.5 increases contrast)
         image_data = np.array(image_data)
-#         image_data = self.increase_contrast(image_data)
         image_data = torch.tensor(image_data, dtype=torch.float).permute(2,0,1)
         image_data = image_data/255.0
-        vtk_data = pyvista.read(data['vtp'])
-        seg_data = imageio.imread(data['seg'])
-        seg_data = seg_data/np.max(seg_data)
+        
+        seg_data = np.zeros(image_data.shape[:2])
         seg_data = torch.tensor(seg_data, dtype=torch.int).unsqueeze(0)
 
         image_data = tvf.normalize(torch.tensor(image_data, dtype=torch.float), mean=self.mean, std=self.std)
 
-
-        # correction of shift in the data
-        # shift = [np.shape(image_data)[0]/2 -1.8, np.shape(image_data)[1]/2 + 8.3, 4.0]
-        # coordinates = np.float32(np.asarray(vtk_data.points))
-        # lines = np.asarray(vtk_data.lines.reshape(-1, 3))
-        coordinates = torch.tensor(np.float32(np.asarray(vtk_data.points)), dtype=torch.float)
-        lines = torch.tensor(np.asarray(vtk_data.lines.reshape(-1, 3)), dtype=torch.int64)
+        coordinates = torch.tensor(np.float32(np.zeros((3,3))), dtype=torch.float)
+        lines = torch.tensor(np.asarray(np.zeros((3,3))), dtype=torch.int64)
         return image_data, seg_data-0.5, coordinates[:,:2], lines[:,1:]
-    
-#     def increase_contrast(self, image):
-#         # converting to LAB color space
-# #         image = cv2.blur(image, (3,3))
-#         lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-#         l_channel, a, b = cv2.split(lab)
-
-#         # Applying CLAHE to L-channel
-#         # feel free to try different values for the limit and grid size:
-#         clahe = cv2.createCLAHE(clipLimit=50.0, tileGridSize=(8,8)) #2.0
-#         cl = clahe.apply(l_channel)
-
-#         # merge the CLAHE enhanced L-channel with the a and b channel
-#         limg = cv2.merge((cl,a,b))
-
-#         # Converting image from LAB Color model to BGR color spcae
-#         enhanced_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
-#         return enhanced_img
-    def increase_contrast(self, image):
-        # Increase the contrast using linear stretching
-        alpha = 1.5  # Contrast factor (adjust as needed)
-        # Apply the contrast adjustment
-        adjusted_image = cv2.convertScaleAbs(image, alpha=alpha, beta=0)
-        brightness_factor = 0.5  # Adjust this factor (0.0 to 1.0) to control darkness
-        # Apply the brightness adjustment
-        darker_image = cv2.convertScaleAbs(adjusted_image, alpha=brightness_factor, beta=0)
-        return darker_image
 
 
 def build_road_network_data(config, mode='train', split=0.95):
@@ -121,32 +87,9 @@ def build_road_network_data(config, mode='train', split=0.95):
 
     Returns:
         [type]: [description]
-    """    
-    img_folder = os.path.join(config.DATA.DATA_PATH, 'raw')
-    seg_folder = os.path.join(config.DATA.DATA_PATH, 'seg')
-    vtk_folder = os.path.join(config.DATA.DATA_PATH, 'vtp')
-    img_files = []
-    vtk_files = []
-    seg_files = []
-
-    for file_ in os.listdir(img_folder):
-        file_ = file_[:-8]
-        img_files.append(os.path.join(img_folder, file_+'data.png'))
-        vtk_files.append(os.path.join(vtk_folder, file_+'graph.vtp'))
-        seg_files.append(os.path.join(seg_folder, file_+'seg.png'))
-
-    data_dicts = [
-        {"img": img_file, "vtp": vtk_file, "seg": seg_file} for img_file, vtk_file, seg_file in zip(img_files, vtk_files, seg_files)
-        ]
-    if mode=='train':
-        ds = Sat2GraphDataLoader(
-            data = data_dicts,
-            transform = train_transform,
-        )
-        print('train data size: ', len(data_dicts))
-        return ds
-    elif mode=='test':
-        img_folder = os.path.join(config.DATA.TEST_DATA_PATH, 'raw')
+    """   
+    if mode=='test':
+        img_folder = os.path.join(config.DATA.TEST_DATA_PATH)
         seg_folder = os.path.join(config.DATA.TEST_DATA_PATH, 'seg')
         vtk_folder = os.path.join(config.DATA.TEST_DATA_PATH, 'vtp')
         img_files = []
@@ -155,11 +98,10 @@ def build_road_network_data(config, mode='train', split=0.95):
         img_names = []
 
         for file_ in os.listdir(img_folder):
-            file_ = file_[:-8]
             img_names.append(file_)
-            img_files.append(os.path.join(img_folder, file_+'data.png'))
-            vtk_files.append(os.path.join(vtk_folder, file_+'graph.vtp'))
-            seg_files.append(os.path.join(seg_folder, file_+'seg.png'))
+            img_files.append(os.path.join(img_folder, file_))
+            vtk_files.append(os.path.join(vtk_folder, file_))
+            seg_files.append(os.path.join(seg_folder, file_))
 
         data_dicts = [
             {"img": img_file, "vtp": vtk_file, "seg": seg_file} for img_file, vtk_file, seg_file in zip(img_files, vtk_files, seg_files)
@@ -170,6 +112,7 @@ def build_road_network_data(config, mode='train', split=0.95):
         )
         print('test data size: ', len(data_dicts))
         return ds, img_names
+    
     elif mode=='split':
         img_folder = os.path.join(config.DATA.DATA_PATH, 'raw')
         seg_folder = os.path.join(config.DATA.DATA_PATH, 'seg')

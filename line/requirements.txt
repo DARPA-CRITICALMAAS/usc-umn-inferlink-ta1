@@ -6,5 +6,6 @@ tqdm
 scipy
 imageio
 pyvista
+geopandas
 ignite==1.1.0
 pytorch-ignite==0.4.9

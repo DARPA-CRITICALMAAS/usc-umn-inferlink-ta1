@@ -17,11 +17,19 @@ parser.add_argument('--config',
                     help='config file (.yml) containing the hyper-parameters for training. '
                          'If None, use the nnU-Net config. See /config for examples.')
 parser.add_argument('--checkpoint', default=None, help='checkpoint of the model to test.')
-parser.add_argument('--line_feature_name', default='fault_line', type=str, help='the name of line feature')
 parser.add_argument('--device', default='cuda',
                         help='device to use for training')
 parser.add_argument('--cuda_visible_device', nargs='*', type=int, default=[3],
                         help='list of index where skip conn will be made.')
+parser.add_argument('--predict_raster', default=False, type=bool, help='predict results are png if True')
+parser.add_argument('--predict_vector', default=False, type=bool, help='predict results are geojson if True')
+parser.add_argument('--line_feature_name', default='fault_line', type=str, help='the name of line feature')
+parser.add_argument('--cropped_image_dir', type=str, default='/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines',
+                       help='the path to the cropped images')
+parser.add_argument('--map_legend_json', default=None, type=str, help='json from the map legend module')
+parser.add_argument('--prediction_dir', type=str, default='./pred_maps',
+                       help='the path to save prediction results')
+parser.add_argument('--map_name', type=str, default=None)
 parser.add_argument('--buffer', type=int, default=10,
                         help='the buffer size for nodes conflation')
 
@@ -139,13 +147,7 @@ def construct_graph(args, map_content_mask):
     config = dict2obj(config)
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, args.cuda_visible_device))
     
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s100')
-    if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s64')
+    config.DATA.TEST_DATA_PATH = args.cropped_image_dir
     config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
     
     import torch
@@ -187,8 +189,6 @@ def construct_graph(args, map_content_mask):
     mean = np.array([0.485, 0.456, 0.406])
     std = np.array([0.229, 0.224, 0.225])
     cnt = 0
-    map_png = cv2.imread(config.DATA.TEST_MAP_PATH)
-    nums_in_row = map_png.shape[1]//2048
     
     lines = [] # a list of LineString 
     
@@ -196,8 +196,6 @@ def construct_graph(args, map_content_mask):
         print('Started processing test set.')
         batch_cnt = 0
         for batchdata in tqdm(test_loader):
-#             if batch_cnt > 2:
-#                 break
             # extract data and put to device
             images, segs, nodes, edges = batchdata[0], batchdata[1], batchdata[2], batchdata[3]
             segs_np = segs.cpu().numpy()
@@ -288,25 +286,27 @@ def predict_shp(args):
     with open(args.config) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
-                                         
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s100')
-    if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s64')
+                                        
     config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
     
     map_name = config.DATA.TEST_MAP_PATH.split('/')[-1][:-4]
-
-    map_content_mask_path = os.path.join(args.map_bound_dir, f'{map_name}_expected_crop_region.tif')
-
-    map_content_mask = cv2.imread(map_content_mask_path, 0)
+    
+    segment_json_file = open(args.map_legend_json)
+    segment_json = json.load(segment_json_file)
+    
+    map_content_y, map_content_x, map_content_w, map_content_h= segment_json['map_content_box']
+    map_height, map_width = segment_json['map_dimension']
+    
+    map_content_mask = np.zeros((map_height, map_width))
+    cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
+                  (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
                                          
     lines = construct_graph(args, map_content_mask)
     nodup_lines = rm_dup_lines(lines)
     print('num of lines = ', len(nodup_lines))
+    
+    if not os.path.exists(args.prediction_dir):
+        os.mkdir(args.prediction_dir)
     
     shp_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.shp'
     if len(nodup_lines) > 0:
@@ -317,14 +317,25 @@ def predict_shp(args):
     else:
         write_shp_in_imgcoord_output_schema(shp_path, nodup_lines, config.DATA.TEST_TIF_PATH)
     
-#     import geopandas
-#     geojson_path = './pred4shp/{}.geojson'.format(config.DATA.PRED_MAP_NAME[:-5])
-#     shp_file = geopandas.read_file(shp_path)
-#     shp_file.to_file(geojson_path, driver='GeoJSON')
-#     print('*** save the predicted geojson in {} ***'.format(geojson_path))
+    import geopandas
+    geojson_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.geojson'
+    shp_file = geopandas.read_file(shp_path)
+    shp_file.to_file(geojson_path, driver='GeoJSON')
+    print('*** save the predicted geojson in {} ***'.format(geojson_path))
     
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    predict_png(args)
-#     predict_shp(args)
+    json_path = args.map_legend_json
+    f = open(json_path)
+    data = json.load(f)
+    
+    for _, sym_property in data.items():
+        if not isinstance(sym_property, dict):
+            continue
+        description = sym_property['description']
+        if 'fault' in description.lower():
+#             args.checkpoint = '/data/weiweidu/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/fault_line_token150_distConn7_adjLoss20_comb_less_neg_topo_10/models/checkpoint_epoch=180.pt'
+            args_line_feature_name = 'fault_line'
+#             predict_png(args)
+            predict_shp(args)
