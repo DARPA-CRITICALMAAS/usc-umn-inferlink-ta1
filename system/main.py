@@ -85,7 +85,7 @@ if __name__ == '__main__':
     # ===============================================================
     # polygon extraction
     
-    polygon_extract_command = f"python loam_handler.py --path_to_tif {config.POLYGON_EXTRACTION.INPUT_MAP_PATH} --path_to_legend_solution {config.LEGEND_ITEM_SEGMENT.OUTPUT_DIR}/{config.MAP_NAME}+'_PolygonType.geojson' --path_to_bound {config.MAP_SEGMENT.JSON_OUTPUT_PATH} --dir_to_integrated_output {config.POLYGON_EXTRACTION.OUTPUT_DIR}
+    polygon_extract_command = f"python ../polygon/loam_handler.py --path_to_tif {config.POLYGON_EXTRACTION.INPUT_MAP_PATH} --path_to_legend_solution {config.LEGEND_ITEM_SEGMENT.OUTPUT_DIR}/{config.MAP_NAME}+'_PolygonType.geojson' --path_to_bound {config.MAP_SEGMENT.JSON_OUTPUT_PATH} --dir_to_integrated_output {config.POLYGON_EXTRACTION.OUTPUT_DIR}"
     
     run_command(polygon_extract_command)
     
