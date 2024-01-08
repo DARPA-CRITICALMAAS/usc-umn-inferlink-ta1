@@ -46,4 +46,4 @@ if __name__ == '__main__':
     combine_json_files_from_gpt(args.gpt4_intermediate_dir, args.map_name, output_path)
     
     output_path = os.path.join(args.gpt4_output_dir, args.map_name+'.json')
-    combine_json_files_gpt_and_symbol_legend(args.symbol_json_dir, args.legend_json_path, args.gpt4_intermediate_dir, args.map_name, output_path)
+    combine_json_files_gpt_and_symbol_legend(args.symbol_json_dir, args.legend_json_path, args.gpt4_intermediate_dir, args.map_dir, args.map_name, output_path)

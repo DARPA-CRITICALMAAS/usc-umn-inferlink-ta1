@@ -1,7 +1,8 @@
 import json
 import os
+import cv2
 import numpy as np
-from gpt4_input_generation import get_polygon_bounding_box
+from gpt4_input_generation import get_polygon_bounding_box, is_bbox_in_roi
 
 def combine_json_files_from_gpt(json_dir, map_name, output_path):
     combined_data = {}
@@ -19,7 +20,7 @@ def combine_json_files_from_gpt(json_dir, map_name, output_path):
         json.dump(combined_data, outfile)
     return 
 
-def combine_json_files_gpt_and_symbol_legend(json_dir_symbol, json_dir_legend, gpt_dir, map_name, output_path):    
+def combine_json_files_gpt_and_symbol_legend(json_dir_symbol, json_dir_legend, gpt_dir, map_dir, map_name, output_path):    
     json_gpt_path = os.path.join(gpt_dir, map_name+'.json')
     
     json_poly_sym_path = os.path.join(json_dir_symbol, map_name+'_PolygonType.geojson')
@@ -39,6 +40,8 @@ def combine_json_files_gpt_and_symbol_legend(json_dir_symbol, json_dir_legend, g
             poly_bbox = item['bbox']
         if item['class_label'] == 'legend_points_lines':
             ptln_bbox = item['bbox']
+        if item['class_label'] == 'map':
+            map_content_bbox = item['bbox'] 
     
     comb_dict = {}
 
@@ -66,6 +69,12 @@ def combine_json_files_gpt_and_symbol_legend(json_dir_symbol, json_dir_legend, g
                 comb_dict[bbox] = {**val, **{'legend_class': 'polygon'}}
             elif is_bbox_in_roi(eval(bbox), ptln_bbox):
                 comb_dict[bbox] = {**val, **{'legend_class': 'point_line'}}
+    
+    comb_dict['map_content_box'] = map_content_bbox
+    
+    map_img = cv2.imread(os.path.join(map_dir, map_name+'.tif'))
+    img_h, img_w = map_img.shape[:-1]
+    comb_dict['map_dimension'] = [img_h, img_w]
     
     with open(output_path, "w") as outfile:
         json.dump(comb_dict, outfile)
