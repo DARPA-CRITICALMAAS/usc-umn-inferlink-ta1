@@ -44,12 +44,8 @@ MAPKURATOR:
 LINE_EXTRACTION:
     CONFIG: '/data/weiweidu/criticalmaas_data/github_test/line/configs/usgs_railroads.yaml'
     CHECKPOINT: '/data/weiweidu/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/thrust_fault_line_token110_distConn7_adjLoss20_6pos_4neg_10/models/checkpoint_epoch=200.pt'
-    PREDICT_RASTER: True
-    PREDICT_VECTOR: FALSE
-    LINE_FEATURE_NAME: 'thrust_fault_line'
-    TEST_TIF_MAP_DIR: '/data/weiweidu/criticalmaas_data/validation'
-    TEST_PNG_MAP_DIR: '/data/weiweidu/criticalmaas_data/validation_thrust_fault_line_github'
-    MAP_BOUND_DIR: '/data/weiweidu/criticalmaas_data/updated_cropped_map_mask_validation'
+    PREDICT_RASTER: False
+    PREDICT_VECTOR: True
     PREDICTION_DIR: '/data/weiweidu/criticalmaas_data/pred_thrust_fault_line_github'
 
 POLYGON_EXTRACTION:
