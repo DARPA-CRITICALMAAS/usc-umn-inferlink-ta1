@@ -1,0 +1,10 @@
+README.md
+/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/cuda_version.cu
+/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/vision.cpp
+/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cpu.cpp
+/data/weiweidu/criticalmaas_data/github_test/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cuda.cu
+AdelaiDet.egg-info/PKG-INFO
+AdelaiDet.egg-info/SOURCES.txt
+AdelaiDet.egg-info/dependency_links.txt
+AdelaiDet.egg-info/requires.txt
+AdelaiDet.egg-info/top_level.txt
