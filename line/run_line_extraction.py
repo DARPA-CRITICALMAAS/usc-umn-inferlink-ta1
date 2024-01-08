@@ -148,7 +148,7 @@ def construct_graph(args, map_content_mask):
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, args.cuda_visible_device))
     
     config.DATA.TEST_DATA_PATH = args.cropped_image_dir
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
     
     import torch
     from monai.data import DataLoader
@@ -216,8 +216,8 @@ def construct_graph(args, map_content_mask):
 #             print('pred_edges shape: ', pred_edges)
             img_size = config.DATA.IMG_SIZE[0]
             for cnt, val in enumerate(zip(pred_edges, pred_nodes)):
-                indices = img_names[batch_cnt*config.DATA.TEST_BATCH_SIZE+cnt].split('_')
-                x_id, y_id = int(indices[-3]), int(indices[-2])
+                indices = img_names[batch_cnt*config.DATA.TEST_BATCH_SIZE+cnt][:-4].split('_')
+                x_id, y_id = int(indices[-2]), int(indices[-1])
                 patch_content_mask = map_content_mask[x_id:x_id+img_size, y_id:y_id+img_size]
                 if np.sum(patch_content_mask) < 50:
                     continue
@@ -230,8 +230,8 @@ def construct_graph(args, map_content_mask):
 #                 print('positive  prediction')
                 for i_idx, j_idx in edges_:                 
                     n1, n2 = (nodes_[i_idx]*img_size).astype('int32'), (nodes_[j_idx]*img_size).astype('int32')
-                    indices = img_names[batch_cnt*config.DATA.TEST_BATCH_SIZE+cnt].split('_')
-                    x_id, y_id = int(indices[-3]), int(indices[-2])
+                    indices = img_names[batch_cnt*config.DATA.TEST_BATCH_SIZE+cnt][:-4].split('_')
+                    x_id, y_id = int(indices[-2]), int(indices[-1])
 
                     n1_in_map = [n1[0] + x_id, n1[1] + y_id]
                     n2_in_map = [n2[0] + x_id, n2[1] + y_id]
@@ -251,29 +251,26 @@ def predict_png(args):
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
 
-    config.DATA.TEST_MAP_PATH = os.path.join(args.test_png_map_dir, args.map_name)
-    config.DATA.TEST_TIF_PATH = os.path.join(args.test_tif_map_dir, args.map_name[:-4]+'.tif')
-    config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s100')
-    if not os.path.exists(config.DATA.TEST_DATA_PATH):
-        config.DATA.TEST_DATA_PATH = os.path.join(args.cropped_image_dir, \
-                                             args.map_name[:-4]+'_g256_s64')
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
     
-    map_name = config.DATA.TEST_MAP_PATH.split('/')[-1][:-4]
+    map_name = args.map_name
 
-    map_content_mask_path = os.path.join(args.map_bound_dir, f'{map_name}_expected_crop_region.tif')
-
-    map_content_mask = cv2.imread(map_content_mask_path, 0)
+    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'.json'))
+    segment_json = json.load(segment_json_file)
+    
+    map_content_y, map_content_x, map_content_w, map_content_h= segment_json['map_content_box']
+    map_height, map_width = segment_json['map_dimension']
+    
+    map_content_mask = np.zeros((map_height, map_width))
+    cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
+                  (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
     
     lines = construct_graph(args, map_content_mask)
  
-    map_png = cv2.imread(config.DATA.TEST_MAP_PATH)
-    pred_png = np.zeros(map_png.shape)
+    pred_png = np.zeros((map_height, map_width, 3))
     for line in lines:                       
         node1, node2 = list(line.coords)
         node1, node2 = [int(node1[0]), int(node1[1])], [int(node2[0]), int(node2[1])]
-#         cv2.line(pred_png, (node1[0], node1[1]), (node2[0], node2[1]), (255,255,255), 1)
         cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 1)
     save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
     cv2.imwrite(save_path, pred_png)
@@ -287,11 +284,11 @@ def predict_shp(args):
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
                                         
-    config.DATA.PRED_MAP_NAME = args.map_name[:-4] + f'_{args.line_feature_name}_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
     
-    map_name = config.DATA.TEST_MAP_PATH.split('/')[-1][:-4]
+    map_name = args.map_name
     
-    segment_json_file = open(args.map_legend_json)
+    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'.json'))
     segment_json = json.load(segment_json_file)
     
     map_content_y, map_content_x, map_content_w, map_content_h= segment_json['map_content_box']
@@ -326,7 +323,7 @@ def predict_shp(args):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    json_path = args.map_legend_json
+    json_path = os.path.join(args.map_legend_json, args.map_name+'.json')
     f = open(json_path)
     data = json.load(f)
     
