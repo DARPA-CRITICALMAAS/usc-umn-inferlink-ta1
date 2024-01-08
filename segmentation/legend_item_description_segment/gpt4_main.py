@@ -22,7 +22,7 @@ parser.add_argument('--gpt4_input_dir',
                   default=None)
 parser.add_argument('--gpt4_intermediate_dir',
                    type=str,
-                   default=None)
+                   default='./intermediate_output')
 parser.add_argument('--gpt4_output_dir',
                    type=str,
                    default=None)
