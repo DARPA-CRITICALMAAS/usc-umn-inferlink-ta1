@@ -21,8 +21,8 @@ parser.add_argument('--device', default='cuda',
                         help='device to use for training')
 parser.add_argument('--cuda_visible_device', nargs='*', type=int, default=[3],
                         help='list of index where skip conn will be made.')
-parser.add_argument('--predict_raster', default=False, type=bool, help='predict results are png if True')
-parser.add_argument('--predict_vector', default=False, type=bool, help='predict results are geojson if True')
+parser.add_argument('--predict_raster', action='store_true', help='predict results are png if True')
+parser.add_argument('--predict_vector', action='store_true', help='predict results are geojson if True')
 parser.add_argument('--line_feature_name', default='fault_line', type=str, help='the name of line feature')
 parser.add_argument('--cropped_image_dir', type=str, default='/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines',
                        help='the path to the cropped images')
@@ -336,6 +336,8 @@ if __name__ == '__main__':
         description = sym_property['description']
         if 'fault' in description.lower():
 #             args.checkpoint = '/data/weiweidu/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/fault_line_token150_distConn7_adjLoss20_comb_less_neg_topo_10/models/checkpoint_epoch=180.pt'
-            args_line_feature_name = 'fault_line'
-#             predict_png(args)
-            predict_shp(args)
+            args.line_feature_name = 'fault_line'
+            if args.predict_raster:
+                predict_png(args)
+            if args.predict_vector:
+                predict_shp(args)
