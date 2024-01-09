@@ -36,4 +36,4 @@ python run_line_extraction.py --config line/configs/usgs_railroads.yaml --map_le
 --map_name the map name, please add ".tif" in the end
 --checkpoint /path/to/trained_model 
 ```
-The pretrained model can be downloaded from [link](https://drive.google.com/drive/folders/1ftU1DsTccTVVw6mrwII4vFZLuOEZ0dcl?usp=sharing)
+The pretrained model can be downloaded from [link](https://drive.google.com/drive/folders/1EA3PyR2d1m9S-xQvtr3YRmy9UvBiJVW3?usp=sharing)
