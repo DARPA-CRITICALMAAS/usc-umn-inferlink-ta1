@@ -16,6 +16,7 @@ parser.add_argument('--config',
                     default=None,
                     help='config file (.yml) containing the hyper-parameters for training. '
                          'If None, use the nnU-Net config. See /config for examples.')
+parser.add_argument('--trained_model_dir', default=None, help='directory storing trained models')
 parser.add_argument('--checkpoint', default=None, help='checkpoint of the model to test.')
 parser.add_argument('--device', default='cuda',
                         help='device to use for training')
@@ -149,6 +150,10 @@ def construct_graph(args, map_content_mask):
     
     config.DATA.TEST_DATA_PATH = args.cropped_image_dir
     config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
+    if 'thrust_fault_line_model.pt' in args.checkpoint:
+        config.MODEL.DECODER.OBJ_TOKEN = 100
+    elif 'fault_line_model.pt' in args.checkpoint:
+        config.MODEL.DECODER.OBJ_TOKEN = 150
     
     import torch
     from monai.data import DataLoader
@@ -167,7 +172,7 @@ def construct_graph(args, map_content_mask):
     torch.backends.cudnn.enabled = True
     torch.multiprocessing.set_sharing_strategy('file_system')
     device = torch.device("cuda") if args.device=='cuda' else torch.device("cpu")
-
+    
     net = build_model(config).to(device)
 
     test_ds, img_names = build_road_network_data(
@@ -331,10 +336,18 @@ if __name__ == '__main__':
         if not isinstance(sym_property, dict):
             continue
         description = sym_property['description']
-        if 'fault' in description.lower():
-#             args.checkpoint = '/data/weiweidu/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/fault_line_token150_distConn7_adjLoss20_comb_less_neg_topo_10/models/checkpoint_epoch=180.pt'
+        if 'fault' in description.lower():            
+            args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
             args.line_feature_name = 'fault_line'
             if args.predict_raster:
                 predict_png(args)
             if args.predict_vector:
                 predict_shp(args)
+        if 'thrust' in description.lower():            
+            args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
+            args.line_feature_name = 'thrust_fault_line'
+            if args.predict_raster:
+                predict_png(args)
+            if args.predict_vector:
+                predict_shp(args)
+
