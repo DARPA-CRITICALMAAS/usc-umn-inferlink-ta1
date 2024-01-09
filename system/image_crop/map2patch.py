@@ -21,8 +21,9 @@ def crop_map(map_image, map_name, patch_size, stride, output_dir):
 
     for i, start in enumerate(list(np.array(ind).reshape(2,-1).T)):
         
-        patch = np.pad(map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :],\
-                       ((pad_h,pad_h),(pad_w,pad_w),(0,0)), mode='constant')
+#         patch = np.pad(map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :],\
+#                        ((pad_h,pad_h),(pad_w,pad_w),(0,0)), mode='constant')
+        patch = map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :]
         
         output_path = os.path.join(output_folder, f'{map_name}_{start[0]}_{start[1]}.png')
         cv2.imwrite(output_path, patch)
