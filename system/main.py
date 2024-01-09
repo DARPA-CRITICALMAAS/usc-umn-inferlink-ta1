@@ -1,5 +1,6 @@
 import yaml
 import json
+from tqdm import tqdm
 import subprocess
 from argparse import ArgumentParser
 
@@ -18,16 +19,20 @@ def dict2obj(dict1):
 
 def run_command(command):
     print(command)
-    print('=======')
-    # Run the command and capture the output
-    process = subprocess.run(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # Get the standard output and error
-    output = process.stdout
-    error = process.stderr
-    # Print the results
-    print(output)
-    if error:
-        print(error)
+    with subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1) as proc:
+         # Create a tqdm progress bar
+        pbar = tqdm(desc="Processing", unit="line")
+        # Read output line by line
+        for line in proc.stdout:
+            print(line, end='')
+            pbar.update(1)
+
+        # Wait for the subprocess to finish
+        proc.wait()
+
+        # Check if the process had an error
+        if proc.returncode != 0:
+            print("Error:", proc.stderr.read())
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -75,10 +80,10 @@ if __name__ == '__main__':
     # ===============================================================
     # map line extraction
     if config.LINE_EXTRACTION.PREDICT_RASTER:
-        line_extract_command = f"python -W ignore ../line/run_line_extraction.py --config {config.LINE_EXTRACTION.CONFIG} --checkpoint {config.LINE_EXTRACTION.CHECKPOINT} --map_name {config.MAP_NAME} --predict_raster --map_legend_json {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g256_s256/ --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR} --cuda_visible_device 3"
+        line_extract_command = f"python -W ignore ../line/run_line_extraction.py --config {config.LINE_EXTRACTION.CONFIG} --trained_model_dir {config.LINE_EXTRACTION.TRAINED_MODEL_DIR} --map_name {config.MAP_NAME} --predict_raster --map_legend_json {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g256_s256/ --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR} --cuda_visible_device 3"
         
     if config.LINE_EXTRACTION.PREDICT_VECTOR:
-        line_extract_command = f"python -W ignore ../line/run_line_extraction.py --config {config.LINE_EXTRACTION.CONFIG} --checkpoint {config.LINE_EXTRACTION.CHECKPOINT} --map_name {config.MAP_NAME} --predict_vector --map_legend_json {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g256_s256/ --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR} --cuda_visible_device 3"
+        line_extract_command = f"python -W ignore ../line/run_line_extraction.py --config {config.LINE_EXTRACTION.CONFIG} --trained_model_dir {config.LINE_EXTRACTION.TRAINED_MODEL_DIR} --map_name {config.MAP_NAME} --predict_vector --map_legend_json {config.LEGEND_ITEM_DESCRIPTION_EXTRACT.GPT_OUTPUT_DIR} --cropped_image_dir {config.CROP_IMAGE_GENERATION.OUTPUT_DIR}/{config.MAP_NAME}_g256_s256/ --prediction_dir {config.LINE_EXTRACTION.PREDICTION_DIR} --cuda_visible_device 3"
     
     run_command(line_extract_command)
 
