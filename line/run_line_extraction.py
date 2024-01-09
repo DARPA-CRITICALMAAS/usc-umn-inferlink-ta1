@@ -10,6 +10,8 @@ from shapely.ops import *
 from shapely import geometry
 from shapely.strtree import STRtree
 from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema
+from write_shp_schema import write_shp_in_imgcoord_with_attr
+from line_ornament import extract_symbol_along_line
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -313,17 +315,11 @@ def predict_shp(args):
     shp_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.shp'
     if len(nodup_lines) > 0:
         merged_lines = integrate_lines(nodup_lines)
-    #     write_shp_in_imgcoord_output_schema(shp_path, lines, config.DATA.TEST_TIF_PATH)
-        write_shp_in_imgcoord_output_schema(shp_path, merged_lines, config.DATA.TEST_TIF_PATH)
+        write_shp_in_imgcoord_output_schema(shp_path, merged_lines)
         print('*** save the predicted shapefile in {} ***'.format(shp_path))
     else:
-        write_shp_in_imgcoord_output_schema(shp_path, nodup_lines, config.DATA.TEST_TIF_PATH)
-    
-    import geopandas
-    geojson_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.geojson'
-    shp_file = geopandas.read_file(shp_path)
-    shp_file.to_file(geojson_path, driver='GeoJSON')
-    print('*** save the predicted geojson in {} ***'.format(geojson_path))
+        write_shp_in_imgcoord_output_schema(shp_path, nodup_lines)
+    return shp_path
     
 
 if __name__ == '__main__':
@@ -342,7 +338,12 @@ if __name__ == '__main__':
             if args.predict_raster:
                 predict_png(args)
             if args.predict_vector:
-                predict_shp(args)
+                output_shp_path = predict_shp(args)
+                line_dict = extract_symbol_along_line(args.map_name, output_shp_path, \
+                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
+                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
+
         if 'thrust' in description.lower():            
             args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
             args.line_feature_name = 'thrust_fault_line'
@@ -350,4 +351,8 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 predict_shp(args)
+                line_dict = extract_symbol_along_line(args.map_name, output_shp_path, \
+                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
+                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
 

@@ -83,7 +83,7 @@ def read_shp(shp_path, tif_path=None):
         f = layer.GetNextFeature()
     return polyline_list    
 
-def write_shp_in_imgcoord(shp_name, lines, coor_path):
+def write_shp_in_imgcoord(shp_name, lines):
     import logging
     logging.getLogger().setLevel(logging.ERROR)
     
@@ -93,9 +93,8 @@ def write_shp_in_imgcoord(shp_name, lines, coor_path):
     if os.path.exists(shp_name):
         driver.DeleteDataSource(shp_name)
     
-    srs = gdal.Open(coor_path).GetProjection()
     spatial_reference = osr.SpatialReference()
-    spatial_reference.ImportFromProj4(srs)
+    spatial_reference.ImportFromEPSG(4326)
     # Creating the shapefile
     ds = driver.CreateDataSource(shp_name)
     layer = ds.CreateLayer('layerName', spatial_reference, geom_type = ogr.wkbLineString)
@@ -130,7 +129,7 @@ def write_shp_in_imgcoord(shp_name, lines, coor_path):
     ds.Destroy()
     print ("Shapefile created")    
     
-def write_shp_in_imgcoord_output_schema(shp_name, lines, coor_path):
+def write_shp_in_imgcoord_output_schema(shp_name, lines):
     import logging
     logging.getLogger().setLevel(logging.ERROR)
     
@@ -140,9 +139,8 @@ def write_shp_in_imgcoord_output_schema(shp_name, lines, coor_path):
     if os.path.exists(shp_name):
         driver.DeleteDataSource(shp_name)
     
-    srs = gdal.Open(coor_path).GetProjection()
     spatial_reference = osr.SpatialReference()
-    spatial_reference.ImportFromProj4(srs)
+    spatial_reference.ImportFromEPSG(4326)
     # Creating the shapefile
     ds = driver.CreateDataSource(shp_name)
     layer = ds.CreateLayer('layerName', spatial_reference, geom_type = ogr.wkbLineString)
@@ -285,19 +283,19 @@ def rm_dup_lines(lines):
             for i in range(1, len(line)):
                 if [line[i], line[i-1]] not in no_dup_lines and [line[i-1], line[i]] not in no_dup_lines:
                     no_dup_lines.append([line[i-1], line[i]])
-                elif line[i] == line[i-1]:
-                    print('same nodes')
-                else:
-                    print('find a duplicate')
+#                 elif line[i] == line[i-1]:
+#                     print('same nodes')
+#                 else:
+#                     print('find a duplicate')
         else:
             if line[0] == line[1]:
-                print('same nodes')
+#                 print('same nodes')
                 continue
             if line not in no_dup_lines and [line[1], line[0]] not in no_dup_lines:
 #                 print(line)
                 no_dup_lines.append(line)
-            else:
-                print('find a duplicate')
+#             else:
+#                 print('find a duplicate')
     return no_dup_lines
 
 # def integrate_lines(lines):

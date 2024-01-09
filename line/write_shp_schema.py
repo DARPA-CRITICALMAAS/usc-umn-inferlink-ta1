@@ -6,11 +6,10 @@ from shapely.ops import linemerge
 from shapely.geometry import LineString
 from shapely.wkt import loads
 import math
-from dash_pattern_direction import detect_line_dash_direction
-from legend_detection import detect_legend
+from line_ornament import extract_symbol_along_line
 from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema
 
-def write_shp_in_imgcoord_output_schema(shp_name, all_lines, coor_path, legend_text = None, image_coords=False):
+def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text = None, image_coords=False):
     import logging
     logging.getLogger().setLevel(logging.ERROR)
     
@@ -20,11 +19,9 @@ def write_shp_in_imgcoord_output_schema(shp_name, all_lines, coor_path, legend_t
     if os.path.exists(shp_name):
         driver.DeleteDataSource(shp_name)
         
-    
-    srs = gdal.Open(coor_path).GetProjection()
     spatial_reference = osr.SpatialReference()
-    spatial_reference.ImportFromWkt(srs)
-#     spatial_reference.ImportFromProj4(srs)
+    spatial_reference.ImportFromEPSG(4326)
+
     # Creating the shapefile
     ds = driver.CreateDataSource(shp_name)
     layer = ds.CreateLayer('layerName', spatial_reference, geom_type = ogr.wkbLineString)
@@ -50,7 +47,7 @@ def write_shp_in_imgcoord_output_schema(shp_name, all_lines, coor_path, legend_t
     fieldDefn = ogr.FieldDefn('symbol', ogr.OFTString)
     layer.CreateField(fieldDefn)
     
-    transform = gdal.Open(coor_path).GetGeoTransform()
+#     transform = gdal.Open(coor_path).GetGeoTransform()
     
     cnt = 0
     
@@ -84,20 +81,26 @@ def write_shp_in_imgcoord_output_schema(shp_name, all_lines, coor_path, legend_t
         feature.SetField('ID', cnt)
         feature.SetField('geometr', 'line')
         feature.SetField('name', 'fault line')
-        feature.SetField('direction', attr[1])
+        feature.SetField('direction', None)
         feature.SetField('type', None)
         feature.SetField('descript', legend_text)
         feature.SetField('dash', attr[0])
-        if attr[1] != 0:
-            feature.SetField('symbol', 'ball-and-bar symbol')
-        else:
-            feature.SetField('symbol', None)
+#         if attr[1] != 0:
+#             feature.SetField('symbol', 'ball-and-bar symbol')
+#         else:
+#             feature.SetField('symbol', None)
 
         layer.CreateFeature(feature)
         lineString.Destroy()
         feature.Destroy()
     ds.Destroy()
     print ("Shapefile created")    
+    
+    import geopandas
+    geojson_path = f'{shp_name[:-4]}.geojson'
+    shp_file = geopandas.read_file(shp_name)
+    shp_file.to_file(geojson_path, driver='GeoJSON')
+    print('*** save the predicted geojson in {} ***'.format(geojson_path))
         
 if __name__ == '__main__':
     map_list = ['NV_HiddenHills']
