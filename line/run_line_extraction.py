@@ -11,7 +11,7 @@ from shapely import geometry
 from shapely.strtree import STRtree
 from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema
 from write_shp_schema import write_shp_in_imgcoord_with_attr
-from line_ornament import extract_symbol_along_line
+from line_ornament import extract_attributes_along_line
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -339,7 +339,7 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 output_shp_path = predict_shp(args)
-                line_dict = extract_symbol_along_line(args.map_name, output_shp_path, \
+                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
@@ -351,7 +351,7 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 predict_shp(args)
-                line_dict = extract_symbol_along_line(args.map_name, output_shp_path, \
+                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)

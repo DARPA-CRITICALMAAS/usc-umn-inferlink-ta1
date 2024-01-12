@@ -7,9 +7,9 @@ from shapely.geometry import LineString
 from shapely.wkt import loads
 import math
 from line_ornament import extract_symbol_along_line
-from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema
+from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines
 
-def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text = None, image_coords=False):
+def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, feature_name=None, image_coords=False):
     import logging
     logging.getLogger().setLevel(logging.ERROR)
     
@@ -85,10 +85,11 @@ def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text = None, ima
         feature.SetField('type', None)
         feature.SetField('descript', legend_text)
         feature.SetField('dash', attr[0])
-#         if attr[1] != 0:
-#             feature.SetField('symbol', 'ball-and-bar symbol')
-#         else:
-#             feature.SetField('symbol', None)
+        if len(attr) == 2:
+            feature.SetField('symbol', 'ball-and-bar symbol')
+            feature.SetField('direction', attr[1])
+        else:
+            feature.SetField('symbol', None)
 
         layer.CreateFeature(feature)
         lineString.Destroy()
@@ -103,46 +104,13 @@ def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text = None, ima
     print('*** save the predicted geojson in {} ***'.format(geojson_path))
         
 if __name__ == '__main__':
-    map_list = ['NV_HiddenHills']
+    map_name = 'NV_HiddenHills'
+    in_shapefile_path = '/data/weiweidu/LDTR_criticalmaas_test/pred4shp/NV_HiddenHills_fault_line_pred.shp'
+    out_shapefile_path = './pred_maps/NV_HiddenHills_fault_line_pred_attr.shp'
+    input_patch_dir = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/NV_HiddenHills_g256_s100/raw'
+    #'/data/weiweidu/line_github_workspace/gpt4_outputs'
 
-    for map_name in map_list:
-        shapefile_path = f'./pred4shp/{map_name}_fault_line_pred.shp'
-        out_shapefile_path = f'./hackathon1/{map_name}_fault_line_image.shp'
-    #     out_geopackage = out_shapefile_path[:-4] + '.gpkg'
-        out_geojson = out_shapefile_path[:-4] + '.geojson'
-        map_image_path = f'/data/weiweidu/criticalmaas_data/validation_fault_line_comb/{map_name}.png'
-#         tif_image_path = f'/data/weiweidu/criticalmaas_data/validation/{map_name}.tif'
-        tif_image_path = f'/data/weiweidu/criticalmaas_data/hackathon1/output_georeferencing/{map_name}.geotiff.tif'
-        tif_dir = '/data/weiweidu/criticalmaas_data/validation' # for json file
-        map_dir = '/data/weiweidu/criticalmaas_data/validation_fault_line_comb'
+    line_dict = extract_symbol_along_line(map_name, in_shapefile_path, input_patch_dir)
+    write_shp_in_imgcoord_with_attr(out_shapefile_path, line_dict, image_coords=True)
 
-        line_dict = detect_line_dash_direction(shapefile_path, map_image_path, tif_dir, \
-                                              obj_name='normal_fault_line', match_threshold=0.5)
-    #################################  
-    # refine (remove duplicates) lines
-    #     refined_line_dict = {}
-    #     for dash_type, lines in line_dict.items():
-    #         if lines == []:
-    #             continue
-    #         nodup_lines = rm_dup_lines(lines)
-    #         merged_lines = integrate_lines(nodup_lines)
-    #         refined_line_dict[dash_type] = merged_lines
-    #     write_shp_in_imgcoord_output_schema('./pred4shp/OR_Carlton_fault_line_pred_dash.shp', line_dict, tif_image_path)
-    #################################  
-
-        legend = detect_legend(map_name, map_dir, tif_dir)
-        legend_str = '. '.join(legend)
-
-        write_shp_in_imgcoord_output_schema(out_shapefile_path, line_dict, tif_image_path, legend_str, image_coords=True)
-
-        import geopandas
-        shp_file = geopandas.read_file(out_shapefile_path)
-        shp_file.to_file(out_geojson, driver='GeoJSON')
-        print('*** save the predicted geojson in {} ***'.format(out_geojson))
-    
-#     import geopandas as gpd
-    
-#     gdf = gpd.read_file(out_shapefile_path)
-#     gdf.to_file(out_geopackage, driver='GPKG')
-#     print('--- saved geopackage in {} ---'.format(out_geopackage))
     
