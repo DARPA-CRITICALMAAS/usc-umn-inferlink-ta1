@@ -22,7 +22,7 @@ def extraction_step7_worker(legend, map_name, legend_name, solutiona_dir, file_p
 
 
     if True: # print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v7.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v7.png'
         cv2.imwrite(out_file_path0, this_current_result)
 
     # convert the grayscale image to binary image
@@ -43,7 +43,7 @@ def extraction_step7_worker(legend, map_name, legend_name, solutiona_dir, file_p
 
 
     # save the raster into a .tif file
-    out_file_path=solutiona_dir+'intermediate7(2)/Output/'+map_name+'_'+legend_name[legend]+'_poly.tif' # output
+    out_file_path=solutiona_dir+'intermediate7_2/Output/'+map_name+'_'+legend_name[legend]+'_poly.tif' # output
     pred_binary_raster=pred_binary_raster.astype('uint16')
     cv2.imwrite(out_file_path, pred_binary_raster)
 

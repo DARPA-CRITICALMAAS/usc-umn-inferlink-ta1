@@ -102,8 +102,8 @@ dir_img_0 = Path('LOAM_Intermediate/data/cma_small/imgs/')
 dir_mask_0 = Path('LOAM_Intermediate/data/cma_small/masks/')
 dir_checkpoint = Path('checkpoints/')
 
-dir_img = Path('LOAM_Intermediate/data/cma_small/imgs(2)/')
-dir_mask = Path('LOAM_Intermediate/data/cma_small/masks(2)/')
+dir_img = Path('LOAM_Intermediate/data/cma_small/imgs_2/')
+dir_mask = Path('LOAM_Intermediate/data/cma_small/masks_2/')
 
 
 dir_img_testing = Path('LOAM_Intermediate/data/cma_small/imgs/')

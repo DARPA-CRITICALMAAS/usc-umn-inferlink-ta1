@@ -376,7 +376,7 @@ def compare_against_competitor_linux(legend, map_name, legend_name, solutiona_di
 
 
     if print_intermediate_image == True:
-        out_file_path000=os.path.join(solutiona_dir+'intermediate7(2)', map_name, map_name+'_'+legend_name[legend]+'_poly_v6.png')
+        out_file_path000=os.path.join(solutiona_dir+'intermediate7_2', map_name, map_name+'_'+legend_name[legend]+'_poly_v6.png')
         cv2.imwrite(out_file_path000, updated_region)
 
     return legend, updated_region
