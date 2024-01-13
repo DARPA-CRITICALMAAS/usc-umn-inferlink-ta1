@@ -52,9 +52,9 @@ def extraction_step1_worker(legend, map_name, legend_name, solutiona_dir, print_
     img_masked = cv2.bitwise_or(rgb_masked, rgb_masked)
     
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v1_rgb.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v1_rgb.png'
         cv2.imwrite(out_file_path0, rgb_masked)
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
         cv2.imwrite(out_file_path0, img_masked)
     
     return legend, img_masked, (color_avg_subset - extracted_avg_rgb)

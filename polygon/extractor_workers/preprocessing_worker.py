@@ -58,13 +58,13 @@ def preprocessing_worker(map_id, file_name, path_to_tif, path_to_json, solutiona
     blank[0:img0.shape[0],0:img0.shape[1],0:img0.shape[2]] = 255
 
 
-    if os.path.exists(solutiona_dir+str('intermediate6/cropped_map(2)/'+file_name.replace('.json', '')+'_crop.tif')) and os.path.exists(solutiona_dir+'intermediate6/cropped_map_mask(2)/'+file_name.replace('.json', '')+'_expected_crop_region.tif'):
+    if os.path.exists(solutiona_dir+str('intermediate6/cropped_map_2/'+file_name.replace('.json', '')+'_crop.tif')) and os.path.exists(solutiona_dir+'intermediate6/cropped_map_mask_2/'+file_name.replace('.json', '')+'_expected_crop_region.tif'):
         img1 = np.copy(img0)
 
-        crop_rgb2 = cv2.imread(solutiona_dir+str('intermediate6/cropped_map(2)/'+file_name.replace('.json', '')+'_crop.tif'))
+        crop_rgb2 = cv2.imread(solutiona_dir+str('intermediate6/cropped_map_2/'+file_name.replace('.json', '')+'_crop.tif'))
         crop_rgb2 = cv2.cvtColor(crop_rgb2, cv2.COLOR_BGR2RGB)
 
-        selected_map_for_examination = cv2.imread(solutiona_dir+'intermediate6/cropped_map_mask(2)/'+file_name.replace('.json', '')+'_expected_crop_region.tif')
+        selected_map_for_examination = cv2.imread(solutiona_dir+'intermediate6/cropped_map_mask_2/'+file_name.replace('.json', '')+'_expected_crop_region.tif')
         selected_map_for_examination = cv2.cvtColor(selected_map_for_examination, cv2.COLOR_BGR2GRAY)
         
 
@@ -443,7 +443,7 @@ def preprocessing_worker(map_id, file_name, path_to_tif, path_to_json, solutiona
         holes = cv2.bitwise_not(holes)
         filled_holes = cv2.bitwise_or(gray000, holes)
 
-        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v2.tif'
+        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v2.tif'
         #cv2.imwrite(out_file_path0, filled_holes)
 
         img00 = cv2.imread(path_to_tif)
@@ -465,15 +465,15 @@ def preprocessing_worker(map_id, file_name, path_to_tif, path_to_json, solutiona
         gaussian_buffer00[gaussian_buffer00 > threshold_blur] = 255
         gaussian_buffer00[gaussian_buffer00 <= threshold_blur] = 0
 
-        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v3.tif'
+        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v3.tif'
         #cv2.imwrite(out_file_path0, gaussian_buffer00)
 
         added_region = cv2.bitwise_and(gaussian_buffer0, gaussian_buffer00)
-        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v4.tif'
+        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v4.tif'
         #cv2.imwrite(out_file_path0, added_region)
 
         merged_region = cv2.bitwise_or(filled_holes, added_region)
-        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v5.tif'
+        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v5.tif'
         #cv2.imwrite(out_file_path0, merged_region)
 
         # flood fill background to find inner holes
@@ -484,7 +484,7 @@ def preprocessing_worker(map_id, file_name, path_to_tif, path_to_json, solutiona
         holes = cv2.bitwise_not(holes)
         filled_holes_v2 = cv2.bitwise_or(merged_region, holes)
 
-        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v6.tif'
+        #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v6.tif'
         #cv2.imwrite(out_file_path0, filled_holes_v2)
 
         # find connected components

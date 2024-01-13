@@ -8,10 +8,10 @@ def extraction_step6_find_legend_in_map_worker(legend, map_name, legend_name, so
     # fetch current result for this legend
     #this_current_result = np.copy(ans_category[legend])
 
-    #img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate7(2)', map_name, map_name+'_'+legend_name[legend]+'_poly_legend.tif'))
+    #img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate7_2', map_name, map_name+'_'+legend_name[legend]+'_poly_legend.tif'))
 
     '''
-    img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate5', 'Extraction', map_name, map_name+'_'+legend_name[legend]+'_legend(2).tif'))
+    img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate5', 'Extraction', map_name, map_name+'_'+legend_name[legend]+'_legend_2.tif'))
     img_legend_v1 = img_legend_v0[int(img_legend_v0.shape[0]*2.0/8.0):int(img_legend_v0.shape[0]*6.0/8.0), int(img_legend_v0.shape[1]*2.0/8.0):int(img_legend_v0.shape[1]*6.0/8.0)]
 
     lower_black_text = np.array([0,0,0])
@@ -117,7 +117,7 @@ def extraction_step6_find_legend_in_map_worker(legend, map_name, legend_name, so
             dilate_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (80, 40))
             this_image_space_temp = cv2.dilate(this_image_space_temp, dilate_kernel, iterations=1)
             overlapping = cv2.bitwise_and(threshold_text, this_image_space_temp)
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_t0.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_t0.png'
             cv2.imwrite(out_file_path0, overlapping)
     #global_res_probability[legend] = np.copy(res) ###
     

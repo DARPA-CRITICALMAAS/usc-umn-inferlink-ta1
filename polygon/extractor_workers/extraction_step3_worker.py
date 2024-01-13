@@ -40,7 +40,7 @@ def extraction_step3_worker(legend, map_name, legend_name, solutiona_dir, print_
 
     if iteration_relaxing == 3:
         if print_intermediate_image == True:
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v3.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v3.png'
             cv2.imwrite(out_file_path0, this_next_result)
 
     return legend, this_next_result

@@ -211,18 +211,18 @@ def extraction_step2_worker(legend, map_name, legend_name, solutiona_dir, print_
 
     if print_intermediate_image == True:
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv.png'
         cv2.imwrite(out_file_path0, hsv_masked)
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_rgb.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_rgb.png'
         cv2.imwrite(out_file_path0, rgb_masked)
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
         cv2.imwrite(out_file_path0, img_masked)
 
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv_extended.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv_extended.png'
         cv2.imwrite(out_file_path0, hsv_masked_ext)
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2_extended.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2_extended.png'
         cv2.imwrite(out_file_path0, img_masked_ext)
         '''
     
@@ -266,19 +266,19 @@ def extraction_step2_worker_single_round(legend, map_name, legend_name, solution
 
     if print_intermediate_image == True:
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv.png'
         cv2.imwrite(out_file_path0, hsv_masked)
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_rgb.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_rgb.png'
         cv2.imwrite(out_file_path0, rgb_masked)
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2.png'
         cv2.imwrite(out_file_path0, img_masked)
 
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv_extended.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v0_hsv_extended.png'
         cv2.imwrite(out_file_path0, hsv_masked_ext)
         '''
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2_extended.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v2_extended.png'
         cv2.imwrite(out_file_path0, img_masked_ext)
     
     #return legend, img_masked, color_space_subset
