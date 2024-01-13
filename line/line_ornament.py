@@ -60,6 +60,8 @@ def read_images_from_folder(image_dir):
     samples = []
     sample_names = []
     for image_name in os.listdir(image_dir):
+        if '.png' not in image_name:
+            continue
         image_path = os.path.join(image_dir, image_name)
         image = cv2.imread(image_path, 0)
         samples.append(image)
@@ -81,7 +83,7 @@ def categorize_dash_pattern(cc_sizes):
     else:
         return 'unknown'
 
-def extract_symbol_along_line(map_name,\
+def extract_attributes_along_line(map_name,\
                               shapefile_path,\
                               patch_path = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/', \
                               legend_dir = './symbol_template',\
@@ -104,7 +106,7 @@ def extract_symbol_along_line(map_name,\
         for idx, line in enumerate(polylines):
             line_shp = LineString(line)
             clipped_line = line_shp.intersection(bounding_box)
-            if not clipped_line.is_empty:
+            if not clipped_line.is_empty and (str(line_shp) not in line_dict.keys() or len(line_dict[str(line_shp)])==1):
                 ########################################
                 # dash pattern detection
                 empty_image = np.zeros((patch_size, patch_size, 3))
@@ -141,7 +143,10 @@ def extract_symbol_along_line(map_name,\
         
 if __name__ == '__main__':
     map_name = 'NV_HiddenHills'
+#     extract_symbol_along_line('AK_Dillingham',\
+#                               '/data/weiweidu/criticalmaas_data/github_test/output_samples/AK_Dillingham_fault_line_pred.shp',\
+#                              patch_path = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/AK_Dillingham_g256_s100/raw')
     
-    extract_symbol_along_line('NV_HiddenHills',\
+    extract_attributes_along_line('NV_HiddenHills',\
                               '/data/weiweidu/LDTR_criticalmaas_test/pred4shp/NV_HiddenHills_fault_line_pred.shp',\
                             patch_path = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/NV_HiddenHills_g256_s100/raw')

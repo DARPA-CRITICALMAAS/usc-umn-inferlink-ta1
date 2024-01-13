@@ -6,8 +6,7 @@ from shapely.ops import linemerge
 from shapely.geometry import LineString
 from shapely.wkt import loads
 import math
-from line_ornament import extract_symbol_along_line
-from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines
+from line_ornament import extract_attributes_along_line
 
 def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, feature_name=None, image_coords=False):
     import logging
@@ -106,11 +105,11 @@ def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, featu
 if __name__ == '__main__':
     map_name = 'NV_HiddenHills'
     in_shapefile_path = '/data/weiweidu/LDTR_criticalmaas_test/pred4shp/NV_HiddenHills_fault_line_pred.shp'
-    out_shapefile_path = './pred_maps/NV_HiddenHills_fault_line_pred_attr.shp'
+    out_shapefile_path = '/data/weiweidu/line_github_workspace/pred_maps/NV_HiddenHills_fault_line_pred_attr.shp'
     input_patch_dir = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/NV_HiddenHills_g256_s100/raw'
     #'/data/weiweidu/line_github_workspace/gpt4_outputs'
 
-    line_dict = extract_symbol_along_line(map_name, in_shapefile_path, input_patch_dir)
+    line_dict = extract_attributes_along_line(map_name, in_shapefile_path, input_patch_dir)
     write_shp_in_imgcoord_with_attr(out_shapefile_path, line_dict, image_coords=True)
 
     
