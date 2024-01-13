@@ -33,7 +33,51 @@ import shutil
 import pyproj
 import map_area_segmenter
 
+import json
 
+
+def processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation):
+    with open(input_legend_segmentation) as f:
+        gj = json.load(f)
+    
+    target_id = -1
+    for this_gj in gj['images']:
+        this_id = this_gj['id']
+        this_file_name = this_gj['file_name']
+        if target_map_name.split('.')[0] in this_file_name:
+            target_id = this_id
+            legend_area_placeholder = np.zeros((this_gj['height'], this_gj['width']), dtype='uint8')
+            break
+    
+    segmentation_added = 0
+    for this_gj in gj['annotations']:
+        if this_gj['image_id'] == target_id:
+            if this_gj['category_id'] == 1 or this_gj['category_id'] == 0:
+                coord_counter = 0
+                poly_coord = []
+                this_coord = []
+                for value in this_gj['segmentation'][0]:
+                    this_coord.append(int(value))
+                    if coord_counter % 2 == 1:
+                        this_coord = np.array(this_coord)
+                        poly_coord.append(this_coord)
+                        this_coord = []
+                    coord_counter += 1
+                poly_coord = np.array(poly_coord)
+
+                cv2.fillConvexPoly(legend_area_placeholder, poly_coord, 1)
+                legend_area_placeholder[legend_area_placeholder > 0] = 255
+
+                segmentation_added += 1
+                if segmentation_added >= 2:
+                    break
+    
+    cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'), legend_area_placeholder)
+    return True
+
+
+
+                    
 
 def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping):
     print('Working on input image:', input_image)
@@ -43,11 +87,15 @@ def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_
 
     output_segmentation = os.path.join(path_to_intermediate, 'exc_crop_binary.tif')
 
-    if len(input_legend_segmentation) > 0 and '.tif' in input_legend_segmentation:
+    if len(input_legend_segmentation) > 0:
         # if have legend segmentation result (a binary mask that highlights polygon/line/point legends)...
         print('Step (0/9): Processing the given map legend segmentation (whole area) result from... '+str(input_legend_segmentation))
         #print('*Please note that the output json for map area segmentation has not directly used this source...')
-        shutil.copyfile(input_legend_segmentation, output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
+        if '.tif' not in input_legend_segmentation:
+            print('    Input for legend_area segmentation is not given as a single tif file; will process the json file first...')
+            processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation)
+        else:
+            shutil.copyfile(input_legend_segmentation, output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.imread(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
     else:
@@ -64,7 +112,7 @@ def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_
         solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
         solution = 255 - solution
         cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'), solution)
-    
+
     img = cv2.imread(input_image)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.bitwise_and(img, img, mask = solution)
@@ -352,15 +400,15 @@ def read_results_from_pytesseract(target_map_name, input_image, path_to_intermed
 
 
 def read_results_from_mapkurator(target_map_name, input_image, path_to_intermediate, path_to_mapkurator_output):
-    if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate3(2)'))):
-        os.makedirs(os.path.join(path_to_intermediate, str('intermediate3(2)')))
+    if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate3_2'))):
+        os.makedirs(os.path.join(path_to_intermediate, str('intermediate3_2')))
     print('Step (3/9): Processing results from mapkurator...')
 
 
     map_name = target_map_name
     #mapkurator_source_name = os.path.join(path_to_mapkurator_output, map_name.replace('.tif', '.geojson'))
     mapkurator_source_name = path_to_mapkurator_output
-    mapkurator_name = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_v2.geojson'))
+    mapkurator_name = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_v2.geojson'))
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
 
     base_image = cv2.imread(basemap_name)
@@ -395,7 +443,7 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
         
 
     text_mask[text_mask > 0] = 255
-    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask.tif'))
+    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask.tif'))
     cv2.imwrite(out_file_path0, text_mask)
 
 
@@ -405,7 +453,7 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
     kernel = np.ones((1, 40), np.uint8)
     text_mask_buffer = cv2.dilate(text_mask_buffer, kernel, iterations = 1)
     text_mask_buffer_temp = np.copy(text_mask_buffer)
-    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))
+    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))
     cv2.imwrite(out_file_path0, text_mask_buffer)
 
 
@@ -425,13 +473,13 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
 
     text_mask_buffer = cv2.bitwise_or(text_mask_buffer, text_mask_buffer_temp)
     text_mask_buffer = cv2.bitwise_or(text_mask_buffer, small_text_mask_buffer)
-    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif'))
+    out_file_path0 = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif'))
     cv2.imwrite(out_file_path0, text_mask_buffer)
 
 
 
-    in_path = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))
-    out_path = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.geojson'))
+    in_path = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))
+    out_path = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.geojson'))
 
     src_ds = gdal.Open(in_path)
     srcband = src_ds.GetRasterBand(1)
@@ -450,8 +498,8 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
 
 
 
-    in_path = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif'))
-    out_path = os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson'))
+    in_path = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif'))
+    out_path = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson'))
 
     src_ds = gdal.Open(in_path)
     srcband = src_ds.GetRasterBand(1)
@@ -471,7 +519,7 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
 
 
     layer1 = gpd.read_file(mapkurator_name, driver='GeoJSON')
-    layer2 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.geojson')), driver='GeoJSON')
+    layer2 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v1.geojson')), driver='GeoJSON')
 
     layer1['x_min'] = layer1.geometry.bounds['minx']
     #layer1['x_max'] = layer1.geometry.bounds['maxx']
@@ -502,11 +550,11 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
             continue
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer2[layer2['g_id']==gid]['g_geometry'].values[0]}])
         text_per_line = gpd.GeoDataFrame(pd.concat( [text_per_line, updated_record], ignore_index=True), crs=layer2.crs)
-    text_per_line.to_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_description_v1.geojson')), driver='GeoJSON')
+    text_per_line.to_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_description_v1.geojson')), driver='GeoJSON')
 
 
-    layer3 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_description_v1.geojson')), driver='GeoJSON')
-    layer4 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
+    layer3 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_description_v1.geojson')), driver='GeoJSON')
+    layer4 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
 
     layer3['l_geometry'] = layer3['geometry']
     layer3['y_min'] = layer3.geometry.bounds['miny']
@@ -538,7 +586,7 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
         updated_record = gpd.GeoDataFrame([{'text':candidate_text, 'geometry':layer4[layer4['g2_id']==gid]['g2_geometry'].values[0]}])
         text_combined_line = gpd.GeoDataFrame(pd.concat( [text_combined_line, updated_record], ignore_index=True), crs=layer4.crs)
 
-    text_combined_line.to_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_description_v2.geojson')), driver='GeoJSON')
+    text_combined_line.to_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_description_v2.geojson')), driver='GeoJSON')
 
     return True
 
@@ -595,7 +643,7 @@ def map_key_extraction_polygon(target_map_name, input_image, path_to_intermediat
     out_file_path0 = os.path.join(path_to_intermediate, 'intermediate4', map_name.replace('.tif', '_mask_map_key.tif'))
     cv2.imwrite(out_file_path0, map_key_candidate)
     
-    reference_gpd = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
+    reference_gpd = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
     polygon_candidate_gpd = gpd.GeoDataFrame(columns=['poly_id', 'geometry'], crs=reference_gpd.crs)
 
     base_image2 = cv2.imread(basemap_name)
@@ -652,7 +700,7 @@ def map_key_extraction_polygon(target_map_name, input_image, path_to_intermediat
         cv2.imwrite(out_file_path0, map_key_candidate)
 
         
-        reference_gpd = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
+        reference_gpd = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_buffer_v2.geojson')), driver='GeoJSON')
         polygon_candidate_gpd = gpd.GeoDataFrame(columns=['poly_id', 'geometry'], crs=reference_gpd.crs)
 
         base_image2 = cv2.imread(basemap_name)
@@ -756,7 +804,7 @@ def linking_description_polygon(target_map_name, input_image, path_to_intermedia
 
     layer_polygon_candidate = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate4', map_name.replace('.tif', '_polygon_candidate_v1.geojson')), driver='GeoJSON')
     layer_link_seeking = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate4', map_name.replace('.tif', '_link_seeking_v1.geojson')), driver='GeoJSON')
-    layer_mask_description = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3(2)', map_name.replace('.tif', '_mapkurator_mask_description_v2.geojson')), driver='GeoJSON')
+    layer_mask_description = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_mapkurator_mask_description_v2.geojson')), driver='GeoJSON')
 
     layer_mask_description_2 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate3', map_name.replace('.tif', '_tesseract_mask_description_v2.geojson')), driver='GeoJSON')
 
@@ -1487,7 +1535,7 @@ def integrating_result(target_map_name, input_image, path_to_intermediate):
     for index, row in linked_poly_description1.iterrows():
         linked_poly_description1.loc[linked_poly_description1['id'] == row['id'], 'geometry'] = shapely.wkt.loads(str(row['name_geo']).replace(', ', 'p').replace(' ', ' -').replace('p', ', ').replace('POLYGON -', 'POLYGON '))
     linked_poly_description1 = linked_poly_description1.set_crs('epsg:3857', allow_override=True)
-    linked_poly_description1.to_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType(2).geojson')), driver='GeoJSON')
+    linked_poly_description1.to_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType_2.geojson')), driver='GeoJSON')
 
     for index, row in linked_poly_description1.iterrows():
         linked_poly_description1.loc[linked_poly_description1['id'] == row['id'], 'geometry'] = shapely.wkt.loads(str(row['poly_geo']).replace(', ', 'p').replace(' ', ' -').replace('p', ', ').replace('POLYGON -', 'POLYGON '))
@@ -1533,7 +1581,7 @@ def integrating_result(target_map_name, input_image, path_to_intermediate):
     for index, row in linked_poly_description1.iterrows():
         linked_poly_description1.loc[linked_poly_description1['id'] == row['id'], 'geometry'] = shapely.wkt.loads(str(row['name_geo']).replace(', ', 'p').replace(' ', ' -').replace('p', ', ').replace('POLYGON -', 'POLYGON '))
     linked_poly_description1 = linked_poly_description1.set_crs('epsg:3857', allow_override=True)
-    linked_poly_description1.to_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType(2).geojson')), driver='GeoJSON')
+    linked_poly_description1.to_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType_2.geojson')), driver='GeoJSON')
 
     for index, row in linked_poly_description1.iterrows():
         linked_poly_description1.loc[linked_poly_description1['id'] == row['id'], 'geometry'] = shapely.wkt.loads(str(row['poly_geo']).replace(', ', 'p').replace(' ', ' -').replace('p', ', ').replace('POLYGON -', 'POLYGON '))
