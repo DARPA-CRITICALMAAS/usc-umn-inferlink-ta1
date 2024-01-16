@@ -123,11 +123,11 @@ def cropping_worker(input_path, output_path, intermediate_path):
         #print('remove gray header')
         selected_map_for_examination[0:int(rgb0.shape[0]*0.06),:] = 0
 
-    out_file_path0=intermediate_path+'/cropping_1(1).tif'
+    out_file_path0=intermediate_path+'/cropping_1_1.tif'
     cv2.imwrite(out_file_path0, selected_map_for_examination)
 
     print_bgr = cv2.cvtColor(crop_rgb2, cv2.COLOR_RGB2BGR)
-    out_file_path0=intermediate_path+'/cropping_1(2).tif'
+    out_file_path0=intermediate_path+'/cropping_1_2.tif'
     cv2.imwrite(out_file_path0, print_bgr)
 
 
@@ -308,17 +308,17 @@ def cropping_worker(input_path, output_path, intermediate_path):
             #print('remove gray header')
             selected_map_for_examination[0:int(rgb0.shape[0]*0.06),:] = 0
 
-        out_file_path0=intermediate_path+'/cropping_1(1).tif'
+        out_file_path0=intermediate_path+'/cropping_1_1.tif'
         cv2.imwrite(out_file_path0, selected_map_for_examination)
 
         print_bgr = cv2.cvtColor(crop_rgb2, cv2.COLOR_RGB2BGR)
-        out_file_path0=intermediate_path+'/cropping_1(2).tif'
+        out_file_path0=intermediate_path+'/cropping_1_2.tif'
         cv2.imwrite(out_file_path0, print_bgr)
 
 
 
 
-    candidate_filing = intermediate_path+'/cropping_1(1).tif'
+    candidate_filing = intermediate_path+'/cropping_1_1.tif'
     img000 = cv2.imread(candidate_filing)
     gray000 = cv2.cvtColor(img000,cv2.COLOR_BGR2GRAY)
 
@@ -330,7 +330,7 @@ def cropping_worker(input_path, output_path, intermediate_path):
     holes = cv2.bitwise_not(holes)
     filled_holes = cv2.bitwise_or(gray000, holes)
 
-    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v2.tif'
+    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v2.tif'
     #cv2.imwrite(out_file_path0, filled_holes)
 
     img00 = cv2.imread(input_path)
@@ -352,15 +352,15 @@ def cropping_worker(input_path, output_path, intermediate_path):
     gaussian_buffer00[gaussian_buffer00 > threshold_blur] = 255
     gaussian_buffer00[gaussian_buffer00 <= threshold_blur] = 0
 
-    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v3.tif'
+    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v3.tif'
     #cv2.imwrite(out_file_path0, gaussian_buffer00)
 
     added_region = cv2.bitwise_and(gaussian_buffer0, gaussian_buffer00)
-    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v4.tif'
+    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v4.tif'
     #cv2.imwrite(out_file_path0, added_region)
 
     merged_region = cv2.bitwise_or(filled_holes, added_region)
-    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v5.tif'
+    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v5.tif'
     #cv2.imwrite(out_file_path0, merged_region)
 
     # flood fill background to find inner holes
@@ -371,7 +371,7 @@ def cropping_worker(input_path, output_path, intermediate_path):
     holes = cv2.bitwise_not(holes)
     filled_holes_v2 = cv2.bitwise_or(merged_region, holes)
 
-    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask(2)/'+candidate_naming.split('.')[0]+'_v6.tif'
+    #out_file_path0 = solutiona_dir+'intermediate6/cropped_map_mask_2/'+candidate_naming.split('.')[0]+'_v6.tif'
     #cv2.imwrite(out_file_path0, filled_holes_v2)
 
     # find connected components
@@ -387,7 +387,7 @@ def cropping_worker(input_path, output_path, intermediate_path):
     selected_map_for_examination = np.zeros((labeled00.shape[0],labeled00.shape[1],1),dtype=np.uint8)
     selected_map_for_examination[labeled00 == selected_index] = 255
 
-    out_file_path0 = intermediate_path+'/cropping_2(1).tif'
+    out_file_path0 = intermediate_path+'/cropping_2_1.tif'
     cv2.imwrite(out_file_path0, selected_map_for_examination)
 
     out_file_path0 = os.path.join(intermediate_path, output_path)
@@ -404,7 +404,7 @@ def cropping_worker(input_path, output_path, intermediate_path):
     blank_mask = cv2.bitwise_and(blank, blank, mask=cv2.bitwise_not(selected_map_for_examination))
     crop_rgb3 = cv2.add(rgb0, blank_mask)
     print_bgr3 = cv2.cvtColor(crop_rgb3, cv2.COLOR_RGB2BGR)
-    out_file_path0=intermediate_path+'/cropping_2(2).tif'
+    out_file_path0=intermediate_path+'/cropping_2_2.tif'
     cv2.imwrite(out_file_path0, print_bgr3)
     '''
 

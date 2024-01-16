@@ -137,12 +137,12 @@ def file_summary():
 
 
 def worker_postprocessing(crop_size):
-    data_dir0 = solution_dir + str('intermediate7(2)')
+    data_dir0 = solution_dir + str('intermediate7_2')
     data_dir1 = dir_to_groundtruth
 
     data_dir2 = solution_dir + str('intermediate7')
     data_dir3 = solution_dir + str('intermediate5')
-    data_dir4 = solution_dir + str('intermediate8(2)')
+    data_dir4 = solution_dir + str('intermediate8_2')
 
 
     info_set = []

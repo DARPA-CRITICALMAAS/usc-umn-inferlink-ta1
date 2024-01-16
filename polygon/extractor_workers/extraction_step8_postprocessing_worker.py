@@ -8,7 +8,7 @@ from collections import Counter
 
 def extraction_step8_postprocessing_worker(legend_id, map_name, legend_full_name, solutiona_dir, floodfill_candidate):
     
-    polygon_candidate_covered = cv2.imread(solutiona_dir+'intermediate7(2)/'+map_name+'/'+legend_full_name+'_v7.png')
+    polygon_candidate_covered = cv2.imread(solutiona_dir+'intermediate7_2/'+map_name+'/'+legend_full_name+'_v7.png')
     polygon_candidate_covered = cv2.cvtColor(polygon_candidate_covered, cv2.COLOR_BGR2GRAY)
 
     # flood fill background to find inner holes
@@ -20,7 +20,7 @@ def extraction_step8_postprocessing_worker(legend_id, map_name, legend_full_name
     valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
     filled_holes = cv2.bitwise_or(polygon_candidate_covered, valid_holes)
 
-    out_file_path0=solutiona_dir+'intermediate7(3)/'+map_name+'/'+legend_full_name+'_v8.png'
+    out_file_path0=solutiona_dir+'intermediate7_3/'+map_name+'/'+legend_full_name+'_v8.png'
     cv2.imwrite(out_file_path0, filled_holes)
 
     #polygon_covered_v2 = cv2.bitwise_or(polygon_covered_v2, filled_holes)
