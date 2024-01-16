@@ -6,7 +6,8 @@ import os
 import cv2
 
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+tesseract_exe = os.getenv("TESSERACT_EXE", r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe')
+pytesseract.pytesseract.tesseract_cmd = tesseract_exe
 
 from geopandas import GeoDataFrame
 from shapely import geometry
