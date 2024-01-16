@@ -33,7 +33,7 @@ python run_line_extraction.py --config line/configs/usgs_railroads.yaml --map_le
 --predict_raster set True the output is png
 --cropped_image_dir the output from "system/image_crop" module
 --prediction_dir the directory to save the extraction results
---map_name the map name, please add ".tif" in the end
+--map_name the map name
 --checkpoint /path/to/trained_model 
 ```
 The pretrained model can be downloaded from [link](https://drive.google.com/drive/folders/1EA3PyR2d1m9S-xQvtr3YRmy9UvBiJVW3?usp=sharing)
