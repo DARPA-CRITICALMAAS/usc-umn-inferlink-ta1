@@ -99,10 +99,10 @@ def extract_attributes_along_line(map_name,\
 
     line_dict = {}
     for patch_name in all_patches:
-        row, col = patch_name.split('.')[0].split('_')[-3:-1]
+        row, col = patch_name.split('.')[0].split('_')[-2:]
         row, col = int(row), int(col)
         bounding_box = box(row, col, row+patch_size, col+patch_size)
-        print(f'*** processing {patch_name} ***')
+#         print(f'*** processing {patch_name} ***')
         for idx, line in enumerate(polylines):
             line_shp = LineString(line)
             clipped_line = line_shp.intersection(bounding_box)
