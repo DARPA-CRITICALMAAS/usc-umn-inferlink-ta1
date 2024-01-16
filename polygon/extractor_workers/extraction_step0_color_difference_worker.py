@@ -66,9 +66,9 @@ def extraction_step0_color_difference_worker(legend, map_name, legend_name, solu
         hsv_dif_single[:,:] = hsv_dif[:,:,dimension_dif]
 
         if print_intermediate_image == True:
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_'+str(dimension_dif)+'.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_'+str(dimension_dif)+'.png'
             cv2.imwrite(out_file_path0, rgb_dif_single)
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_'+str(dimension_dif)+'.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_'+str(dimension_dif)+'.png'
             cv2.imwrite(out_file_path0, hsv_dif_single)
     
     #rgb_dif_min = np.zeros((rgb_rb_temp.shape[0], rgb_rb_temp.shape[1]), dtype='uint8')
@@ -76,7 +76,7 @@ def extraction_step0_color_difference_worker(legend, map_name, legend_name, solu
     rgb_dif_min = np.min(rgb_dif, axis=2).astype('uint8')
     #rgb_dif_min[rgb_dif_min < 127] = 0
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_x.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_x.png'
         cv2.imwrite(out_file_path0, rgb_dif_min)
     
     #hsv_dif_min = np.zeros((hsv_rb_temp.shape[0], hsv_rb_temp.shape[1]), dtype='uint8')
@@ -84,7 +84,7 @@ def extraction_step0_color_difference_worker(legend, map_name, legend_name, solu
     hsv_dif_min = np.min(hsv_dif, axis=2).astype('uint8')
     #hsv_dif_min[hsv_dif_min < 127] = 0
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_x.png'
+        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_x.png'
         cv2.imwrite(out_file_path0, hsv_dif_min)
 
     return legend, True

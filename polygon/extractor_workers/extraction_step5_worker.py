@@ -28,7 +28,7 @@ def extraction_step5_worker(legend, map_name, legend_name, solutiona_dir, print_
                 opening = cv2.morphologyEx(this_current_result, cv2.MORPH_OPEN, kernel, iterations=1)
                 this_next_result =cv2.threshold(opening, 0, 255, cv2.THRESH_BINARY)[1]
 
-                out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5v.png'
+                out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5v.png'
                 cv2.imwrite(out_file_path0, this_next_result)
             return legend, this_current_result, updated_for_relaxing, False
         masked_update = cv2.bitwise_and(rgb_rb, rgb_rb, mask=updated_for_relaxing)
@@ -232,7 +232,7 @@ def extraction_step5_worker(legend, map_name, legend_name, solutiona_dir, print_
 
     if print_intermediate_image == True:
         if iteration == 0:
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5.png'
             cv2.imwrite(out_file_path0, this_next_result)
         elif iteration == 1:
             # remove noisy white pixel
@@ -240,7 +240,7 @@ def extraction_step5_worker(legend, map_name, legend_name, solutiona_dir, print_
             opening = cv2.morphologyEx(this_current_result, cv2.MORPH_OPEN, kernel, iterations=1)
             this_next_result =cv2.threshold(opening, 0, 255, cv2.THRESH_BINARY)[1]
 
-            out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5v.png'
+            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v5v.png'
             cv2.imwrite(out_file_path0, this_next_result)
 
     return legend, this_next_result, updated_for_relaxing, True

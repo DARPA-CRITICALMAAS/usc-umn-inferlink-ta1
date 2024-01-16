@@ -61,7 +61,7 @@ python loam_handler.py --path_to_tif xxx.tif --path_to_legend_solution xxx.geojs
 python loam_handler.py --path_to_tif xxx.tif --path_to_json xxx.json --path_to_legend_solution xxx.geojson --path_to_bound xxx.geojson --dir_to_integrated_output xxx --set_json False
 ```
 
-(3) If one does not have legend-item segmentation output and only needs polygon-extraction outputs in raster format:
+(3) If one does not have legend-item segmentation output and only needs polygon-extraction outputs in raster format (There will be no vector outputs if --path_to_legend_solution is empty):
 
 ```
 python loam_handler.py --path_to_tif xxx.tif --path_to_json xxx.json --dir_to_integrated_output xxx
@@ -79,5 +79,7 @@ Descriptions of the inputs are as follows.
 --set_json: (bool, optional) whether to use the json file that conforms with the competition schema to identify the legend items. (Default to 'False')
 --map_area_segmentation: (bool, optional) whether map-area segmentation is needed. (Default to 'False')
 --performance_evaluation: (bool, optional) whether performance evaluation is needed. Please provide 'dir_to_groundtruth' if set to True. (Default to 'False')
+--version: (str, optional) a value indicating the version. (Default to '0')
+--log: (str, optional) path to the logging txt. (Default to 'log_file.txt')
 ```
 

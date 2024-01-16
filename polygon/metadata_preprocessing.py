@@ -48,7 +48,7 @@ postprocessing_floodfill = False # Set to False under current setting
 
 print_intermediate_image = True # create directory and output intermediate images 
 # output for cropped map => 'intermediate6/cropped_map_mask'
-# output for polygon extraction => 'intermediate7(2)'
+# output for polygon extraction => 'intermediate7_2'
 
 solutiona_dir='Solution_1102/'
 
@@ -90,11 +90,11 @@ def setting_summary():
     print('*Intput map json for polygon extraction => "' + path_to_json + '"')
     if map_preprocessing == False:
         print('*Intput bound geojson for polygon extraction => "' + path_to_bound + '"')
-    print('*Output for polygon extraction => "' + solutiona_dir + 'intermediate7(2)/Output"')
+    print('*Output for polygon extraction => "' + solutiona_dir + 'intermediate7_2/Output"')
 
     if print_intermediate_image == True:
         print(' - Output for intermediate basemap => "' + solutiona_dir + 'intermediate7"')
-        print(' - Output for intermediate extraction => "' + solutiona_dir + 'intermediate7(2)/(Map_Name)"')
+        print(' - Output for intermediate extraction => "' + solutiona_dir + 'intermediate7_2/(Map_Name)"')
         print(' - Output for cropped map => "' + solutiona_dir + 'intermediate6/cropped_map_mask" (Supporting point, line, polygon)')
     '''
     if generate_boundary_groundtruth == True:
@@ -615,8 +615,8 @@ def worker_boundary_extraction():
     if generate_boundary_extraction == True:
         if not os.path.exists(solutiona_dir+str('intermediate5/')):
             os.makedirs(solutiona_dir+str('intermediate5/'))
-        if not os.path.exists(solutiona_dir+str('intermediate5/Extraction(2)/')):
-            os.makedirs(solutiona_dir+str('intermediate5/Extraction(2)/'))
+        if not os.path.exists(solutiona_dir+str('intermediate5/Extraction_2/')):
+            os.makedirs(solutiona_dir+str('intermediate5/Extraction_2/'))
         
 
         for target_file_q in range(0, len(candidate_file_name_for_polygon), 1):
@@ -730,26 +730,26 @@ def worker_boundary_extraction():
 
                 laplacian = cv2.Laplacian(hsv_rb,cv2.CV_64F)
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_hsv_rb.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_hsv_rb.png'
                     cv2.imwrite(out_file_path0, laplacian)
                 laplacian = cv2.Laplacian(rgb_rb,cv2.CV_64F)
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_rgb_rb.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_rgb_rb.png'
                     cv2.imwrite(out_file_path0, laplacian)
                 laplacian = cv2.Laplacian(hsv_ms,cv2.CV_64F)
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_hsv_ms.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_hsv_ms.png'
                     cv2.imwrite(out_file_path0, laplacian)
                 laplacian = cv2.Laplacian(rgb_ms,cv2.CV_64F)
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_rgb_ms.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_rgb_ms.png'
                     cv2.imwrite(out_file_path0, laplacian)
 
                 for candidate_space in range(0,3):
                     img = np.copy(hsv_ms[:,:,candidate_space])
                     laplacian = cv2.Laplacian(img,cv2.CV_64F)
                     if print_intermediate_image == True:
-                        out_file_path0=solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_hsv_ms_'+str(candidate_space)+'.png'
+                        out_file_path0=solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_hsv_ms_'+str(candidate_space)+'.png'
                         cv2.imwrite(out_file_path0, laplacian)
 
     else:
@@ -767,8 +767,8 @@ def worker_boundary_extraction():
     if generate_boundary_extraction == True:
         if not os.path.exists(solutiona_dir+str('intermediate5/')):
             os.makedirs(solutiona_dir+str('intermediate5/'))
-        if not os.path.exists(solutiona_dir+str('intermediate5/Extraction(3)/')):
-            os.makedirs(solutiona_dir+str('intermediate5/Extraction(3)/'))
+        if not os.path.exists(solutiona_dir+str('intermediate5/Extraction_3/')):
+            os.makedirs(solutiona_dir+str('intermediate5/Extraction_3/'))
         
 
         for target_file_q in range(0, len(candidate_file_name_for_polygon), 1):
@@ -781,17 +781,17 @@ def worker_boundary_extraction():
                 runningtime_start=datetime.now()
                 print('Working on map:', target_map_name+'.tif')
 
-                img_cand_1 = cv2.imread(solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_hsv_ms_1.png')
+                img_cand_1 = cv2.imread(solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_hsv_ms_1.png')
                 img_cand_1 = cv2.cvtColor(img_cand_1, cv2.COLOR_BGR2GRAY)
 
-                img_cand_2 = cv2.imread(solutiona_dir+'intermediate5/Extraction(2)/'+file_name.replace('.json', '')+'_hsv_ms_2.png')
+                img_cand_2 = cv2.imread(solutiona_dir+'intermediate5/Extraction_2/'+file_name.replace('.json', '')+'_hsv_ms_2.png')
                 img_cand_2 = cv2.cvtColor(img_cand_2, cv2.COLOR_BGR2GRAY)
 
                 dilate_kernel = np.ones((3,3), np.uint8)
                 img_cand_3 = cv2.dilate(img_cand_1, dilate_kernel, iterations=1)
 
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_hsv_ms_1_dilation.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_hsv_ms_1_dilation.png'
                     cv2.imwrite(out_file_path0, img_cand_3)
 
                 img_cand_comb = cv2.add(img_cand_3, img_cand_2)
@@ -799,7 +799,7 @@ def worker_boundary_extraction():
                 #erode_kernel = np.ones((1,1), np.uint8)
                 #img_cand_comb = cv2.erode(img_cand_comb, erode_kernel, iterations=1)
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_hsv_ms_1_combined.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_hsv_ms_1_combined.png'
                     cv2.imwrite(out_file_path0, img_cand_comb)
 
                 #img_cand_comb[img_cand_comb > 127] = 255
@@ -825,7 +825,7 @@ def worker_boundary_extraction():
                 img_cand_5_blur = np.copy(img_cand_5)
 
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_boundary_blur.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_boundary_blur.png'
                     cv2.imwrite(out_file_path0, img_cand_5_blur)
                 
                 #print(img_cand_comb.shape)
@@ -833,7 +833,7 @@ def worker_boundary_extraction():
                 img_cand_6 = cv2.bitwise_and(img_cand_comb, img_cand_5_blur)
 
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png'
+                    out_file_path0=solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png'
                     cv2.imwrite(out_file_path0, img_cand_6)
                 
                 
@@ -890,7 +890,7 @@ def worker_auxiliary_info():
                 img_crop_black = cv2.cvtColor(img_crop_black, cv2.COLOR_BGR2GRAY)
 
                 #img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction/'+file_name.replace('.json', '')+'_overall_boundary.png')
-                img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png')
+                img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png')
                 img_boundary = cv2.cvtColor(img_boundary, cv2.COLOR_BGR2GRAY)
 
                 img_rb = cv2.imread(solutiona_dir+'intermediate7/'+file_name.replace('.json', '')+'_remove_black.png')
@@ -996,8 +996,8 @@ def worker_auxiliary_info():
                 rgb_space = np.zeros((255,255,3), dtype='uint8')
 
 
-                if not os.path.exists(solutiona_dir+'intermediate7(2)/'+map_name):
-                    os.makedirs(solutiona_dir+'intermediate7(2)/'+map_name)
+                if not os.path.exists(solutiona_dir+'intermediate7_2/'+map_name):
+                    os.makedirs(solutiona_dir+'intermediate7_2/'+map_name)
 
 
 
@@ -1062,7 +1062,7 @@ def worker_auxiliary_info():
                     img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
                     
                     if print_intermediate_image == True:
-                        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
+                        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
                         cv2.imwrite(out_file_path0, img_legend)
                     
                     
@@ -1211,7 +1211,7 @@ def worker_auxiliary_info():
                 #print(rgb_dif)
 
                 #if print_intermediate_image == True:
-                    #out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_x.png'
+                    #out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_x.png'
                 #print(hsv_dif_h_space)
 
                 #print(np.sort(rgb_dif[:, 0]))
@@ -1503,8 +1503,8 @@ def worker_recoloring():
                 rgb_space = np.zeros((255,255,3), dtype='uint8')
 
 
-                if not os.path.exists(solutiona_dir+'intermediate7(2)/'+map_name):
-                    os.makedirs(solutiona_dir+'intermediate7(2)/'+map_name)
+                if not os.path.exists(solutiona_dir+'intermediate7_2/'+map_name):
+                    os.makedirs(solutiona_dir+'intermediate7_2/'+map_name)
 
 
 
@@ -1569,7 +1569,7 @@ def worker_recoloring():
                     img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
                     
                     if print_intermediate_image == True:
-                        out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
+                        out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
                         cv2.imwrite(out_file_path0, img_legend)
                     
                     
@@ -1733,101 +1733,177 @@ def worker_recoloring():
                         grid_counting = math.ceil(y_shape/minimal_grid_size) * math.ceil(x_shape/minimal_grid_size)
                         grid_completed = 0
 
-                        for r in range(0, math.ceil(y_shape/minimal_grid_size)):
-                            for c in range(0, math.ceil(x_shape/minimal_grid_size)):
-                                r_0 = ystart + r*minimal_grid_size
-                                r_1 = ystart + min(r*minimal_grid_size+minimal_grid_size, y_shape)
-                                c_0 = xstart + c*minimal_grid_size
-                                c_1 = xstart + min(c*minimal_grid_size+minimal_grid_size, x_shape)
-                                #print(r, c, r_0, r_1, c_0, c_1)
+                        if split_multiprocessing == True and poly_counter <= 40:
+                            print('Start multi-processing...')
+                            import extractor_workers.extraction_step0_recoloring as extraction_step0_recoloring
+                            
+                            r_0 = np.zeros((math.ceil(y_shape/minimal_grid_size)*math.ceil(x_shape/minimal_grid_size)), dtype=int)
+                            r_1 = np.zeros((math.ceil(y_shape/minimal_grid_size)*math.ceil(x_shape/minimal_grid_size)), dtype=int)
+                            c_0 = np.zeros((math.ceil(y_shape/minimal_grid_size)*math.ceil(x_shape/minimal_grid_size)), dtype=int)
+                            c_1 = np.zeros((math.ceil(y_shape/minimal_grid_size)*math.ceil(x_shape/minimal_grid_size)), dtype=int)
 
-                                ### only process a small part of the whole subregion
-                                #im = np.copy(rgb_rb[ystart:ystop, xstart:xstop, :])
-                                im = np.copy(rgb_rb[r_0:r_1, c_0:c_1, :])
-                                image = im.reshape(im.shape[0],im.shape[1],1,3)
+                            recoloring_grid_counting = 0
+                            for r in range(0, math.ceil(y_shape/minimal_grid_size)):
+                                for c in range(0, math.ceil(x_shape/minimal_grid_size)):
+                                    r_0[recoloring_grid_counting] = ystart + r*minimal_grid_size
+                                    r_1[recoloring_grid_counting] = ystart + min(r*minimal_grid_size+minimal_grid_size, y_shape)
+                                    c_0[recoloring_grid_counting] = xstart + c*minimal_grid_size
+                                    c_1[recoloring_grid_counting] = xstart + min(c*minimal_grid_size+minimal_grid_size, x_shape)
+                                    recoloring_grid_counting += 1
 
-                                # Create color container 
-                                colors_container = np.ones(shape=[image.shape[0],image.shape[1],len(color_avg),3])
-                                for i,color in enumerate(color_avg):
-                                    colors_container[:,:,i,:] = color
-                                colors_container2 = np.ones(shape=[image.shape[0],image.shape[1],len(color_avg2),3])
-                                for i,color in enumerate(color_avg2):
-                                    colors_container2[:,:,i,:] = color
+                            trial = 4
+                            if trial > 20:
+                                trial = 2
+                            try:
+                                runningtime_start = datetime.now()
+                                ram_usage_v = []
+
+                                with multiprocessing.Pool(int(trial)) as pool:
+                                    callback = pool.starmap_async(extraction_step0_recoloring.extraction_step0_recoloring, [(this_grid, rgb_rb[r_0[this_grid]:r_1[this_grid], c_0[this_grid]:c_1[this_grid], :], color_avg, color_avg2, mapping_color_set_to_color_prob_tp, ) for this_grid in range(0, recoloring_grid_counting)])
+                                    multiprocessing_results = callback.get()
+
+                                    for targeted_grid, result_image, min_index_map, peak_ram_usage in multiprocessing_results:
+                                        repaste_image[r_0[targeted_grid]:r_1[targeted_grid], c_0[targeted_grid]:c_1[targeted_grid], :] = np.copy(result_image[:, :, :])
+                                        repaste_index[r_0[targeted_grid]:r_1[targeted_grid], c_0[targeted_grid]:c_1[targeted_grid], 0] = np.copy(min_index_map[:, :])
+                                        ram_usage_v.append(peak_ram_usage)
+                                        grid_completed += 1
+                                        print('processing _v0 >>> _v1 (finding the closest color)... (grid completed '+str(grid_completed)+'/'+str(grid_counting)+')... :', datetime.now()-runningtime_start)
                                 
-                                rgb_weight = np.ones(shape=[image.shape[0],image.shape[1],1,3])
-                                rgb_weight[:,:,:,0] = 1 # 2
-                                rgb_weight[:,:,:,1] = 1 # 4
-                                rgb_weight[:,:,:,2] = 1 # 3
 
-                                background_correction_direct_rgb = np.ones(shape=[image.shape[0],image.shape[1],1,3])
-                                background_correction_direct_rgb[:,:,:,0] = 1.0
-                                background_correction_direct_rgb[:,:,:,1] = 1.0
-                                background_correction_direct_rgb[:,:,:,2] = 1.0
+                                # print('processing _v1 >>> _v2 (legend '+str(legend+1)+'/'+str(poly_counter)+')... :', datetime.now()-runningtime_start)
 
-                                image_deviation = np.zeros(shape=[image.shape[0],image.shape[1],1,3])
-                                image_deviation[:,:,:,0] = image[:,:,:,0] - image[:,:,:,1]
-                                image_deviation[:,:,:,1] = image[:,:,:,0] - image[:,:,:,2]
-                                image_deviation[:,:,:,2] = image[:,:,:,1] - image[:,:,:,2]
 
-                                legend_deviation = np.zeros(shape=[image.shape[0],image.shape[1],len(color_avg),3])
-                                legend_deviation[:,:,:,0] = colors_container[:,:,:,0] - colors_container[:,:,:,1]
-                                legend_deviation[:,:,:,1] = colors_container[:,:,:,0] - colors_container[:,:,:,2]
-                                legend_deviation[:,:,:,2] = colors_container[:,:,:,1] - colors_container[:,:,:,2]
+                                #result_image0 = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
+                                #out_file_path0=solutiona_dir+'intermediate8/'+map_name+'_polygon_recoloring_attempt_0.png'
+                                #cv2.imwrite(out_file_path0, result_image0)
+
+                                repaste_image = cv2.cvtColor(repaste_image, cv2.COLOR_RGB2BGR)
+                                out_file_path0=solutiona_dir+'intermediate8/'+map_name+'_polygon_recoloring_attempt_1.png'
+                                cv2.imwrite(out_file_path0, repaste_image)
+
+                                out_file_path0=solutiona_dir+'intermediate8/'+map_name+'_polygon_recoloring_index_1.png'
+                                cv2.imwrite(out_file_path0, repaste_index)
+
+                                repaste_image = cv2.cvtColor(repaste_image, cv2.COLOR_BGR2RGB)
+                                repaste_image_v2 = np.copy(repaste_image)
+                                if check_ocean == False:
+                                    # if we manually add the ocean color
+                                    ocean_mask = cv2.inRange(repaste_image, np.array([218, 240, 254]), np.array([218, 240, 254]))
+                                    repaste_image_v2 = cv2.bitwise_and(repaste_image, repaste_image, mask=(255-ocean_mask))
+                                    #repaste_image_v2[targeted_image == np.array([218, 240, 254])] = np.array([0,0,0])
                                 
-                                background_correction_deviated_rgb = np.ones(shape=[image.shape[0],image.shape[1],1,3])
-                                background_correction_deviated_rgb[:,:,:,:] = 0.5 + 0.5*(1.0-abs(image_deviation[:,:,:,:])/255.0)
+                                repaste_image_v2 = cv2.cvtColor(repaste_image_v2, cv2.COLOR_RGB2BGR)
+                                out_file_path0=solutiona_dir+'intermediate8/'+map_name+'_polygon_recoloring_attempt_2.png'
+                                cv2.imwrite(out_file_path0, repaste_image_v2)
 
+                                
+                                #targeted_image = cv2.imread(out_file_path0)
+                                #color_thief = ColorThief(out_file_path0)
+                                
+                                # get the dominant color
+                                #dominant_color = color_thief.get_color(quality=1)
+                                #palette = color_thief.get_palette(color_count=10)
+                            except:
+                                print('MemoryError...')
+                                break
 
-                                def closest(image,color_container):
-                                    shape = image.shape[:2]
-                                    total_shape = shape[0]*shape[1]
+                        
+                        else:
+                            for r in range(0, math.ceil(y_shape/minimal_grid_size)):
+                                for c in range(0, math.ceil(x_shape/minimal_grid_size)):
+                                    r_0 = ystart + r*minimal_grid_size
+                                    r_1 = ystart + min(r*minimal_grid_size+minimal_grid_size, y_shape)
+                                    c_0 = xstart + c*minimal_grid_size
+                                    c_1 = xstart + min(c*minimal_grid_size+minimal_grid_size, x_shape)
+                                    #print(r, c, r_0, r_1, c_0, c_1)
 
-                                    # calculate distances
-                                    distances_0 = np.sqrt(np.sum(rgb_weight*((color_container*background_correction_direct_rgb-image)**2),axis=3))
-                                    distances_1 = np.sqrt(np.sum(((legend_deviation*background_correction_deviated_rgb-image_deviation)**2),axis=3))
-                                    distances = distances_0*0.95 + distances_1*0.05
+                                    ### only process a small part of the whole subregion
+                                    #im = np.copy(rgb_rb[ystart:ystop, xstart:xstop, :])
+                                    im = np.copy(rgb_rb[r_0:r_1, c_0:c_1, :])
+                                    image = im.reshape(im.shape[0],im.shape[1],1,3)
 
-                                    # in the 1st version, the distance is the distance to the color of each key
-                                    # in the 2nd version, the distance is the distance to the color under the color set of each key
-
-                                    #print(distances.shape) # shape: (1500, 1500, # of colors)
-                                    #print(mapping_color_set_to_color_prob_tp.shape) # shape: (# of colors, # of keys)
-
-                                    multiplied_distances = np.dot(distances, mapping_color_set_to_color_prob_tp)
-
-                                    #print(multiplied_distances.shape) # shape: (1500, 1500, # of keys)
+                                    # Create color container 
+                                    colors_container = np.ones(shape=[image.shape[0],image.shape[1],len(color_avg),3])
+                                    for i,color in enumerate(color_avg):
+                                        colors_container[:,:,i,:] = color
+                                    colors_container2 = np.ones(shape=[image.shape[0],image.shape[1],len(color_avg2),3])
+                                    for i,color in enumerate(color_avg2):
+                                        colors_container2[:,:,i,:] = color
                                     
-                                    conv_distances = scipy.ndimage.convolve(multiplied_distances, distance_kernel)
+                                    rgb_weight = np.ones(shape=[image.shape[0],image.shape[1],1,3])
+                                    rgb_weight[:,:,:,0] = 1 # 2
+                                    rgb_weight[:,:,:,1] = 1 # 4
+                                    rgb_weight[:,:,:,2] = 1 # 3
+
+                                    background_correction_direct_rgb = np.ones(shape=[image.shape[0],image.shape[1],1,3])
+                                    background_correction_direct_rgb[:,:,:,0] = 1.0
+                                    background_correction_direct_rgb[:,:,:,1] = 1.0
+                                    background_correction_direct_rgb[:,:,:,2] = 1.0
+
+                                    image_deviation = np.zeros(shape=[image.shape[0],image.shape[1],1,3])
+                                    image_deviation[:,:,:,0] = image[:,:,:,0] - image[:,:,:,1]
+                                    image_deviation[:,:,:,1] = image[:,:,:,0] - image[:,:,:,2]
+                                    image_deviation[:,:,:,2] = image[:,:,:,1] - image[:,:,:,2]
+
+                                    legend_deviation = np.zeros(shape=[image.shape[0],image.shape[1],len(color_avg),3])
+                                    legend_deviation[:,:,:,0] = colors_container[:,:,:,0] - colors_container[:,:,:,1]
+                                    legend_deviation[:,:,:,1] = colors_container[:,:,:,0] - colors_container[:,:,:,2]
+                                    legend_deviation[:,:,:,2] = colors_container[:,:,:,1] - colors_container[:,:,:,2]
+                                    
+                                    background_correction_deviated_rgb = np.ones(shape=[image.shape[0],image.shape[1],1,3])
+                                    background_correction_deviated_rgb[:,:,:,:] = 0.5 + 0.5*(1.0-abs(image_deviation[:,:,:,:])/255.0)
 
 
-                                    min_index_map = np.argmin(conv_distances, axis=2)
-                                    min_index = min_index_map.reshape(-1)
-                                    natural_index = np.arange(total_shape)
+                                    def closest(image,color_container):
+                                        shape = image.shape[:2]
+                                        total_shape = shape[0]*shape[1]
 
-                                    reshaped_container = colors_container2.reshape(-1,len(color_avg2),3) # only use one color to re-color the map
+                                        # calculate distances
+                                        distances_0 = np.sqrt(np.sum(rgb_weight*((color_container*background_correction_direct_rgb-image)**2),axis=3))
+                                        distances_1 = np.sqrt(np.sum(((legend_deviation*background_correction_deviated_rgb-image_deviation)**2),axis=3))
+                                        distances = distances_0*0.95 + distances_1*0.05
 
-                                    color_view = reshaped_container[natural_index, min_index].reshape(shape[0], shape[1], 3)
-                                    return color_view, min_index_map
-                                
-                                
-                                result_image, min_index_map = closest(image, colors_container)
-                                result_image = result_image.astype(np.uint8)
-                                min_index_map = min_index_map.astype(np.uint8)
+                                        # in the 1st version, the distance is the distance to the color of each key
+                                        # in the 2nd version, the distance is the distance to the color under the color set of each key
 
-                                grid_completed += 1
-                                print('processing _v0 >>> _v1 (finding the closest color)... (grid completed '+str(grid_completed)+'/'+str(grid_counting)+')... :', datetime.now()-runningtime_start)
+                                        #print(distances.shape) # shape: (1500, 1500, # of colors)
+                                        #print(mapping_color_set_to_color_prob_tp.shape) # shape: (# of colors, # of keys)
 
-                                #plt.imshow(result_image)
-                                #plt.show()
+                                        multiplied_distances = np.dot(distances, mapping_color_set_to_color_prob_tp)
 
-                                #Image.fromarray(result_image.astype(np.uint8)).show()
+                                        #print(multiplied_distances.shape) # shape: (1500, 1500, # of keys)
+                                        
+                                        conv_distances = scipy.ndimage.convolve(multiplied_distances, distance_kernel)
 
 
-                                #subtract_rgb = []
+                                        min_index_map = np.argmin(conv_distances, axis=2)
+                                        min_index = min_index_map.reshape(-1)
+                                        natural_index = np.arange(total_shape)
 
-                                #repaste_image[ystart:ystop, xstart:xstop, :] = np.copy(result_image[:, :, :])
-                                repaste_image[r_0:r_1, c_0:c_1, :] = np.copy(result_image[:, :, :])
-                                repaste_index[r_0:r_1, c_0:c_1, 0] = np.copy(min_index_map[:, :])
+                                        reshaped_container = colors_container2.reshape(-1,len(color_avg2),3) # only use one color to re-color the map
+
+                                        color_view = reshaped_container[natural_index, min_index].reshape(shape[0], shape[1], 3)
+                                        return color_view, min_index_map
+                                    
+                                    
+                                    result_image, min_index_map = closest(image, colors_container)
+                                    result_image = result_image.astype(np.uint8)
+                                    min_index_map = min_index_map.astype(np.uint8)
+
+                                    grid_completed += 1
+                                    print('processing _v0 >>> _v1 (finding the closest color)... (grid completed '+str(grid_completed)+'/'+str(grid_counting)+')... :', datetime.now()-runningtime_start)
+
+                                    #plt.imshow(result_image)
+                                    #plt.show()
+
+                                    #Image.fromarray(result_image.astype(np.uint8)).show()
+
+
+                                    #subtract_rgb = []
+
+                                    #repaste_image[ystart:ystop, xstart:xstop, :] = np.copy(result_image[:, :, :])
+                                    repaste_image[r_0:r_1, c_0:c_1, :] = np.copy(result_image[:, :, :])
+                                    repaste_index[r_0:r_1, c_0:c_1, 0] = np.copy(min_index_map[:, :])
                     else:
                         im = np.copy(rgb_rb[ystart:ystop, xstart:xstop, :])
                         image = im.reshape(im.shape[0],im.shape[1],1,3)
@@ -1974,8 +2050,8 @@ def worker_recoloring():
     if preprocessing_recoloring == True:
         print('Applying recoloring...')
 
-        if not os.path.exists(solutiona_dir+str('intermediate8(2)/')):
-            os.makedirs(solutiona_dir+str('intermediate8(2)/'))
+        if not os.path.exists(solutiona_dir+str('intermediate8_2/')):
+            os.makedirs(solutiona_dir+str('intermediate8_2/'))
         
         for target_file_q in range(0, len(candidate_file_name_for_polygon), 1):
             file_name = candidate_file_name_for_polygon[target_file_q]
@@ -2105,8 +2181,8 @@ def worker_recoloring():
                 rgb_space = np.zeros((255,255,3), dtype='uint8')
 
 
-                if not os.path.exists(solutiona_dir+str('intermediate8(2)/')+str(map_name)+'/'):
-                    os.makedirs(solutiona_dir+str('intermediate8(2)/')+str(map_name)+'/')
+                if not os.path.exists(solutiona_dir+str('intermediate8_2/')+str(map_name)+'/'):
+                    os.makedirs(solutiona_dir+str('intermediate8_2/')+str(map_name)+'/')
 
 
                 if '.geojson' in file_name_json:
@@ -2173,7 +2249,7 @@ def worker_recoloring():
 
                     temp_rgb_recoloring3 = np.reshape(temp_rgb_recoloring3, (-1, bgr_image.shape[1], 1))
                     temp_rgb_recoloring3 = cv2.bitwise_and(temp_rgb_recoloring3, img_bound)
-                    out_file_path0 = os.path.join(solutiona_dir+'intermediate8(2)', map_name, map_name+'_'+legend_name[color_index]+'_poly_rc_v0.png')
+                    out_file_path0 = os.path.join(solutiona_dir+'intermediate8_2', map_name, map_name+'_'+legend_name[color_index]+'_poly_rc_v0.png')
                     cv2.imwrite(out_file_path0, temp_rgb_recoloring3)
 
 
@@ -2201,10 +2277,10 @@ def worker_main_component():
     runningtime_start_global = datetime.now()
 
 
-    if not os.path.exists(solutiona_dir+str('intermediate7(2)/')):
-        os.makedirs(solutiona_dir+str('intermediate7(2)/'))
-    if not os.path.exists(solutiona_dir+str('intermediate7(2)/Output/')):
-        os.makedirs(solutiona_dir+str('intermediate7(2)/Output/'))
+    if not os.path.exists(solutiona_dir+str('intermediate7_2/')):
+        os.makedirs(solutiona_dir+str('intermediate7_2/'))
+    if not os.path.exists(solutiona_dir+str('intermediate7_2/Output/')):
+        os.makedirs(solutiona_dir+str('intermediate7_2/Output/'))
 
     for target_file_q in range(0, len(candidate_file_name_for_polygon), 1):
         file_name = candidate_file_name_for_polygon[target_file_q]
@@ -2231,7 +2307,7 @@ def worker_main_component():
             img_crop_black = cv2.cvtColor(img_crop_black, cv2.COLOR_BGR2GRAY)
 
             #img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction/'+file_name.replace('.json', '')+'_overall_boundary.png')
-            img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction(3)/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png')
+            img_boundary = cv2.imread(solutiona_dir+'intermediate5/Extraction_3/'+file_name.replace('.json', '')+'_overall_boundary_candidate.png')
             img_boundary = cv2.cvtColor(img_boundary, cv2.COLOR_BGR2GRAY)
 
             img_rb = cv2.imread(solutiona_dir+'intermediate7/'+file_name.replace('.json', '')+'_remove_black.png')
@@ -2335,8 +2411,8 @@ def worker_main_component():
             rgb_space = np.zeros((255,255,3), dtype='uint8')
 
 
-            if not os.path.exists(solutiona_dir+'intermediate7(2)/'+map_name):
-                os.makedirs(solutiona_dir+'intermediate7(2)/'+map_name)
+            if not os.path.exists(solutiona_dir+'intermediate7_2/'+map_name):
+                os.makedirs(solutiona_dir+'intermediate7_2/'+map_name)
 
 
 
@@ -2401,7 +2477,7 @@ def worker_main_component():
                 img_legend = np.copy(img000[x_min:x_max, y_min:y_max, :])
                 
                 if print_intermediate_image == True:
-                    out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
+                    out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+names+'_legend.tif'
                     cv2.imwrite(out_file_path0, img_legend)
                 
                 
@@ -2633,7 +2709,7 @@ def worker_main_component():
 
 
                 result_image0 = cv2.cvtColor(result_image, cv2.COLOR_RGB2BGR)
-                out_file_path0=solutiona_dir+'intermediate7(2)/'+map_name+'/'+map_name+'_nearest.png'
+                out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_nearest.png'
                 cv2.imwrite(out_file_path0, result_image0)
 
 
@@ -3198,7 +3274,7 @@ def worker_main_component():
 
 
                             if print_intermediate_image == True:
-                                out_file_path000=os.path.join(solutiona_dir+'intermediate7(2)', map_name, map_name+'_'+legend_name[legend]+'_poly_v6.png')
+                                out_file_path000=os.path.join(solutiona_dir+'intermediate7_2', map_name, map_name+'_'+legend_name[legend]+'_poly_v6.png')
                                 cv2.imwrite(out_file_path000, updated_region)
                             
                             temp_ans_category[legend] = np.copy(updated_region) ### updated v6 to v7 (3/3)
@@ -3245,11 +3321,11 @@ def worker_main_component():
 
 
 
-            if os.path.isfile(solutiona_dir+'intermediate7(2)/'+'running_time_record_v3.csv') == False:
-                with open(solutiona_dir+'intermediate7(2)/'+'running_time_record_v3.csv','w') as fd:
+            if os.path.isfile(solutiona_dir+'intermediate7_2/'+'running_time_record_v3.csv') == False:
+                with open(solutiona_dir+'intermediate7_2/'+'running_time_record_v3.csv','w') as fd:
                     fd.write('File,checkpoint_0,checkpoint_1,checkpoint_2,checkpoint_3,checkpoint_4,checkpoint_5,checkpoint_t0,checkpoint_t1,checkpoint_t2,checkpoint_t3,checkpoint_7,\n')
                     fd.close()
-            with open(solutiona_dir+'intermediate7(2)/'+'running_time_record_v3.csv','a') as fd:
+            with open(solutiona_dir+'intermediate7_2/'+'running_time_record_v3.csv','a') as fd:
                 fd.write(map_name+',')
                 for rtc in range(0, len(running_time_v)):
                     fd.write(str(running_time_v[rtc])+',')

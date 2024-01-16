@@ -22,11 +22,11 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     factor = 2.5 #increase contrast
     im2 = enhancer.enhance(factor)
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend(2).tif'
+        out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend_2.tif'
         im2.save(out_file_path0)
     
 
-    img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate5', 'Extraction', map_name, map_name+'_'+names+'_legend(2).tif'))
+    img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate5', 'Extraction', map_name, map_name+'_'+names+'_legend_2.tif'))
     img_legend_v1 = img_legend_v0[int(img_legend_v0.shape[0]*5.0/16.0):int(img_legend_v0.shape[0]*11.0/16.0), int(img_legend_v0.shape[1]*5.0/16.0):int(img_legend_v0.shape[1]*11.0/16.0)]
 
 

@@ -18,7 +18,7 @@ def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_
     target_path_4 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_2.png"))
     source_path_5 = os.path.join(data_dir2, this_map_name+'_crop_blackregion.png') # black basemap
     target_path_5 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_3.png"))
-    source_path_6 = os.path.join(data_dir3, 'Extraction(3)', str(this_map_name+'_overall_boundary_candidate.png')) # identified boundary
+    source_path_6 = os.path.join(data_dir3, 'Extraction_3', str(this_map_name+'_overall_boundary_candidate.png')) # identified boundary
     target_path_6 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_4.png"))
     source_path_7 = os.path.join(data_dir4, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_rc_v0.png") # recoloring polygon
     target_path_7 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_5.png"))
