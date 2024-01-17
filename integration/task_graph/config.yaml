@@ -17,25 +17,24 @@ map_segment:
         # inputs:
         input_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
         # outputs:
-        binary_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.tif"
-        json_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.geojson"
+        binary_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.tif"
+        json_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.geojson"
         # misc:
         intermediate_dir: "{config.JOB_DIR}/map_segment/temp"
         version: 0
-        log: "{config.JOB_DIR}/map_segment/output/log_file.txt"
+        log: "{config.JOB_DIR}/map_segment/temp/log_file.txt"
 
 # 2
 legend_segment:
     config:
         docker_image: inferlink/ta1_legend_segment
-        make_dirs: ["{config.HOST_JOB_DIR}/legend_segment/output", "{config.HOST_JOB_DIR}/legend_segment/temp"]
+        make_dirs: ["{config.HOST_JOB_DIR}/legend_segment/output"]
     options:
         # inputs:
         input: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
         # outputs: {NAME}_map_segmentation.json
         output: "{config.JOB_DIR}/legend_segment/output"
         # misc:
-        workdir: "{config.JOB_DIR}/legend_segment/temp"
         model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
 
 # 3
@@ -46,8 +45,8 @@ legend_item_segment:
     options:
         # inputs:
         input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        path_to_mapkurator_output: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/mapkurator/{config.MAP_NAME}.geojson"
-        input_legend_segmentation: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
+        path_to_mapkurator_output: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.geojson"
+        input_legend_segmentation: "{config.DATA_DIR}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
         # outputs:
         output_dir: "{config.JOB_DIR}/legend_item_segment/output"
         # misc:
@@ -55,7 +54,7 @@ legend_item_segment:
         postprocessing_for_crs: True
         path_to_intermediate: "{config.JOB_DIR}/legend_item_segment/temp"
         version: 0
-        log: "{config.JOB_DIR}/legend_item_segment/output/log_file.txt"
+        log: "{config.JOB_DIR}/legend_item_segment/temp/log_file.txt"
 
 # 4
 legend_item_description:

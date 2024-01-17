@@ -53,8 +53,8 @@ class DockerRunner:
         for c in command:
             cs += f" {c}"
 
-        run1 = f"# docker run -it --entrypoint bash {vs} {image}\n"
-        run2 = f"# docker run --user {user} {vs} {image} {cs}\n"
+        run1 = f"# docker run --gpus all -it --entrypoint bash {vs} {image}\n"
+        run2 = f"# docker run --gpus all --user {user} {vs} {image} {cs}\n"
 
         print("-----------------------------------------------\n")
         print(run1)
