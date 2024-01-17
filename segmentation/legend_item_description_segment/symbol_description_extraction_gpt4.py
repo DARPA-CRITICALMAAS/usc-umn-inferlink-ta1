@@ -12,6 +12,7 @@ import collections
 import os
 import sys
 from symbol_bbox_ocr import get_symbol_names
+import time
 # get_symbol_names_within_roi_with_buffer_v2, get_symbol_names_within_roi_with_buffer
 
 def remove_unicode(text):
