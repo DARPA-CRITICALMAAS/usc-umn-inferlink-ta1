@@ -11,3 +11,7 @@ __pycache__/
 *.pth
 *.geojson
 *.jpg
+
+# ignore temp dockerfiles
+Dockerfile.tmp
+
