@@ -95,7 +95,7 @@ class DockerTask(SimpleTask):
             f.write(str(self.config.data[self.NAME]))
 
     def output(self):
-        return luigi.LocalTarget(f"{self.host_job_dir}/task-{self.NAME}.txt")
+        return luigi.LocalTarget(f"{self.host_job_dir}/{self.NAME}-task.txt")
 
 
 class StartTask(SimpleTask):
@@ -189,13 +189,13 @@ class TA1Task(SimpleTask):
             # LegendSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 3
-            # LegendItemSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            LegendItemSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 4
             # LegendItemDescriptionTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 5
-            MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            # MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 6
             # TextSpottingTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
