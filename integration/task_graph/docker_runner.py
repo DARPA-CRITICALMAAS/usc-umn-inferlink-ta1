@@ -1,13 +1,12 @@
 # Copyright 2024 InferLink Corporation
 
 from pathlib import Path
-from tempfile import mkdtemp
 import time
 from typing import Optional
-import logging
 
 import docker
 import docker.types
+import docker.errors
 
 
 class DockerRunner:
@@ -26,6 +25,11 @@ class DockerRunner:
 
         mounts = [_make_mount(v) for v in volumes]
 
+        gpus = docker.types.DeviceRequest(
+            driver="nvidia",
+            count=-1,
+            capabilities=[["gpu"]])
+
         try:
             c = self._client.containers.get(name)
             c.remove()
@@ -38,7 +42,8 @@ class DockerRunner:
             mounts=mounts,
             command=command,
             environment=environment,
-            user=user
+            user=user,
+            device_requests=[gpus],
         )
 
         vs = ""

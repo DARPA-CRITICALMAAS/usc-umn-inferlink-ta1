@@ -9,4 +9,3 @@ ENV PYTHONPATH=/ta1/dev/uncharted-ta1:$PYTHONPATH
 
 CMD []
 ENTRYPOINT ["python3", "pipelines/segmentation/run_pipeline.py"]
-

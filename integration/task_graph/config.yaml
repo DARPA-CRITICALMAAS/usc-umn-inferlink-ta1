@@ -14,9 +14,12 @@ map_segment:
         docker_image: inferlink/ta1_map_segment
         make_dirs: ["{config.HOST_JOB_DIR}/map_segment/output", "{config.HOST_JOB_DIR}/map_segment/temp"]
     options:
+        # inputs:
         input_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
+        # outputs:
         binary_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.tif"
         json_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.geojson"
+        # misc:
         intermediate_dir: "{config.JOB_DIR}/map_segment/temp"
         version: 0
         log: "{config.JOB_DIR}/map_segment/output/log_file.txt"
@@ -27,8 +30,11 @@ legend_segment:
         docker_image: inferlink/ta1_legend_segment
         make_dirs: ["{config.HOST_JOB_DIR}/legend_segment/output", "{config.HOST_JOB_DIR}/legend_segment/temp"]
     options:
-        input: "{config.DATA_DIR}/{config.MAP_NAME}.tif"
+        # inputs:
+        input: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
+        # outputs: {NAME}_map_segmentation.json
         output: "{config.JOB_DIR}/legend_segment/output"
+        # misc:
         workdir: "{config.JOB_DIR}/legend_segment/temp"
         model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
 
@@ -38,13 +44,16 @@ legend_item_segment:
         docker_image: inferlink/ta1_legend_item_segment
         make_dirs: ["{config.HOST_JOB_DIR}/legend_item_segment/output", "{config.HOST_JOB_DIR}/legend_item_segment/temp"]
     options:
+        # inputs:
         input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
+        path_to_mapkurator_output: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/mapkurator/{config.MAP_NAME}.geojson"
+        input_legend_segmentation: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
+        # outputs:
         output_dir: "{config.JOB_DIR}/legend_item_segment/output"
+        # misc:
         preprocessing_for_cropping: True
         postprocessing_for_crs: True
-        path_to_mapkurator_output: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/mapkurator/{config.MAP_NAME}.geojson"
         path_to_intermediate: "{config.JOB_DIR}/legend_item_segment/temp"
-        input_legend_segmentation: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
         version: 0
         log: "{config.JOB_DIR}/legend_item_segment/output/log_file.txt"
 
@@ -52,27 +61,40 @@ legend_item_segment:
 legend_item_description:
     config:
         docker_image: inferlink/ta1_legend_item_description
-        make_dirs: ["{config.HOST_JOB_DIR}/legend_item_description/output", "{config.HOST_JOB_DIR}/legend_item_description/temp"]
+        make_dirs: [
+            "{config.HOST_JOB_DIR}/legend_item_description/output",
+            "{config.HOST_JOB_DIR}/legend_item_description/temp",
+            "{config.HOST_JOB_DIR}/legend_item_description/temp/gpt4_input_dir",
+            "{config.HOST_JOB_DIR}/legend_item_description/temp/gpt4_temp_dir",
+        ]
     options:
-        map_dir: "{config.DATA_DIR}"
-        legend_json_path: "{legend_segment.options.output}"
-        symbol_json_dir: "{legend_item_segment.options.output_dir}"
+        # inputs:
+        map_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
         map_name: "{config.MAP_NAME}"
-        gpt4_input_dir: "{config.JOB_DIR}/legend_item_description/input"
-        gpt4_output_dir: "{config.JOB_DIR}/legend_item_description/output"
-        gpt4_intermediate_dir: "{config.JOB_DIR}/legend_item_description/temp"
+        legend_json_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/map_segment_outputs"
+        symbol_json_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_segment_outputs"
+        # outputs:
+        gpt4_output_dir: "{config.JOB_DIR}/temp/legend_item_description/output"
+        # misc:
+        gpt4_input_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_input_dir"
+        gpt4_intermediate_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_temp_dir"
 
 # 5
 map_crop:
     config:
         docker_image: inferlink/ta1_map_crop
-        make_dirs: ["{config.HOST_JOB_DIR}/map_crop/output", "{config.HOST_JOB_DIR}/map_crop/temp"]
+        make_dirs: ["{config.HOST_JOB_DIR}/map_crop/output"]
     options:
-        input_dir: "{config.DATA_DIR}"
+        # inputs:
+        input_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
         map_name: "{config.MAP_NAME}"
-        patch_sizes: [1000, 256, 1024]
-        strides: [500, 256, 256]
+        # outputs:
+        #    The folder name convention is {map_name}_g{patch_size}_s{strides}.
+        #    In the folder, the image name convention is {map_name}_{row}_{col}.png
         output_dir: "{config.JOB_DIR}/map_crop/output"
+        # misc
+        patch_sizes: [1000, 256]
+        strides: [100, 100]
 
 # 6
 text_spotting:
@@ -81,17 +103,27 @@ text_spotting:
         make_dirs: ["{config.HOST_JOB_DIR}/text_spotting/output", "{config.HOST_JOB_DIR}/text_spotting/temp"]
         user: root
     options:
-        map_kurator_system_dir: "{config.DATA_DIR}/mapkurator/mapkurator-system/"
-        input_dir_path: "{map_crop.options.output_dir}/{config.MAP_NAME}_g1000_s500/"
-        model_weight_path: "{config.DATA_DIR}/mapkurator/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth"
-        expt_name: "mapKurator_test"
-        module_text_spotting: None
-        text_spotting_model_dir: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/"
-        spotter_model: "spotter_v2"
-        spotter_config: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml"
-        spotter_expt_name: "test"
-        module_img_geojson: None
-        output_folder: "{config.JOB_DIR}/github_test/mapkurator/mapkurator-test-images/output/"
+        map_kurator_system_dir: The directory to map_kurator_system for MapKurator
+        text_spotting_model_dir: The directory to the spotting model for MapKurator
+        spotter_config: The path to the config file for MapKurator
+        output_folder: The directory to save the text spotting results in geojson
+        model_weight_path: The path to the pretrained model
+
+        # inputs:
+        input_dir_path: "{map_crop.options.output_dir}/{config.MAP_NAME}_g1000_s100/"
+        # outputs:
+        # misc:
+        ##map_kurator_system_dir: /ta1/dev/system/mapkurator/mapkurator-system
+
+        ##model_weight_path: "{config.DATA_DIR}/mapkurator/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth"
+        ##expt_name: "mapKurator_test"
+        ##module_text_spotting: None
+        ##text_spotting_model_dir: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/"
+        ##spotter_model: "spotter_v2"
+        ##spotter_config: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml"
+        ##spotter_expt_name: "test"
+        ##module_img_geojson: None
+        ##output_folder: "{config.JOB_DIR}/github_test/mapkurator/mapkurator-test-images/output/"
 
 # 7
 line_extract:

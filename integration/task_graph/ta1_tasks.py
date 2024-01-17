@@ -195,13 +195,13 @@ class TA1Task(SimpleTask):
             # LegendItemDescriptionTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 5
-            # MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 6
             # TextSpottingTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 7
-            LineExtractTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            # LineExtractTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 8
             # PolygonExtractTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),

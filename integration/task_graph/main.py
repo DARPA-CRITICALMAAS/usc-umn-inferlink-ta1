@@ -16,8 +16,8 @@ from resolver import Resolver
 
 
 DEFAULT_JOB_ID = "1"  # datetime.datetime.now().strftime("%H.%M.%S")
-#DEFAULT_JOB_NAME = "AK_Dillingham"
-DEFAULT_JOB_NAME = "WY_CO_Peach"
+DEFAULT_JOB_NAME = "AK_Dillingham"
+#DEFAULT_JOB_NAME = "WY_CO_Peach"
 DEFAULT_CONFIG_FILE = "./config.yaml"
 
 HOST_ROOT_DIR = "/home/ubuntu/dev"
