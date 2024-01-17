@@ -1,0 +1,129 @@
+# all paths are relative to the container
+
+config:
+    MAP_NAME: "{JOB_NAME}"
+    DATA_DIR: "{CONTAINER_DATA_DIR}"
+    JOB_DIR: "{CONTAINER_JOB_DIR}"
+    HOST_DATA_DIR: "{HOST_DATA_DIR}"
+    HOST_JOB_DIR: "{HOST_JOB_DIR}"
+    OPENAI_API_KEY: "{OPENAI_API_KEY}"
+
+# 1
+map_segment:
+    config:
+        docker_image: inferlink/ta1_map_segment
+        make_dirs: ["{config.HOST_JOB_DIR}/map_segment/output", "{config.HOST_JOB_DIR}/map_segment/temp"]
+    options:
+        input_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
+        binary_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.tif"
+        json_output_path: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}_seg.geojson"
+        intermediate_dir: "{config.JOB_DIR}/map_segment/temp"
+        version: 0
+        log: "{config.JOB_DIR}/map_segment/output/log_file.txt"
+
+# 2
+legend_segment:
+    config:
+        docker_image: inferlink/ta1_legend_segment
+        make_dirs: ["{config.HOST_JOB_DIR}/legend_segment/output", "{config.HOST_JOB_DIR}/legend_segment/temp"]
+    options:
+        input: "{config.DATA_DIR}/{config.MAP_NAME}.tif"
+        output: "{config.JOB_DIR}/legend_segment/output"
+        workdir: "{config.JOB_DIR}/legend_segment/temp"
+        model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
+
+# 3
+legend_item_segment:
+    config:
+        docker_image: inferlink/ta1_legend_item_segment
+        make_dirs: ["{config.HOST_JOB_DIR}/legend_item_segment/output", "{config.HOST_JOB_DIR}/legend_item_segment/temp"]
+    options:
+        input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
+        output_dir: "{config.JOB_DIR}/legend_item_segment/output"
+        preprocessing_for_cropping: True
+        postprocessing_for_crs: True
+        path_to_mapkurator_output: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/mapkurator/{config.MAP_NAME}.geojson"
+        path_to_intermediate: "{config.JOB_DIR}/legend_item_segment/temp"
+        input_legend_segmentation: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
+        version: 0
+        log: "{config.JOB_DIR}/legend_item_segment/output/log_file.txt"
+
+# 4
+legend_item_description:
+    config:
+        docker_image: inferlink/ta1_legend_item_description
+        make_dirs: ["{config.HOST_JOB_DIR}/legend_item_description/output", "{config.HOST_JOB_DIR}/legend_item_description/temp"]
+    options:
+        map_dir: "{config.DATA_DIR}"
+        legend_json_path: "{legend_segment.options.output}"
+        symbol_json_dir: "{legend_item_segment.options.output_dir}"
+        map_name: "{config.MAP_NAME}"
+        gpt4_input_dir: "{config.JOB_DIR}/legend_item_description/input"
+        gpt4_output_dir: "{config.JOB_DIR}/legend_item_description/output"
+        gpt4_intermediate_dir: "{config.JOB_DIR}/legend_item_description/temp"
+
+# 5
+map_crop:
+    config:
+        docker_image: inferlink/ta1_map_crop
+        make_dirs: ["{config.HOST_JOB_DIR}/map_crop/output", "{config.HOST_JOB_DIR}/map_crop/temp"]
+    options:
+        input_dir: "{config.DATA_DIR}"
+        map_name: "{config.MAP_NAME}"
+        patch_sizes: [1000, 256, 1024]
+        strides: [500, 256, 256]
+        output_dir: "{config.JOB_DIR}/map_crop/output"
+
+# 6
+text_spotting:
+    config:
+        docker_image: inferlink/ta1_text_spotting
+        make_dirs: ["{config.HOST_JOB_DIR}/text_spotting/output", "{config.HOST_JOB_DIR}/text_spotting/temp"]
+        user: root
+    options:
+        map_kurator_system_dir: "{config.DATA_DIR}/mapkurator/mapkurator-system/"
+        input_dir_path: "{map_crop.options.output_dir}/{config.MAP_NAME}_g1000_s500/"
+        model_weight_path: "{config.DATA_DIR}/mapkurator/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth"
+        expt_name: "mapKurator_test"
+        module_text_spotting: None
+        text_spotting_model_dir: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/"
+        spotter_model: "spotter_v2"
+        spotter_config: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml"
+        spotter_expt_name: "test"
+        module_img_geojson: None
+        output_folder: "{config.JOB_DIR}/github_test/mapkurator/mapkurator-test-images/output/"
+
+# 7
+line_extract:
+    config:
+        docker_image: inferlink/ta1_line_extract
+        make_dirs: ["{config.HOST_JOB_DIR}/line_extract/output", "{config.HOST_JOB_DIR}/line_extract/temp"]
+    options:
+        config: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/usgs_railroads.yaml"
+        map_name: "{config.MAP_NAME}"
+        cuda_visible_device: 0
+        predict_raster: True
+        predict_vector: False
+        map_legend_json: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract"
+        cropped_image_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/{config.MAP_NAME}_g256_s256/"
+        trained_model_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/trained_weights"
+        #checkpoint: "{config.DATA_DIR}/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/thrust_fault_line_token110_distConn7_adjLoss20_6pos_4neg_10/models/checkpoint_epoch=200.pt"
+        #line_feature_name: "thrust_fault_line"
+        #test_tif_map_dir: "{config.JOB_DIR}/validation"
+        #test_png_map_dir: "{config.JOB_DIR}/validation_thrust_fault_line_github"
+        #cropped_image_dir: "{map_crop.options.output_dir}"
+        #map_bound_dir: "{config.DATA_DIR}/updated_cropped_map_mask_validation"
+
+# 8
+polygon_extract:
+    config:
+        docker_image: inferlink/ta1_polygon_extract
+        make_dirs: ["{config.HOST_JOB_DIR}/polygon_extract/output", "{config.HOST_JOB_DIR}/polygon_extract/temp"]
+    options:
+        path_to_tif: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
+        path_to_json: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/polygon_extract/{config.MAP_NAME}.tif"
+        path_to_legend_solution: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/polygon_extract/{config.MAP_NAME}_PolygonType.geojson"
+        #path_to_bound: "{map_segment.options.json_output_path}"
+        dir_to_integrated_output:  "{config.JOB_DIR}/polygon_extract/output/vectors"
+        version: 0
+        log: "{config.JOB_DIR}/polygon_extract/output/log_file.txt"
