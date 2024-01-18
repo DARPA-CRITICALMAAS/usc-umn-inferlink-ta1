@@ -1,13 +1,9 @@
-#FROM nvidia/cuda:11.4.0-base-ubuntu20.04
-#FROM pytorch/pytorch
-
 FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel
 
 RUN apt update 
 RUN \
-  DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata \
-  && apt-get -y install apt-utils \
-  && apt-get -y install  software-properties-common \
+  DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y tzdata \
+  && apt-get install -y apt-utils software-properties-common \
   && conda update -y -n base -c defaults conda
 
 RUN conda install -y -n base \
