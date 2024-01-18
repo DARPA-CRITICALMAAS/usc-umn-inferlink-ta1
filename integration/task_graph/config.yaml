@@ -37,7 +37,7 @@ legend_segment:
         # misc:
         model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
 
-# 3
+# 3: uses 1 and 2
 legend_item_segment:
     config:
         docker_image: inferlink/ta1_legend_item_segment
@@ -45,7 +45,8 @@ legend_item_segment:
     options:
         # inputs:
         input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        path_to_mapkurator_output: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.geojson"
+        ###BUG path_to_mapkurator_output: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.geojson"
+        path_to_mapkurator_output: "{config.DATA_DIR}/references/legend_item_segmentation/Example_Input/{config.MAP_NAME}.geojson"
         input_legend_segmentation: "{config.DATA_DIR}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
         # outputs:
         output_dir: "{config.JOB_DIR}/legend_item_segment/output"
@@ -56,7 +57,7 @@ legend_item_segment:
         version: 0
         log: "{config.JOB_DIR}/legend_item_segment/temp/log_file.txt"
 
-# 4
+# 4: uses 2 and 3
 legend_item_description:
     config:
         docker_image: inferlink/ta1_legend_item_description
@@ -70,10 +71,10 @@ legend_item_description:
         # inputs:
         map_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
         map_name: "{config.MAP_NAME}"
-        legend_json_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/map_segment_outputs"
-        symbol_json_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/legend_segment_outputs"
+        legend_json_path: "{config.JOB_DIR}/legend_segment/output"
+        symbol_json_dir: "{config.JOB_DIR}/legend_item_segment/output"
         # outputs:
-        gpt4_output_dir: "{config.JOB_DIR}/temp/legend_item_description/output"
+        gpt4_output_dir: "{config.JOB_DIR}/legend_item_description/output"
         # misc:
         gpt4_input_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_input_dir"
         gpt4_intermediate_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_temp_dir"

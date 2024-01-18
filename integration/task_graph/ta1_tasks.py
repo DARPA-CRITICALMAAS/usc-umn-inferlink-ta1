@@ -189,10 +189,10 @@ class TA1Task(SimpleTask):
             # LegendSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 3
-            LegendItemSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            # LegendItemSegmentTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 4
-            # LegendItemDescriptionTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            LegendItemDescriptionTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 5
             # MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
