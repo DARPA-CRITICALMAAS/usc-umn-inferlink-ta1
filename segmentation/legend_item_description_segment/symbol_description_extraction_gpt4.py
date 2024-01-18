@@ -64,7 +64,9 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
     
 def call_gpt_api(image_path, max_attempts=10, delay=5):
-    client = OpenAI()
+    api_key = os.environ.get("OPENAI_API_KEY").strip()
+    client = OpenAI(api_key=api_key)
+
     base64_image = encode_image(image_path)
     
     for attempt in range(max_attempts):
