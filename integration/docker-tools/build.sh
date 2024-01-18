@@ -22,6 +22,9 @@ if [ "$do_pull" -eq 1 ]
 then
     for i in $MODULE_IMAGES
     do
+	echo ""
+	echo "*** $i... ***"
+	echo ""
 	docker pull $i
     done
 fi
@@ -30,6 +33,9 @@ if [ "$do_build" -eq 1 ]
 then
     for i in $MODULE_DIRS
     do
+	echo ""
+	echo "*** $i... ***"
+	echo ""
 	pushd $REPO_ROOT/$i/docker
 	./build_docker.sh
 	popd
@@ -40,6 +46,9 @@ if [ "$do_push" -eq 1 ]
 then
     for i in $MODULE_IMAGES
     do
+	echo ""
+	echo "*** $i... ***"
+	echo ""
 	docker push $i
     done
 fi
