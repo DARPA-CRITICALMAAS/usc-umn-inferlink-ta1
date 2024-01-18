@@ -195,10 +195,10 @@ class TA1Task(SimpleTask):
             # LegendItemDescriptionTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 5
-            MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            # MapCropTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 6
-            # TextSpottingTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
+            TextSpottingTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
 
             # 7
             # LineExtractTask(job_id=self.job_id, job_name=self.job_name, _config=self.config),
@@ -208,7 +208,7 @@ class TA1Task(SimpleTask):
         ]
 
     def output(self):
-        return luigi.LocalTarget(f"{self.host_job_dir}/{self.NAME}-task.txt")
+        return luigi.LocalTarget(f"{self.host_job_dir}/end-{self.NAME}-task.txt")
 
     def run(self):
         with self.output().open('w') as f:

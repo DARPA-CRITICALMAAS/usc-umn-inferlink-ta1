@@ -8,7 +8,8 @@ config:
     HOST_JOB_DIR: "{HOST_JOB_DIR}"
     OPENAI_API_KEY: "{OPENAI_API_KEY}"
 
-# 1
+# 1: uses nothing
+# segmentation/map_area_segmentation - Fandel
 map_segment:
     config:
         docker_image: inferlink/ta1_map_segment
@@ -24,7 +25,8 @@ map_segment:
         version: 0
         log: "{config.JOB_DIR}/map_segment/temp/log_file.txt"
 
-# 2
+# 2: uses nothing
+# integration/legend_segment - Uncharted
 legend_segment:
     config:
         docker_image: inferlink/ta1_legend_segment
@@ -37,7 +39,8 @@ legend_segment:
         # misc:
         model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
 
-# 3: uses 1 and 2
+# 3: uses 6 and 2
+# segmentation/legend_item_segmentation - Fandel
 legend_item_segment:
     config:
         docker_image: inferlink/ta1_legend_item_segment
@@ -45,8 +48,8 @@ legend_item_segment:
     options:
         # inputs:
         input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        ###BUG path_to_mapkurator_output: "{config.JOB_DIR}/map_segment/output/{config.MAP_NAME}.geojson"
-        path_to_mapkurator_output: "{config.DATA_DIR}/references/legend_item_segmentation/Example_Input/{config.MAP_NAME}.geojson"
+        path_to_mapkurator_output: "{config.JOB_DIR}/text_spotting/output/{config.MAP_NAME}.geojson"
+        ###path_to_mapkurator_output: "{config.DATA_DIR}/references/legend_item_segmentation/Example_Input/{config.MAP_NAME}.geojson"
         input_legend_segmentation: "{config.DATA_DIR}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
         # outputs:
         output_dir: "{config.JOB_DIR}/legend_item_segment/output"
@@ -58,6 +61,7 @@ legend_item_segment:
         log: "{config.JOB_DIR}/legend_item_segment/temp/log_file.txt"
 
 # 4: uses 2 and 3
+# segmentation/legend_item_description_segment - Weiwei
 legend_item_description:
     config:
         docker_image: inferlink/ta1_legend_item_description
@@ -79,7 +83,8 @@ legend_item_description:
         gpt4_input_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_input_dir"
         gpt4_intermediate_dir: "{config.JOB_DIR}/legend_item_description/temp/gpt4_temp_dir"
 
-# 5
+# 5: uses nothing
+# system/image_crop - Weiwei
 map_crop:
     config:
         docker_image: inferlink/ta1_map_crop
@@ -96,66 +101,63 @@ map_crop:
         patch_sizes: [1000, 256]
         strides: [100, 100]
 
-# 6
+# 6: uses 5
+# integration/text_spotting - Weiwei (Zekun)
 text_spotting:
     config:
         docker_image: inferlink/ta1_text_spotting
         make_dirs: ["{config.HOST_JOB_DIR}/text_spotting/output", "{config.HOST_JOB_DIR}/text_spotting/temp"]
         user: root
     options:
-        map_kurator_system_dir: The directory to map_kurator_system for MapKurator
-        text_spotting_model_dir: The directory to the spotting model for MapKurator
-        spotter_config: The path to the config file for MapKurator
-        output_folder: The directory to save the text spotting results in geojson
-        model_weight_path: The path to the pretrained model
-
         # inputs:
-        input_dir_path: "{map_crop.options.output_dir}/{config.MAP_NAME}_g1000_s100/"
+        input_dir_path: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g1000_s100"
         # outputs:
+        output_folder: "{config.JOB_DIR}/text_spotting/output"
         # misc:
-        ##map_kurator_system_dir: /ta1/dev/system/mapkurator/mapkurator-system
+        model_weight_path: "{config.DATA_DIR}/text_spotting/model_final.pth"
+        spotter_config: "{config.DATA_DIR}/text_spotting/SynthMap_Polygon.yaml"
+        map_kurator_system_dir: /ta1/dev/usc-umn-inferlink-ta1/system/mapkurator/mapkurator-system
+        text_spotting_model_dir: /ta1/dev/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN
+        expt_name: mapKurator_test
+        module_text_spotting: ""
+        spotter_model: spotter_v2
+        spotter_expt_name: test
+        module_img_geojson: ""
 
-        ##model_weight_path: "{config.DATA_DIR}/mapkurator/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth"
-        ##expt_name: "mapKurator_test"
-        ##module_text_spotting: None
-        ##text_spotting_model_dir: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/"
-        ##spotter_model: "spotter_v2"
-        ##spotter_config: "{config.DATA_DIR}/github_test/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml"
-        ##spotter_expt_name: "test"
-        ##module_img_geojson: None
-        ##output_folder: "{config.JOB_DIR}/github_test/mapkurator/mapkurator-test-images/output/"
-
-# 7
+# 7: uses 4 and 5
+# line - Weiwei
 line_extract:
     config:
         docker_image: inferlink/ta1_line_extract
         make_dirs: ["{config.HOST_JOB_DIR}/line_extract/output", "{config.HOST_JOB_DIR}/line_extract/temp"]
     options:
-        config: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/usgs_railroads.yaml"
+        # inputs:
+        map_legend_json: "{config.JOB_DIR}/legend_item_description/outputs"
+        cropped_image_dir: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g1000_s100"
+        # outputs:
+        prediction_dir: "{config.JOB_DIR}/line_extract/output"
+        # misc:
+        config: "{config.DATA_DIR}/inputs/line_extract/usgs_railroads.yaml"
         map_name: "{config.MAP_NAME}"
         cuda_visible_device: 0
         predict_raster: True
         predict_vector: False
-        map_legend_json: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract"
-        cropped_image_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/{config.MAP_NAME}_g256_s256/"
-        trained_model_dir: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/line_extract/trained_weights"
-        #checkpoint: "{config.DATA_DIR}/LDTR_criticalmaas_online_pos_neg/trained_weights/runs/thrust_fault_line_token110_distConn7_adjLoss20_6pos_4neg_10/models/checkpoint_epoch=200.pt"
-        #line_feature_name: "thrust_fault_line"
-        #test_tif_map_dir: "{config.JOB_DIR}/validation"
-        #test_png_map_dir: "{config.JOB_DIR}/validation_thrust_fault_line_github"
-        #cropped_image_dir: "{map_crop.options.output_dir}"
-        #map_bound_dir: "{config.DATA_DIR}/updated_cropped_map_mask_validation"
+        trained_model_dir: "{config.DATA_DIR}/line_extract/trained_weights"
 
-# 8
+# 8: uses 3 and 4
+# polygon - Fandel
 polygon_extract:
     config:
         docker_image: inferlink/ta1_polygon_extract
         make_dirs: ["{config.HOST_JOB_DIR}/polygon_extract/output", "{config.HOST_JOB_DIR}/polygon_extract/temp"]
     options:
+        # inputs:
+        path_to_legend_solution: "{config.JOB_DIR}/legend_item_segment/outputs/{config.MAP_NAME}_PolygonType.geojson"
         path_to_tif: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        path_to_json: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/polygon_extract/{config.MAP_NAME}.tif"
-        path_to_legend_solution: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/polygon_extract/{config.MAP_NAME}_PolygonType.geojson"
-        #path_to_bound: "{map_segment.options.json_output_path}"
-        dir_to_integrated_output:  "{config.JOB_DIR}/polygon_extract/output/vectors"
+        path_to_json: "{config.JOB_DIR}/legend_item_description/output/{config.MAP_NAME}.json"
+        # outputs:
+        dir_to_integrated_output:  "{config.JOB_DIR}/polygon_extract/output"
+        # misc:
         version: 0
         log: "{config.JOB_DIR}/polygon_extract/output/log_file.txt"
+

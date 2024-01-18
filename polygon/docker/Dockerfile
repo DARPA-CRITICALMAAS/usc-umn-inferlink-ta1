@@ -1,10 +1,6 @@
 FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-devel
 
-RUN apt update
-RUN \
-  DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y tzdata \
-  && apt-get install -y apt-utils software-properties-common \
-  && conda update -y -n base -c defaults conda
+# INCLUDEX base.txt
 
 RUN conda install -y -n base \
     scipy \
