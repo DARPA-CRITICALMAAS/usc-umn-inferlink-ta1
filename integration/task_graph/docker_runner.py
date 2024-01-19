@@ -17,6 +17,7 @@ class DockerRunner:
                  volumes: list[str],  # [/host:/container]
                  environment: list[str], # [VAR=value]
                  log_file: Path,
+                 gpus: bool,
                  user: Optional[str] = None):
 
         self._log_file = log_file
@@ -25,10 +26,14 @@ class DockerRunner:
 
         mounts = [_make_mount(v) for v in volumes]
 
-        gpus = docker.types.DeviceRequest(
-            driver="nvidia",
-            count=-1,
-            capabilities=[["gpu"]])
+        if gpus:
+            device = docker.types.DeviceRequest(
+                driver="nvidia",
+                count=-1,
+                capabilities=[["gpu"]])
+            devices = [device]
+        else:
+            devices = []
 
         try:
             c = self._client.containers.get(name)
@@ -43,18 +48,20 @@ class DockerRunner:
             command=command,
             environment=environment,
             user=user,
-            device_requests=[gpus],
+            device_requests=devices,
         )
 
         vs = ""
         for v in volumes:
             vs += f" -v {v}"
-        cs = ""
-        for c in command:
-            cs += f" {c}"
 
-        run1 = f"# docker run --gpus all -it --entrypoint bash {vs} {image}\n"
-        run2 = f"# docker run --gpus all --user {user} {vs} {image} {cs}\n"
+        options = ""
+        for c in command:
+            options += f" {c}"
+
+        gpus_s = "--gpus all" if gpus else ""
+        run1 = f"# docker run {gpus_s} --user {user} {vs} -it --entrypoint bash {image}\n"
+        run2 = f"# docker run {gpus_s} --user {user} {vs} {image} {options}\n"
 
         print("-----------------------------------------------\n")
         print(run1)

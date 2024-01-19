@@ -106,11 +106,17 @@ map_crop:
 text_spotting:
     config:
         docker_image: inferlink/ta1_text_spotting
-        make_dirs: ["{config.HOST_JOB_DIR}/text_spotting/output", "{config.HOST_JOB_DIR}/text_spotting/temp"]
+        make_dirs: [
+            "{config.HOST_JOB_DIR}/text_spotting/output",
+            "{config.HOST_JOB_DIR}/text_spotting/temp",
+            "{config.HOST_JOB_DIR}/text_spotting/output/mapKurator_test/crop",
+            "{config.HOST_JOB_DIR}/text_spotting/output/mapKurator_test/spotter",
+        ]
         user: root
+        gpus: True
     options:
         # inputs:
-        input_dir_path: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g1000_s100"
+        input_dir_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
         # outputs:
         output_folder: "{config.JOB_DIR}/text_spotting/output"
         # misc:
