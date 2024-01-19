@@ -47,6 +47,8 @@ class DockerTask(SimpleTask):
 
         image = tool_config["docker_image"]
 
+        gpus = tool_config.get("gpus", "True").lower().strip() in ("yes", "y", "true", "t", "1")
+
         docker_log = Path(f"{self.config.data['config']['HOST_JOB_DIR']}/{self.NAME}.docker.log")
 
         options = []
@@ -80,6 +82,7 @@ class DockerTask(SimpleTask):
             environment=environment,
             log_file=docker_log,
             user=user,
+            gpus=gpus,
         )
 
     def run(self):
