@@ -3,7 +3,7 @@ matplotlib
 collection
 statistics
 opencv-python-headless==4.6.0.66
-Pillow==9.4.0
+Pillow
 datetime
 scikit-image
 pathlib
@@ -11,15 +11,13 @@ tqdm
 wandb
 joblib
 pyvips
-pandas==2.0.3
-geopandas==0.13.2
-shapely==2.0.1
+pandas
+geopandas
+shapely
 GDAL==3.6.2
 rasterio
-shutil
 pyproj
-
-
+pytesseract
 
 
 
