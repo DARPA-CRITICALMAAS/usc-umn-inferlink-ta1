@@ -1,3 +1,4 @@
+# Text-based Georferencing
 
 ## Dependencies:
 * Data dependency: create a folder named `support_data` the same level as `run_georeference.py` and download the following files to the folder:
