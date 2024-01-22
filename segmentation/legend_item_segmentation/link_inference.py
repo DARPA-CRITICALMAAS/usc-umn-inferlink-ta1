@@ -37,7 +37,7 @@ import map_area_segmenter
 import json
 
 
-def processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation):
+def processing_uncharted_json_batch(input_legend_segmentation, target_map_name, output_segmentation):
     with open(input_legend_segmentation) as f:
         gj = json.load(f)
     
@@ -77,7 +77,21 @@ def processing_uncharted_json(input_legend_segmentation, target_map_name, output
     return True
 
 
+def processing_uncharted_json_single(input_image, input_legend_segmentation, target_map_name, output_segmentation):
+    with open(input_legend_segmentation) as f:
+        gj = json.load(f)
+    
+    img0 = cv2.imread(input_image)
+    gray0 = cv2.cvtColor(img0,cv2.COLOR_BGR2GRAY)
+    legend_area_placeholder = np.zeros((gray0.shape[0],gray0.shape[1]), dtype='uint8')
 
+    for this_gj in gj['segments']:
+        if 'legend_polygons' in this_gj['class_label'] or 'legend_points_lines' in this_gj['class_label']:
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds']), 1)
+            legend_area_placeholder[legend_area_placeholder > 0] = 255
+    
+    cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'), legend_area_placeholder)
+    return True
                     
 
 def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping):
@@ -94,12 +108,14 @@ def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_
         #print('*Please note that the output json for map area segmentation has not directly used this source...')
         if '.tif' not in input_legend_segmentation:
             print('    Input for legend_area segmentation is not given as a single tif file; will process the json file first...')
-            processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation)
+            processing_uncharted_json_single(input_image, input_legend_segmentation, target_map_name, output_segmentation)
         else:
             shutil.copyfile(input_legend_segmentation, output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.imread(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
     else:
+        print('Highly recommended to use legend-area segmentation output from Uncharted......')
+
         if preprocessing_for_cropping == True:
             # if preprocessing for map area segmentation is needed...
             print('Step (0/9): Preprocessing for map area segmentation...')
