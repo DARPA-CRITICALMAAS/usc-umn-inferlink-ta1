@@ -1,7 +1,9 @@
 # Text-based Georferencing
 
 ## Dependencies:
-* Data dependency: create a folder named `support_data` the same level as `run_georeference.py` and download the following files to the folder:
+* Data dependency:
+  - Create a folder named `support_data` at the same level as `run_georeference.py` 
+  - Download the following files to the folder:
    [Support data download link](https://drive.google.com/drive/folders/17eHH1y71tB_WGizi88d2FLB5U8EujniV)
 * Package dependency: `python3 -m pip install -r requirements.txt`
 * Python version: Python3.10 and above
