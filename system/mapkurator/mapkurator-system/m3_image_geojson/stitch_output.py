@@ -13,7 +13,6 @@ pd.options.mode.chained_assignment = None
 def concatenate_and_convert_to_geojson(args):
     map_subdir = args.input_dir
     output_geojson = args.output_geojson
-    shift_size = args.shift_size
     eval_bool = args.eval_only
 
     file_list = glob.glob(map_subdir + '/*.json')
@@ -33,12 +32,12 @@ def concatenate_and_convert_to_geojson(args):
             
 
         for index, line_data in df.iterrows():
-            df['polygon_x'][index] = np.array(df['polygon_x'][index]) + shift_size * patch_index_w
-            df['polygon_y'][index] = np.array(df['polygon_y'][index]) + shift_size * patch_index_h
+            df['polygon_x'][index] = np.array(df['polygon_x'][index]) + patch_index_w #shift_size * 
+            df['polygon_y'][index] = np.array(df['polygon_y'][index]) + patch_index_h #shift_size * 
+        
         map_data.append(df)
 
     map_df = pd.concat(map_data)
-    print(map_df)
 
     features = []
     for index, line_data in map_df.iterrows():
@@ -46,7 +45,7 @@ def concatenate_and_convert_to_geojson(args):
         
         if eval_bool ==  False: 
              # y is kept to be positive.  Needs to be negative for QGIS visualization
-            polygon = Polygon([[[x,-y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], -polygon_y[0]]]])
+            polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
         else:
             polygon = Polygon([[[x,y] for x,y in zip(polygon_x, polygon_y)]+[[polygon_x[0], polygon_y[0]]]])
             
@@ -66,14 +65,11 @@ def concatenate_and_convert_to_geojson(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_dir', type=str, default='data/100_maps_crop_abc/0063014',
+    parser.add_argument('--input_dir', type=str, default='/data/weiweidu/usc-umn-inferlink-ta1_local/system/mapkurator_outputs/mapKurator_test/spotter/test',
                         help='path to input json path.')
     
-    parser.add_argument('--output_geojson', type=str, default='data/100_maps_geojson_abc/0063014.geojson',
+    parser.add_argument('--output_geojson', type=str, default='/data/weiweidu/usc-umn-inferlink-ta1_local/system/mapkurator_outputs/mapKurator_test/stitch/test/14484_9220.geojson',
                         help='path to output geojson path')
-
-    parser.add_argument('--shift_size', type=int, default = 1000,
-                        help='image patch size and shift size.')
     
     # This can not be of string type. Otherwise it will be interpreted to True all the time.
     parser.add_argument('--eval_only', default = False, action='store_true',
