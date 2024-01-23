@@ -38,7 +38,7 @@ MAPKURATOR:
     INPUT_DIR_PATH: '/data/weiweidu/criticalmaas_data/hackathon2/mvtzinc_maps/cropped_images/10639_2_g1000_s500/'
     TEXT_SPOTTING_MODEL_DIR: '/data/weiweidu/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/'
     SPOTTER_CONFIG: '/data/weiweidu/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml'
-    OUTPUT_FOLDER: '/data/weiweidu/criticalmaas_data/hackathon2/mapkurator_output'
+    OUTPUT_FOLDER: '/data/weiweidu/criticalmaas_data/hackathon2/mapkurator_output/10639_2_g1000_s500/'
     
     
 LINE_EXTRACTION:

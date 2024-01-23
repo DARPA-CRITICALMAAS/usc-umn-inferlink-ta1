@@ -37,7 +37,7 @@ import map_area_segmenter
 import json
 
 
-def processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation):
+def processing_uncharted_json_batch(input_legend_segmentation, target_map_name, output_segmentation):
     with open(input_legend_segmentation) as f:
         gj = json.load(f)
     
@@ -77,7 +77,21 @@ def processing_uncharted_json(input_legend_segmentation, target_map_name, output
     return True
 
 
+def processing_uncharted_json_single(input_image, input_legend_segmentation, target_map_name, output_segmentation):
+    with open(input_legend_segmentation) as f:
+        gj = json.load(f)
+    
+    img0 = cv2.imread(input_image)
+    gray0 = cv2.cvtColor(img0,cv2.COLOR_BGR2GRAY)
+    legend_area_placeholder = np.zeros((gray0.shape[0],gray0.shape[1]), dtype='uint8')
 
+    for this_gj in gj['segments']:
+        if 'legend_polygons' in this_gj['class_label'] or 'legend_points_lines' in this_gj['class_label']:
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds']), 1)
+            legend_area_placeholder[legend_area_placeholder > 0] = 255
+    
+    cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'), legend_area_placeholder)
+    return True
                     
 
 def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping):
@@ -94,12 +108,14 @@ def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_
         #print('*Please note that the output json for map area segmentation has not directly used this source...')
         if '.tif' not in input_legend_segmentation:
             print('    Input for legend_area segmentation is not given as a single tif file; will process the json file first...')
-            processing_uncharted_json(input_legend_segmentation, target_map_name, output_segmentation)
+            processing_uncharted_json_single(input_image, input_legend_segmentation, target_map_name, output_segmentation)
         else:
             shutil.copyfile(input_legend_segmentation, output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.imread(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
     else:
+        print('Highly recommended to use legend-area segmentation output from Uncharted......')
+
         if preprocessing_for_cropping == True:
             # if preprocessing for map area segmentation is needed...
             print('Step (0/9): Preprocessing for map area segmentation...')
@@ -408,18 +424,21 @@ def read_results_from_mapkurator(target_map_name, input_image, path_to_intermedi
 
     map_name = target_map_name
     #mapkurator_source_name = os.path.join(path_to_mapkurator_output, map_name.replace('.tif', '.geojson'))
-    mapkurator_source_name = path_to_mapkurator_output
-    mapkurator_name = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_v2.geojson'))
-    basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
+    if os.path.isfile(path_to_mapkurator_output) == True:
+        mapkurator_source_name = path_to_mapkurator_output
+        mapkurator_name = os.path.join(path_to_intermediate, 'intermediate3_2', map_name.replace('.tif', '_v2.geojson'))
 
+        with open(mapkurator_source_name, 'r') as file:
+            source_data = file.read().replace('-', '')
+        with open(mapkurator_name, 'w') as file:
+            file.write(source_data)
+    else:
+        mapkurator_name = os.path.join(path_to_intermediate, 'intermediate9', map_name.replace('.tif', '_tesseract_v2.geojson'))
+    
+    
+    basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
     base_image = cv2.imread(basemap_name)
     base_image = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-
-
-    with open(mapkurator_source_name, 'r') as file:
-        source_data = file.read().replace('-', '')
-    with open(mapkurator_name, 'w') as file:
-        file.write(source_data)
 
     gdf = gpd.read_file(mapkurator_name, driver='GeoJSON')
     text_mask = np.zeros((base_image.shape[0], base_image.shape[1]), dtype='uint8')
@@ -1665,6 +1684,70 @@ def generating_geojson(target_map_name, input_image, path_to_intermediate):
 
 
 
+def generating_json(target_map_name, input_image, output_dir, path_to_intermediate):
+    print('Step (9/9): Preparing output json - Generating JSON file (competition format)...')
+
+    map_name = target_map_name
+
+    linked_poly_description1 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType.geojson')), driver='GeoJSON')
+    new_item = []
+
+    for index, row in linked_poly_description1.iterrows():
+        if len(row['abbreviation']) > 0:
+            this_poly_name = row['abbreviation'] + '_poly'
+        else:
+            this_poly_name = str(row['id']) + '_poly'
+        this_legend_bounds = row['geometry'].bounds
+        this_item = {}
+        this_item['label'] = this_poly_name
+        this_item['points'] = [[this_legend_bounds[0], -1.0*this_legend_bounds[1]], [this_legend_bounds[2], -1.0*this_legend_bounds[3]]]
+        this_item['group_id'] = None
+        this_item['shape_type'] = 'rectangle'
+        this_item['flags']: None
+        new_item.append(this_item)
+
+    updated_record = {}
+    updated_record['version'] = '0.0.1'
+    updated_record['flags'] = None
+    updated_record['shapes'] = new_item
+
+    with open(os.path.join(output_dir, map_name.replace('.tif', '_PolygonType_internal.json')), 'w') as outfile: 
+        json.dump(updated_record, outfile)
+
+
+
+
+    linked_poly_description1 = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType.geojson')), driver='GeoJSON')
+    new_item = []
+
+    for index, row in linked_poly_description1.iterrows():
+        if len(row['abbreviation']) > 0:
+            this_poly_name = row['abbreviation'] + '_poly'
+        else:
+            this_poly_name = str(row['id']) + '_poly'
+        this_legend_bounds = row['geometry'].bounds
+        this_item = {}
+        this_item['label'] = this_poly_name
+        this_item['points'] = [[this_legend_bounds[0], -1.0*this_legend_bounds[1]], [this_legend_bounds[2], -1.0*this_legend_bounds[3]]]
+        this_item['group_id'] = None
+        this_item['shape_type'] = 'rectangle'
+        this_item['flags']: None
+        new_item.append(this_item)
+
+    updated_record = {}
+    updated_record['version'] = '0.0.1'
+    updated_record['flags'] = None
+    updated_record['shapes'] = new_item
+
+    with open(os.path.join(output_dir, map_name.replace('.tif', '_PointLineType_internal.json')), 'w') as outfile: 
+        json.dump(updated_record, outfile)
+
+
+
+    return True
+
+
+
 
 def adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir, postprocessing_for_crs):
     if not os.path.exists(output_dir):
@@ -1738,6 +1821,7 @@ def start_linking(target_map_name, input_image, output_dir, path_to_intermediate
     linking_description_pointline(target_map_name, input_image, path_to_intermediate)
     integrating_result(target_map_name, input_image, path_to_intermediate)
     generating_geojson(target_map_name, input_image, path_to_intermediate)
+    generating_json(target_map_name, input_image, output_dir, path_to_intermediate)
     adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir, postprocessing_for_crs)
 
 

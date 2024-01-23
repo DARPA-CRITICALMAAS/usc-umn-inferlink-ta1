@@ -87,5 +87,7 @@ def get_toponym_tokens(query_sentence, device):
 
     query_tokens = tokens[0][torch.where(predicted_labels[0] != 0)[0]]
 
+    print(query_tokens)
+
     human_readable = generate_human_readable(tokenizer.convert_ids_to_tokens(query_tokens))
     return query_tokens, human_readable
