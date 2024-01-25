@@ -157,24 +157,50 @@ def getTitle(base64_image):
     return response.json()['choices'][0]['message']['content']
 
 
+
 #check and downscale:
-def downscale(image, max_size=13):
-    
+def downscale(image, max_size=9):
+
+    print("downscaling...")
+
     buffer = io.BytesIO()
+
     image.save(buffer, format="JPEG")  
+
     img_size = buffer.tell() / (1024 * 1024)
+
     
     if img_size > max_size:
+
         downscale_factor = max_size / img_size
+
         downscale_factor = max(downscale_factor, 0.1)
-        
+
         new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
-        
+
+        while True:
+            downscaled_img = image.resize(new_size)
+            buffer = io.BytesIO()
+            downscaled_img.save(buffer, format="JPEG")
+            downscaled_size = buffer.tell() / (1024 * 1024)
+
+            print(downscaled_size)
+
+            if downscaled_size <= max_size:
+                print("down.")
+                break  
+            else:
+                downscale_factor *= 0.8 
+
+            print("downscaled x 1")
+
+            new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
+
+        print("after downscaled, the new size is: ")
+        print(new_size)
+
         downscaled_img = image.resize(new_size)
-        
-        # st.write(f"image has downscaled")
-        # st.image(downscaled_img)
-        
+
         return downscaled_img
     else:
         return image
