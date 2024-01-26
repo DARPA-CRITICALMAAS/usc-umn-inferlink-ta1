@@ -15,3 +15,9 @@ __pycache__/
 # ignore temp dockerfiles
 Dockerfile.tmp
 
+# PyCharm
+.idea
+
+# emacs
+*~
+

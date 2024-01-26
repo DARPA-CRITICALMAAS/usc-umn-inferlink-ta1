@@ -15,15 +15,14 @@ RUN conda install -y -n base \
 RUN apt install -y libtiff-dev \
     && apt install -y tesseract-ocr libtesseract-dev \
     && pip --no-input install pytesseract \
-    && conda install -y -n base rasterio pyproj
+    && pip --no-input install --upgrade openai
 
-RUN pip install openai
+ARG openai_api_key
+ENV OPENAI_API_KEY=$openai_api_key
 
 # INCLUDEX perms.txt
 
 COPY . /ta1/dev/usc-umn-inferlink-ta1/
 
-ENV TESSERACT_EXE=/usr/bin/tesseract
 CMD []
-ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/map_legend_segmentation.py"]
-
+ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/segmentation/legend_item_description_segment/gpt4_main.py"]

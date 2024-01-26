@@ -1,0 +1,5 @@
+RUN apt update
+RUN \
+  DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y tzdata \
+  && apt-get install -y apt-utils software-properties-common \
+  && conda update -y -n base -c defaults conda

@@ -19,4 +19,5 @@ RUN apt install -y libtiff-dev
 COPY . /ta1/dev/usc-umn-inferlink-ta1/
 
 CMD []
-ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/segmentation/map_area_segmentation/map_area_segmentation.py"]
+ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/line/run_line_extraction.py"]
+
