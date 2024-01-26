@@ -9,6 +9,6 @@ folium
 rasterio 
 streamlit_folium
 opencv-python
-torchvision
+torchvision==0.16.0
 matplotlib
 
