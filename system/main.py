@@ -94,4 +94,10 @@ if __name__ == '__main__':
     
     run_command(polygon_extract_command)
     
+    # ===============================================================
+    # text-based georeferencing
+    
+    georeferencing_command = f"python ../georeferencing/text-based/run_georenference.py --input_path {config.GEOREFERENCING.INPUT_MAP_PATH}, --output_path {config.GEOREFERENCING.OUTPUT_PATH}"
+    
+    run_command(georeferencing_command)
     

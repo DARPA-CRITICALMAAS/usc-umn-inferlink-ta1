@@ -153,7 +153,8 @@ def getTitle(base64_image):
     }
 
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-    
+    print(dir(response))
+    print(response.text)
     return response.json()['choices'][0]['message']['content']
 
 
