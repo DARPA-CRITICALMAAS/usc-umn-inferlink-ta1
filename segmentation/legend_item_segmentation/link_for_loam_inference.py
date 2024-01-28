@@ -71,6 +71,7 @@ from scipy import sparse
 import pyvips
 
 import shutil
+import gdown
 
 import multiprocessing
 PROCESSES = 10
@@ -1018,6 +1019,11 @@ def model_testing():
     if os.path.isfile('checkpoints/epoch.txt') == True:
         with open('checkpoints/epoch.txt', 'r') as file:
             read_targeted_epoch = int(file.read().replace('\n', ''))
+    
+    if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(read_targeted_epoch)+'.pth')) == False:
+        url = 'https://drive.google.com/uc?id=1ARdbQcFGtS8EcVGPUuYuWof5Y6x7JnEe'
+        output = os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(read_targeted_epoch)+'.pth')
+        gdown.download(url, output, quiet=False)
 
     for epoch_id in range(read_targeted_epoch, 0, -1): # (20, 0, -1)
         if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(epoch_id)+'.pth')):
