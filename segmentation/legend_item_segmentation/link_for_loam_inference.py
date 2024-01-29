@@ -135,6 +135,12 @@ def setup_directory():
         os.makedirs('LOAM_Intermediate/output')
     if not os.path.exists('LOAM_Intermediate/predict'):
         os.makedirs('LOAM_Intermediate/predict')
+    if not os.path.exists('checkpoints'):
+        os.makedirs('checkpoints')
+    if os.path.isfile('checkpoints/epoch.txt') == False:
+        with open('checkpoints/epoch.txt', 'w') as fep:
+            fep.write(str(1))
+            fep.close()
 
 
 
@@ -999,6 +1005,7 @@ def model_training():
 
         with open('checkpoints/epoch.txt', 'w') as fep:
             fep.write(str(best_epoch_id))
+            fep.close()
         return best_epoch_id
     else:
         print('training is already done...')
