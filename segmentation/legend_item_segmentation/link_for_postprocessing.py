@@ -34,6 +34,7 @@ import shutil
 import pyproj
 
 import json
+import csv
 
 
 
@@ -57,7 +58,7 @@ def processing_uncharted_json_batch(input_legend_segmentation, target_map_name, 
     
     if target_id == -1:
         return False
-    
+
     segmentation_added = 0
     for this_gj in gj['annotations']:
         if this_gj['image_id'] == target_id:
@@ -180,6 +181,12 @@ def reading_model_based_output(target_map_name, path_to_intermediate):
     raster_output_for_poly = cv2.cvtColor(raster_output_for_poly, cv2.COLOR_BGR2GRAY)
     raster_output_for_ptln = cv2.imread(model_based_output_for_ptln)
     raster_output_for_ptln = cv2.cvtColor(raster_output_for_ptln, cv2.COLOR_BGR2GRAY)
+    
+    placeholder = np.zeros((raster_output_for_poly.shape[0], raster_output_for_poly.shape[1]), dtype='uint8')
+    if os.path.isfile(legend_area_candidate_poly) == False:
+        cv2.imwrite(legend_area_candidate_poly, placeholder)
+    if os.path.isfile(legend_area_candidate_ptln) == False:
+        cv2.imwrite(legend_area_candidate_ptln, placeholder)
 
     raster_area_for_poly = cv2.imread(legend_area_candidate_poly)
     raster_area_for_poly = cv2.cvtColor(raster_area_for_poly, cv2.COLOR_BGR2GRAY)
@@ -429,37 +436,42 @@ def adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir
     map_name = target_map_name
     basemap_name = input_image
 
+    crs_flag = False
     if postprocessing_for_crs == True:
+        try:
+            # convert the image to a binary raster .tif
+            raster = rasterio.open(basemap_name)
+            transform = raster.transform
+            array     = raster.read(1)
+            crs       = raster.crs 
+            width     = raster.width 
+            height    = raster.height 
+            raster.close()
 
-        # convert the image to a binary raster .tif
-        raster = rasterio.open(basemap_name)
-        transform = raster.transform
-        array     = raster.read(1)
-        crs       = raster.crs 
-        width     = raster.width 
-        height    = raster.height 
-        raster.close()
+            this_epsg_code = pyproj.crs.CRS.from_proj4(crs.to_proj4()).to_epsg()
+        
+            trans_np = np.array(transform)
+            trans_matrix = [trans_np[0], trans_np[1], trans_np[3], -trans_np[4], trans_np[2], trans_np[5]]
+            #print(trans_matrix)
 
-        this_epsg_code = pyproj.crs.CRS.from_proj4(crs.to_proj4()).to_epsg()
-        #print('Target CRS:', this_epsg_code)
-        trans_np = np.array(transform)
-        trans_matrix = [trans_np[0], trans_np[1], trans_np[3], -trans_np[4], trans_np[2], trans_np[5]]
-        #print(trans_matrix)
-
-        original_file = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType.geojson')), driver='GeoJSON')
-        for index, poi in original_file.iterrows():
-            geo_series = gpd.GeoSeries(poi['geometry'])
-            original_file.loc[index, 'geometry'] = geo_series.affine_transform(trans_matrix).values[0]
-        original_file = original_file.set_crs('epsg:'+str(this_epsg_code), allow_override=True)
-        original_file.to_file(os.path.join(output_dir, map_name.replace('.tif', '_PolygonType_crs.geojson')), driver='GeoJSON')
+            original_file = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType.geojson')), driver='GeoJSON')
+            for index, poi in original_file.iterrows():
+                geo_series = gpd.GeoSeries(poi['geometry'])
+                original_file.loc[index, 'geometry'] = geo_series.affine_transform(trans_matrix).values[0]
+            original_file = original_file.set_crs('epsg:'+str(this_epsg_code), allow_override=True)
+            original_file.to_file(os.path.join(output_dir, map_name.replace('.tif', '_PolygonType_crs.geojson')), driver='GeoJSON')
 
 
-        original_file = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType.geojson')), driver='GeoJSON')
-        for index, poi in original_file.iterrows():
-            geo_series = gpd.GeoSeries(poi['geometry'])
-            original_file.loc[index, 'geometry'] = geo_series.affine_transform(trans_matrix).values[0]
-        original_file = original_file.set_crs('epsg:'+str(this_epsg_code), allow_override=True)
-        original_file.to_file(os.path.join(output_dir, map_name.replace('.tif', '_PointLineType_crs.geojson')), driver='GeoJSON')
+            original_file = gpd.read_file(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType.geojson')), driver='GeoJSON')
+            for index, poi in original_file.iterrows():
+                geo_series = gpd.GeoSeries(poi['geometry'])
+                original_file.loc[index, 'geometry'] = geo_series.affine_transform(trans_matrix).values[0]
+            original_file = original_file.set_crs('epsg:'+str(this_epsg_code), allow_override=True)
+            original_file.to_file(os.path.join(output_dir, map_name.replace('.tif', '_PointLineType_crs.geojson')), driver='GeoJSON')
+            
+            crs_flag = True
+        except:
+            print('Invalid CRS...')
 
     shutil.copyfile(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PolygonType.geojson')), os.path.join(output_dir, map_name.replace('.tif', '_PolygonType.geojson')))
     shutil.copyfile(os.path.join(path_to_intermediate, 'intermediate7', map_name.replace('.tif', '_PointLineType.geojson')), os.path.join(output_dir, map_name.replace('.tif', '_PointLineType.geojson')))
@@ -471,7 +483,8 @@ def adjusting_crs(target_map_name, input_image, path_to_intermediate, output_dir
     print(os.path.join(output_dir, map_name.replace('.tif', '_PolygonType.geojson')), 'for legend item segmentation (polygon) (GPKG_GEOJSON format, image coordinate)')
     print(os.path.join(output_dir, map_name.replace('.tif', '_PointLineType.geojson')), 'for legend item segmentation (point, line) (GPKG_GEOJSON format, image coordinate)')
     print(os.path.join(output_dir, map_name.replace('.tif', '_[Type]_internal.json')), 'for internal usage (competition format)')
-    print(os.path.join(output_dir, map_name.replace('.tif', '_[Type]_crs.geojson')), 'for output with transformed crs (map coordinate)')
+    if postprocessing_for_crs == True and crs_flag == True:
+        print(os.path.join(output_dir, map_name.replace('.tif', '_[Type]_crs.geojson')), 'for output with transformed crs (map coordinate)')
     print(os.path.join(output_dir, map_name.replace('.tif', '_[Type]_qgis.geojson')), 'for output visualizable in qgis (qgis coordinate)')
     print('Legend-item Segmentation has concluded for input image:', input_image)
 
@@ -498,18 +511,38 @@ def start_linking_postprocessing(target_map_name, input_image, output_dir, path_
 
 
 def main():
-    for target_map_cand in os.listdir('Data/validation/'):
+    missing_list = []
+    with open('missing.csv', newline='') as fdd:
+        reader = csv.reader(fdd)
+        for row in reader:
+            missing_list.append(row[0])
+    print(missing_list)
+
+
+    this_map_count = 0
+    total_map_count = len(os.listdir('Data/testing/'))/2
+    for target_map_cand in os.listdir('Data/testing/'):
         if '.tif' in target_map_cand:
             target_map = target_map_cand.split('.tif')[0]
-            print('Processing map... '+str(target_map)+'.tif')
+            if target_map_cand in missing_list:
+                this_map_count += 1
+                print('Disintegrity map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+                continue
 
             target_map_name = str(target_map)+'.tif'
-            input_image = 'Data/validation/'+str(target_map)+'.tif'
-            path_to_intermediate = 'LINK_Intermediate/validation/'+str(target_map)+'/'
-            input_area_segmentation = None
+            input_image = 'Data/testing/'+str(target_map)+'.tif'
+            output_dir = 'Example_Output/Vectorization_Output/'
+            path_to_intermediate = 'LINK_Intermediate/testing/'+str(target_map)+'/'
             input_legend_segmentation = 'Uncharted/ch2_validation_evaluation_labels_coco.json'
-            path_to_mapkurator_output = 'MapKurator/ta1-feature-validation/'+str(target_map)+'.geojson'
 
-            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
-            start_linking_postprocessing(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, False, True)
+            start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, False, True, True)
+            this_map_count += 1
+            print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+
+
+import argparse
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    main()
