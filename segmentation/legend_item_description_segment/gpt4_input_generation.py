@@ -184,7 +184,7 @@ def main(map_dir, legend_json_path, symbol_json_dir, map_name, output_dir):
     all_symbol_bbox = []
     for roi in roi_list:
         print('***', symbol_json_dir, map_name, '***')
-        bboxes = read_symbol_bbox_from_json(symbol_json_dir, map_name, roi)
+        bboxes = read_symbol_bbox_from_json_gt(symbol_json_dir, map_name, roi)
         roi_str = '_'.join(str(int(i)) for i in roi)
         symbol_in_roi[roi_str] = bboxes
         all_symbol_bbox.extend(bboxes)
@@ -192,7 +192,7 @@ def main(map_dir, legend_json_path, symbol_json_dir, map_name, output_dir):
     small_rois_width = cutoff_roi_width(symbol_in_roi)
     cutoff_symbol_in_roi_width = {}
     for roi in small_rois_width:
-        bboxes = read_symbol_bbox_from_json(symbol_json_dir, map_name, roi)
+        bboxes = read_symbol_bbox_from_json_gt(symbol_json_dir, map_name, roi)
         roi_str = '_'.join(str(int(i)) for i in roi)
         cutoff_symbol_in_roi_width[roi_str] = bboxes
 #     save_png(map_dir, map_name, cutoff_symbol_in_roi_width, output_dir)
@@ -200,7 +200,7 @@ def main(map_dir, legend_json_path, symbol_json_dir, map_name, output_dir):
     small_rois_height = cutoff_roi_height(cutoff_symbol_in_roi_width)    
     cutoff_symbol_in_roi_height = {}
     for roi in small_rois_height:
-        bboxes = read_symbol_bbox_from_json(symbol_json_dir, map_name, roi)
+        bboxes = read_symbol_bbox_from_json_gt(symbol_json_dir, map_name, roi)
         roi_str = '_'.join(str(int(i)) for i in roi)
         cutoff_symbol_in_roi_height[roi_str] = bboxes
     
