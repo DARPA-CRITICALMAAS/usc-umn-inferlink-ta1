@@ -17,7 +17,11 @@ class LegendItemDescriptionTask4(DockerTask):
 
     def _get_expected_outputs(self) -> tuple[list[Path], list[Path]]:
         return (
-            [Path(self.job_name + ".json")],
+            [
+                Path(self.job_name + "_point.json"),
+                Path(self.job_name + "_line.json"),
+                Path(self.job_name + "_polygon.json"),
+            ],
             []
         )
 

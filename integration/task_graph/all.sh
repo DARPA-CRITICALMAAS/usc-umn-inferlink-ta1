@@ -21,13 +21,13 @@ run_main() {
 inputs="WY_CO_Peach WY_EatonRes AK_Dillingham"
 modules="map_segment legend_segment map_crop text_spotting legend_item_segment legend_item_description line_extract polygon_extract"
 
-#inputs="WY_CO_Peach"
+inputs="WY_CO_Peach"
 modules="end"
 
 for module in $modules
 do
     for input in $inputs
     do
-       run_main $input $module 0130b_$input
+       run_main $input $module 0131_$input
     done
 done

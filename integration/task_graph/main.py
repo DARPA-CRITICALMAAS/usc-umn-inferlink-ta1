@@ -53,7 +53,7 @@ class Options:
 
 def main(options: Options) -> int:
 
-    openai_api_key = Path(f"{os.path.expanduser('~')}/.ssh/openai").read_text()
+    openai_api_key = Path(f"{os.path.expanduser('~')}/.ssh/openai").read_text().strip()
 
     extras = {
         "JOB_ID": options.job_id,
