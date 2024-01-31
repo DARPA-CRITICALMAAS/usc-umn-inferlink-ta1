@@ -1130,7 +1130,8 @@ def loam_inference(
         input_targeted_map_file = 'targeted_map.csv',
         input_path_to_tif = 'input.tif',
         input_groundtruth_dir = 'Data/testing_groundtruth',
-        input_performance_evaluation = False
+        input_performance_evaluation = False,
+        input_thread = 10
 ):
     global filtering_new_dataset
     global filtering_threshold
@@ -1145,6 +1146,7 @@ def loam_inference(
     global performance_evaluation
 
     global target_map_name
+    global PROCESSES
 
     filtering_new_dataset = input_filtering_new_dataset
     filtering_threshold = input_filtering_threshold
@@ -1161,6 +1163,8 @@ def loam_inference(
     path_list = path_to_tif.replace('\\','/').split('/')
     target_map_name = os.path.splitext(path_list[-1])[0]
     #print('target_map_name', target_map_name)
+
+    PROCESSES = input_thread
 
     run_testing()
 
