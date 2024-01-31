@@ -213,7 +213,7 @@ def run(crop_size):
     worker_postprocessing(crop_size)
 
 
-def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_performance_evaluation=False, crop_size=256):
+def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_performance_evaluation=False, crop_size=256, input_thread):
     global solution_dir
     global path_to_tif
     global path_to_json
@@ -221,6 +221,8 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
 
     global dir_to_groundtruth
     global performance_evaluation
+
+    global PROCESSES
 
     path_to_tif = input_path_to_tif
     path_to_json = input_path_to_json
@@ -231,6 +233,8 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
 
     dir_to_groundtruth = input_dir_to_groundtruth
     performance_evaluation = input_performance_evaluation
+
+    PROCESSES = input_thread
 
     print('========================================== Setting of Metadata Postprocessing for Polygon Extraction ==========================================')
     print('*Intput map tif for polygon extraction => "' + path_to_tif + '"')

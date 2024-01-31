@@ -3378,7 +3378,7 @@ path_to_bound = 'bound.geojson'
 target_map_name = 'intput'
 
 
-def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing):
+def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread):
     global solutiona_dir
     global map_preprocessing
     global generate_boundary_extraction
@@ -3389,6 +3389,8 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     global path_to_json
     global path_to_bound
     global target_map_name
+
+    global PROCESSES
 
     path_to_tif = input_path_to_tif
     path_to_json = input_path_to_json
@@ -3405,6 +3407,8 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     generate_boundary_extraction = True
     printing_auxiliary_information = True
     preprocessing_recoloring = True
+
+    PROCESSES = input_thread
 
     print('Parameter Settings:', map_preprocessing, generate_boundary_extraction, printing_auxiliary_information, preprocessing_recoloring)
 
