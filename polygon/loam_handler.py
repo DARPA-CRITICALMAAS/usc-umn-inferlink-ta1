@@ -67,10 +67,10 @@ def main():
         #input_json = path_to_legend_solution
     if set_json == False:
         input_json = path_to_legend_solution
-    if os.path.isfile(input_json) == False:
+    if os.path.isfile(input_json) == False or '.json' not in input_json:
         print('Please provide the json file from legend-item segmentation...')
         exit(1)
-    if os.path.isfile(path_to_legend_solution) == False:
+    if os.path.isfile(path_to_legend_solution) == False or '.geojson' not in path_to_legend_solution:
         print('Please provide the geojson file from legend-item segmentation...')
         exit(1)
         
