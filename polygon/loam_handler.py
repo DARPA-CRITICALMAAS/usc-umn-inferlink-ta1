@@ -54,6 +54,11 @@ def main():
 
     path_to_legend_solution = args.path_to_legend_solution
     dir_to_integrated_output = args.dir_to_integrated_output
+    try:
+        input_threads = int(args.threads)
+    except:
+        print('Please input a valid number for number of threads in multi-processing...')
+        exit(1)
 
     os.makedirs(os.path.dirname(dir_to_integrated_output), exist_ok=True)
     os.makedirs(os.path.dirname(dir_to_intermediate), exist_ok=True)
@@ -63,8 +68,6 @@ def main():
             print('The geojson file for area segmentation is not found, will proceed with area segmentation...')
             map_preprocessing = True
 
-    #if set_json == False or os.path.isfile(input_json) == False:
-        #input_json = path_to_legend_solution
     if set_json == False:
         input_json = path_to_legend_solution
     if os.path.isfile(input_json) == False or '.json' not in input_json:
@@ -82,6 +85,7 @@ def main():
         input_path_to_bound = input_bound,
         input_dir_to_intermediate = dir_to_intermediate,
         input_map_preprocessing = map_preprocessing,
+        input_thread = input_threads
     )
 
 
@@ -91,7 +95,8 @@ def main():
         input_dir_to_intermediate = dir_to_intermediate,
         input_dir_to_groundtruth = dir_to_groundtruth,
         input_performance_evaluation = performance_evaluation,
-        crop_size=256
+        crop_size=256,
+        input_thread = input_threads
     )
     
     
@@ -106,7 +111,8 @@ def main():
         input_targeted_map_file = 'targeted_map.csv',
         input_path_to_tif = input_tif,
         input_groundtruth_dir = dir_to_groundtruth,
-        input_performance_evaluation = performance_evaluation
+        input_performance_evaluation = performance_evaluation,
+        input_thread = input_threads
     )
 
 
@@ -143,6 +149,8 @@ if __name__ == '__main__':
     parser.add_argument('--set_json', type=str, default='True')
     parser.add_argument('--map_area_segmentation', type=str, default='False')
     parser.add_argument('--performance_evaluation', type=str, default='False')
+
+    parser.add_argument('--threads', type=str, default='8')
 
     parser.add_argument('--version', type=str, default='0')
     parser.add_argument('--log', type=str, default='log_file.txt')
