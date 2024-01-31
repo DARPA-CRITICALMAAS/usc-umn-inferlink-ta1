@@ -262,7 +262,7 @@ def predict_png(args):
     
     map_name = args.map_name
 
-    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'.json'))
+    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'_line.json'))
     segment_json = json.load(segment_json_file)
     
     map_content_y, map_content_x, map_content_w, map_content_h= segment_json['map_content_box']
@@ -295,7 +295,7 @@ def predict_shp(args):
     
     map_name = args.map_name
     
-    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'.json'))
+    segment_json_file = open(os.path.join(args.map_legend_json, args.map_name+'_line.json'))
     segment_json = json.load(segment_json_file)
     
     map_content_y, map_content_x, map_content_w, map_content_h= segment_json['map_content_box']
