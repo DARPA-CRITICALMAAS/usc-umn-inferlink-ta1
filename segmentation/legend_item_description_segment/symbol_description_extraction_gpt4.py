@@ -125,7 +125,7 @@ def call_gpt_api(image_path, max_attempts=10, delay=5):
                 time.sleep(delay)
             else:
                 raise
-    return ValueError('GPT4 result is not a json')
+    return {} #ValueError('GPT4 result is not a json')
 
 
 def match_str(query_words, source_str):
