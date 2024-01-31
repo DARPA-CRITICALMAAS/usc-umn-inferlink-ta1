@@ -22,28 +22,35 @@ parser.add_argument('--gpt4_input_dir',
                   default=None)
 parser.add_argument('--gpt4_intermediate_dir',
                    type=str,
-                   default='./intermediate_output')
+                   default=None)
 parser.add_argument('--gpt4_output_dir',
                    type=str,
                    default=None)
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    
+#     step one: take legend areas and symbol bounding boxes, 
+#     and break the legend areas into smaller ones for GPT4
     all_sym_bbox = generate_gpt4_input(args.map_dir, args.legend_json_path, args.symbol_json_dir,\
                        args.map_name, args.gpt4_input_dir)
     
+#     step two: use GPT4 to extract descriptions for sybmols
     import os
     for root, dirs, files in os.walk(args.gpt4_input_dir):
         for f_name in files:
-            if args.map_name not in f_name: 
+            if args.map_name not in f_name:
                 continue
             print(f'*** processing {f_name} ***')
             image_name = f_name.split('.')[0]
             extract_symbol_description(image_name, args.map_dir, all_sym_bbox, args.gpt4_input_dir, args.gpt4_intermediate_dir)
+
     
-    # combine the gpt results into one json file
-    output_path = os.path.join(args.gpt4_intermediate_dir, args.map_name+'.json')
-    combine_json_files_from_gpt(args.gpt4_intermediate_dir, args.map_name, output_path)
+    # step three: combine the gpt results into one json file
+    for category in ['point', 'line', 'polygon']:
+        output_path = os.path.join(args.gpt4_intermediate_dir, args.map_name+f'_{category}_.json')
+        combine_json_files_from_gpt(args.gpt4_intermediate_dir, args.map_name, output_path, category)
     
-    output_path = os.path.join(args.gpt4_output_dir, args.map_name+'.json')
-    combine_json_files_gpt_and_symbol_legend(args.symbol_json_dir, args.legend_json_path, args.gpt4_intermediate_dir, args.map_dir, args.map_name, output_path)
+        output_path = os.path.join(args.gpt4_output_dir, args.map_name+f'_{category}.json')
+        combine_json_files_gpt_and_symbol_legend(args.symbol_json_dir, args.legend_json_path, \
+                                                 args.gpt4_intermediate_dir, args.map_dir, args.map_name, output_path, category)

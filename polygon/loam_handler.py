@@ -48,7 +48,7 @@ def main():
         dir_to_intermediate = dir_to_intermediate+'/'
     #dir_to_solution = args.dir_to_solution
     dir_to_groundtruth = args.dir_to_groundtruth
-    set_json = args.set_json
+    set_json = str_to_bool(args.set_json)
     map_preprocessing = str_to_bool(args.map_area_segmentation)
     performance_evaluation = str_to_bool(args.performance_evaluation)
 
@@ -63,8 +63,17 @@ def main():
             print('The geojson file for area segmentation is not found, will proceed with area segmentation...')
             map_preprocessing = True
 
-    if set_json == False or os.path.isfile(input_json) == False:
+    #if set_json == False or os.path.isfile(input_json) == False:
+        #input_json = path_to_legend_solution
+    if set_json == False:
         input_json = path_to_legend_solution
+    if os.path.isfile(input_json) == False or '.json' not in input_json:
+        print('Please provide the json file from legend-item segmentation...')
+        exit(1)
+    if os.path.isfile(path_to_legend_solution) == False or '.geojson' not in path_to_legend_solution:
+        print('Please provide the geojson file from legend-item segmentation...')
+        exit(1)
+        
     
     
     metadata_preprocessing.metadata_preprocessing(
@@ -131,7 +140,7 @@ if __name__ == '__main__':
     parser.add_argument('--dir_to_intermediate', type=str, default='LOAM_Intermediate/Metadata_Preprocessing/')
     parser.add_argument('--dir_to_groundtruth', type=str, default='Data/validation_groundtruth')
 
-    parser.add_argument('--set_json', type=str, default='False')
+    parser.add_argument('--set_json', type=str, default='True')
     parser.add_argument('--map_area_segmentation', type=str, default='False')
     parser.add_argument('--performance_evaluation', type=str, default='False')
 

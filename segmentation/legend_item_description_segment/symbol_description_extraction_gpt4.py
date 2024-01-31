@@ -11,8 +11,8 @@ import json
 import collections
 import os
 import sys
-from symbol_bbox_ocr import get_symbol_names
 import time
+from symbol_bbox_ocr import get_symbol_names
 # get_symbol_names_within_roi_with_buffer_v2, get_symbol_names_within_roi_with_buffer
 
 def remove_unicode(text):
@@ -42,6 +42,7 @@ def str2json(string):
     json_str = string[s_ind:e_ind]
     dic = {}
     for item in json_str.split('},'):
+#         print(item.strip())
         if "}" != item.strip()[-1]:
             dict_str = item.strip()+'}'
         else:
@@ -64,9 +65,7 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
     
 def call_gpt_api(image_path, max_attempts=10, delay=5):
-    api_key = os.environ.get("OPENAI_API_KEY").strip()
-    client = OpenAI(api_key=api_key)
-
+    client = OpenAI()
     base64_image = encode_image(image_path)
     
     for attempt in range(max_attempts):
@@ -115,8 +114,10 @@ def call_gpt_api(image_path, max_attempts=10, delay=5):
                 )
             
             extract_res = response.choices[0].message.content   
+            print(extract_res)
             gpt_json = str2json(extract_res)
             if not isinstance(gpt_json, Exception):
+                print(gpt_json)
                 return gpt_json
         except (openai.InternalServerError, openai.OpenAIError, ValueError) as e:
             print(f"Attempt {attempt + 1} failed: {e}")
@@ -165,10 +166,17 @@ def main(image_name, map_dir, all_sym_bbox, image_dir='/data/weiweidu/gpt4/map_l
     if not os.path.isfile(image_path):
         print(f'*** {image_name}.tif does not exist! ***')
         sys.exit()
+#     map_dir = None
+#     if os.path.isfile(os.path.join('/data/weiweidu/criticalmaas_data/validation', f'{map_name}.json')):
+#         map_dir = '/data/weiweidu/criticalmaas_data/validation'
+#     elif os.path.isfile(os.path.join('/data/weiweidu/criticalmaas_data/training', f'{map_name}.json')):
+#         map_dir = '/data/weiweidu/criticalmaas_data/training'
+#     else:
+#         print(f'*** {image_name}.json does not exist! ***')
+#         sys.exit()
     
     # ========== get texts in the buffered symbol bbox ===================
-    symbol_texts, symbol_bboxes = get_symbol_names(image_dir, image_name, map_dir, all_sym_bbox)
-    print(symbol_bboxes)
+    symbol_texts_dict, symbol_bboxes_dict = get_symbol_names(image_dir, image_name, map_dir, all_sym_bbox)
     
     # ========== get json from gpt4 API {'symbol_name': 'description'} ===================
     json_res = call_gpt_api(image_path)
@@ -176,22 +184,34 @@ def main(image_name, map_dir, all_sym_bbox, image_dir='/data/weiweidu/gpt4/map_l
     if isinstance(json_res, Exception):
         sys.exit()
     
-    # ========== match res from gpt4 API and symbol bbox ===================
-    sym_des_dict = {}
+#     # ========== match res from gpt4 API and symbol bbox ===================
+    sym_des_category = {'line': {}, 'point': {}, 'polygon': {}}
     matched_dict = {}
+    
     for sym in json_res.keys():
         matched_dict[sym] = False
+    for category in ['line', 'point', 'polygon']:
+        sym_des_dict = {}
+        for i, symbol in enumerate(symbol_texts_dict[category]):
+            matched_symbol = match_symbol(symbol, json_res, matched_dict)
+            matched_dict[matched_symbol] = True
+#         print('**', matched_symbol)
+            if matched_symbol is not None:
+                sym_des_dict[str(symbol_bboxes_dict[category][i])] = {'description': json_res[matched_symbol], 'symbol name': matched_symbol}
+        sym_des_category[category] = sym_des_dict
 
-    for i, symbol in enumerate(symbol_texts):
-        matched_symbol = match_symbol(symbol, json_res, matched_dict)
-        matched_dict[matched_symbol] = True
-        if matched_symbol is not None:
-            sym_des_dict[str(symbol_bboxes[i])] = {'description': json_res[matched_symbol], 'symbol name': matched_symbol}
-
-
-    with open(f"{output_dir}/{image_name}.json", "w") as outfile:
-        json.dump(sym_des_dict, outfile)
-    print(f'*** saved result in {output_dir}/{image_name}.json ***')
+    for category in ['line', 'point', 'polygon']:
+        with open(f"{output_dir}/{image_name}_{category}.json", "w") as outfile:
+            json.dump(sym_des_category[category], outfile)
+        print(f'*** saved result in {output_dir}/{image_name}.json ***')
     return
 
 
+if __name__ == '__main__':
+    image_dir = '/data/weiweidu/AdvancedLiterateMachinery/DocumentUnderstanding/VGT/GridforVGT/map_legend/PNG'
+    image_name = 'TX_Driftwood_Wimberley_6597_11717_1375_1736'
+#     image_name = 'DC_Frederick_7780_1260_826_1001'
+#'USGS_GF-13_2_4815_838_323_1230'#'DC_Wash_West_11169_14744_12796_1962'#'MA_Grafton_10037_2545_1597_1037'#
+#     image_dir='/data/weiweidu/gpt4/map_legend_gpt_input_hw'
+    output_dir = './res'
+    main(image_name, image_dir, output_dir)
