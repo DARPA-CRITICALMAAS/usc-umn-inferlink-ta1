@@ -11,3 +11,5 @@ VOLUME /ta1/job
 WORKDIR /ta1/job
 
 USER cmaas
+
+ENV PROJ_LIB=/opt/conda/share/proj

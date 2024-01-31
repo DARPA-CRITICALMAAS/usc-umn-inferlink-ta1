@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 # Copyright 2024 InferLink Corporation
 
-import datetime
+import argparse
 import os
 from pathlib import Path
 from pprint import pprint
-import shutil
 import sys
 import yaml
 
 import luigi
 
-from ta1_tasks import TA1Task, MyDict
 from resolver import Resolver
+from registry import registry_lookup
+
+from simple_task import MyDict
+import map_segment_task_1
+import legend_segment_task_2
+import legend_item_segment_task_3
+import legend_item_description_task_4
+import map_crop_task_5
+import text_spotting_task_6
+import line_extract_task_7
+import polygon_extract_task_8
+import end_task
 
 
 DEFAULT_JOB_ID = "1"  # datetime.datetime.now().strftime("%H.%M.%S")
-#DEFAULT_JOB_NAME = "AK_Dillingham"
 DEFAULT_JOB_NAME = "WY_CO_Peach"
 DEFAULT_CONFIG_FILE = "./config.yaml"
 
@@ -24,81 +33,58 @@ HOST_ROOT_DIR = "/home/ubuntu/dev"
 CONTAINER_ROOT_DIR = "/ta1"
 
 
-def parse_args(args: list[str]) -> dict[str, str]:
-    job_id = DEFAULT_JOB_ID
-    job_name = DEFAULT_JOB_NAME
-    config_file = DEFAULT_CONFIG_FILE
-    resolve = False
+class Options:
+    def __init__(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--job-id", type=str, default=DEFAULT_JOB_ID)
+        parser.add_argument("--job-name", type=str, default=DEFAULT_JOB_NAME)
+        parser.add_argument("--config-file", type=str, default=DEFAULT_CONFIG_FILE)
+        parser.add_argument("--resolve", action="store_true")
+        parser.add_argument("--task-name", type=str, required=True)
 
-    i = 0
-    while i < len(args):
-        if args[i] == "--job-id":
-            job_id = args[i + 1]
-            i += 2
-        elif args[i] == "--job-name":
-            job_name = args[i + 1]
-            i += 2
-        elif args[i] == "--config-file":
-            config_file = args[i + 1]
-            i += 2
-        elif args[i] == "--resolve":
-            resolve = True
-            i += 1
-        else:
-            print(f"usage error: invalid argument: {args[i]}")
-            sys.exit(1)
+        args = parser.parse_args()
 
-    if not job_id:
-        print("usage error: --job-id missing")
-        sys.exit(1)
-    if not job_name:
-        print("usage error: --job-name missing")
-        sys.exit(1)
-    if not config_file:
-        print("usage error: --config-file missing")
-        sys.exit(1)
-
-    return {
-        "job_id": job_id, "job_name": job_name,
-        "config_file": config_file,
-        "resolve": resolve,
-    }
+        self.job_id = args.job_id
+        self.job_name = args.job_name
+        self.config_file = args.config_file
+        self.resolve = args.resolve
+        self.task_name = args.task_name
 
 
-def main(
-        job_id: str, job_name: str,
-        config_file: str,
-        resolve: bool) -> int:
+def main(options: Options) -> int:
 
     openai_api_key = Path(f"{os.path.expanduser('~')}/.ssh/openai").read_text()
 
     extras = {
-        "JOB_ID": job_id,
-        "JOB_NAME": job_name,
+        "JOB_ID": options.job_id,
+        "JOB_NAME": options.job_name,
         "CONTAINER_JOB_DIR": CONTAINER_ROOT_DIR + "/job",
         "CONTAINER_DATA_DIR": CONTAINER_ROOT_DIR + "/data",
-        "HOST_JOB_DIR": HOST_ROOT_DIR + "/ta1-jobs/" + job_id,
+        "HOST_JOB_DIR": HOST_ROOT_DIR + "/ta1-jobs/" + options.job_id,
         "HOST_DATA_DIR": HOST_ROOT_DIR + "/ta1-data",
         "OPENAI_API_KEY": openai_api_key,
     }
-    config_text = Path(config_file).read_text()
+    config_text = Path(options.config_file).read_text()
     data = yaml.load(config_text, Loader=yaml.FullLoader)
     resolver = Resolver(data, extras=extras)
     config_dict = resolver.resolve(data)
     config_dict = MyDict(config_dict)
-    if resolve:
+    if options.resolve:
         pprint(config_dict.data, compact=False, indent=4, width=75)
         return 0
 
     host_data_dir = Path(config_dict.data["config"]["HOST_DATA_DIR"])
     assert host_data_dir.exists()
     host_job_dir = Path(config_dict.data["config"]["HOST_JOB_DIR"])
-    #if host_job_dir.exists():
-    #    shutil.rmtree(host_job_dir)
     host_job_dir.mkdir(parents=True, exist_ok=True)
 
+    task_cls = registry_lookup(options.task_name)
+    if not task_cls:
+        print(f"task not found: {options.task_name}")
+        return 1
+
     result = luigi.build(
-        tasks=[TA1Task(job_id=job_id, job_name=job_name, _config=config_dict)],
+        tasks=[task_cls(job_id=options.job_id, job_name=options.job_name, _config=config_dict)],
         local_scheduler=True,
         detailed_summary=True
     )
@@ -107,6 +93,6 @@ def main(
 
 
 if __name__ == '__main__':
-    arguments = parse_args(sys.argv[1:])
-    status = main(**arguments)
+    opts = Options()
+    status = main(opts)
     sys.exit(status)

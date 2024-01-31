@@ -27,6 +27,7 @@ map_segment:
 
 # 2: uses nothing
 # integration/legend_segment - Uncharted
+# produces: X_map_segmentation.json
 legend_segment:
     config:
         docker_image: inferlink/ta1_legend_segment
@@ -34,12 +35,13 @@ legend_segment:
     options:
         # inputs:
         input: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
-        # outputs: {NAME}_map_segmentation.json
+        # outputs:
         output: "{config.JOB_DIR}/legend_segment/output"
         # misc:
         model: "{config.DATA_DIR}/legend_segment/layoutlmv3_20230929"
+        ####workdir: "{config.JOB_DIR}/legend_segment/temp"
 
-# 3: uses 6 and 2
+# 3: uses 6
 # segmentation/legend_item_segmentation - Fandel
 legend_item_segment:
     config:
@@ -48,17 +50,18 @@ legend_item_segment:
     options:
         # inputs:
         input_image: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        path_to_mapkurator_output: "{config.JOB_DIR}/text_spotting/output/{config.MAP_NAME}.geojson"
-        ###path_to_mapkurator_output: "{config.DATA_DIR}/references/legend_item_segmentation/Example_Input/{config.MAP_NAME}.geojson"
+        path_to_mapkurator_output: "{config.JOB_DIR}/text_spotting/output/mapKurator_test/stitch/test/{config.MAP_NAME}.geojson"
         input_legend_segmentation: "{config.DATA_DIR}/legend_item_segment/ch2_validation_evaluation_labels_coco.json"
         # outputs:
         output_dir: "{config.JOB_DIR}/legend_item_segment/output"
         # misc:
-        preprocessing_for_cropping: True
+        #preprocessing_for_cropping: True
         postprocessing_for_crs: True
+        competition_custom: True
         path_to_intermediate: "{config.JOB_DIR}/legend_item_segment/temp"
-        version: 0
+        version: 1
         log: "{config.JOB_DIR}/legend_item_segment/temp/log_file.txt"
+
 
 # 4: uses 2 and 3
 # segmentation/legend_item_description_segment - Weiwei
@@ -99,7 +102,7 @@ map_crop:
         output_dir: "{config.JOB_DIR}/map_crop/output"
         # misc
         patch_sizes: [1000, 256]
-        strides: [100, 100]
+        strides: [1000, 256]
 
 # 6: uses 5
 # integration/text_spotting - Weiwei (Zekun)
@@ -108,22 +111,20 @@ text_spotting:
         docker_image: inferlink/ta1_text_spotting
         make_dirs: [
             "{config.HOST_JOB_DIR}/text_spotting/output",
-            "{config.HOST_JOB_DIR}/text_spotting/temp",
-            "{config.HOST_JOB_DIR}/text_spotting/output/mapKurator_test/crop",
-            "{config.HOST_JOB_DIR}/text_spotting/output/mapKurator_test/spotter",
+            "{config.HOST_JOB_DIR}/text_spotting/output/mapKurator_test/spotter/test",
         ]
         user: root
         gpus: True
     options:
         # inputs:
-        input_dir_path: "{config.DATA_DIR}/inputs/{config.MAP_NAME}"
+        input_dir_path: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g1000_s1000"
         # outputs:
         output_folder: "{config.JOB_DIR}/text_spotting/output"
         # misc:
-        model_weight_path: "{config.DATA_DIR}/text_spotting/model_final.pth"
-        spotter_config: "{config.DATA_DIR}/text_spotting/SynthMap_Polygon.yaml"
-        map_kurator_system_dir: /ta1/dev/usc-umn-inferlink-ta1/system/mapkurator/mapkurator-system
-        text_spotting_model_dir: /ta1/dev/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN
+        model_weight_path: /home/spotter_v2/PALEJUN/weights/synthmap_pretrain/model_final.pth
+        spotter_config: /home/spotter_v2/PALEJUN/configs/PALEJUN/SynthMap/SynthMap_Polygon.yaml
+        map_kurator_system_dir: /home/mapkurator-system
+        text_spotting_model_dir: /home/spotter_v2/PALEJUN
         expt_name: mapKurator_test
         module_text_spotting: ""
         spotter_model: spotter_v2
@@ -138,16 +139,16 @@ line_extract:
         make_dirs: ["{config.HOST_JOB_DIR}/line_extract/output", "{config.HOST_JOB_DIR}/line_extract/temp"]
     options:
         # inputs:
-        map_legend_json: "{config.JOB_DIR}/legend_item_description/outputs"
-        cropped_image_dir: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g1000_s100"
+        map_legend_json: "{config.JOB_DIR}/legend_item_description/output"
+        cropped_image_dir: "{config.JOB_DIR}/map_crop/output/{config.MAP_NAME}_g256_s256"
         # outputs:
         prediction_dir: "{config.JOB_DIR}/line_extract/output"
         # misc:
-        config: "{config.DATA_DIR}/inputs/line_extract/usgs_railroads.yaml"
+        config: "{config.DATA_DIR}/line_extract/usgs_railroads.yaml"
         map_name: "{config.MAP_NAME}"
         cuda_visible_device: 0
-        predict_raster: True
-        predict_vector: False
+        predict_raster: ""
+        # predict_vector: ""
         trained_model_dir: "{config.DATA_DIR}/line_extract/trained_weights"
 
 # 8: uses 3 and 4
@@ -158,12 +159,11 @@ polygon_extract:
         make_dirs: ["{config.HOST_JOB_DIR}/polygon_extract/output", "{config.HOST_JOB_DIR}/polygon_extract/temp"]
     options:
         # inputs:
-        path_to_legend_solution: "{config.JOB_DIR}/legend_item_segment/outputs/{config.MAP_NAME}_PolygonType.geojson"
+        path_to_legend_solution: "{config.JOB_DIR}/legend_item_segment/output/{config.MAP_NAME}_PolygonType.geojson"
         path_to_tif: "{config.DATA_DIR}/inputs/{config.MAP_NAME}/{config.MAP_NAME}.tif"
-        path_to_json: "{config.JOB_DIR}/legend_item_description/output/{config.MAP_NAME}.json"
+        path_to_json: "{config.JOB_DIR}/legend_item_segment/output/{config.MAP_NAME}_PolygonType_internal.json"
         # outputs:
         dir_to_integrated_output:  "{config.JOB_DIR}/polygon_extract/output"
         # misc:
         version: 0
         log: "{config.JOB_DIR}/polygon_extract/output/log_file.txt"
-

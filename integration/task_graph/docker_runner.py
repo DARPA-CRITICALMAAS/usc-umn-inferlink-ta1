@@ -41,6 +41,9 @@ class DockerRunner:
         except docker.errors.NotFound:
             pass
 
+        # filter out "", used for switches with no values
+        command = [c for c in command if c]
+
         self._container = self._client.containers.create(
             image=image,
             name=name,
@@ -73,13 +76,15 @@ class DockerRunner:
             print(run2, file=f)
 
     # returns (status code, log string)
-    def run(self) -> tuple[int, str]:
+    def run(self) -> tuple[int, str, int]:
         start = time.time()
         self._container.start()
 
         exit_status = self._container.wait()
         end = time.time()
-        print(f"elapsed: {round(end-start)} seconds")
+        elapsed = round(end-start)
+
+        print(f"elapsed: {elapsed} seconds")
         print(exit_status)
 
         log = self._container.logs(stdout=True, stderr=True)
@@ -89,11 +94,12 @@ class DockerRunner:
         with open(self._log_file, "a") as f:
             print(log, file=f)
             print("\n# " + str(exit_status), file=f)
-            print(f"# elapsed: {round(end-start)} seconds")
+            print(f"# elapsed: {elapsed} seconds")
 
         self._container.remove()
 
-        return exit_status['StatusCode'], log
+        return exit_status['StatusCode'], log, elapsed
+
 
 def _make_mount(v: str) -> docker.types.Mount:
     t = v.split(":")
