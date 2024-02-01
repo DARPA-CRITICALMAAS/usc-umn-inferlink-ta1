@@ -6,7 +6,7 @@ from typing import Optional
 
 import luigi
 
-from tasker.utils.config import Config, TaskConfig
+from mip.utils.config import Config, TaskConfig
 
 
 class SimpleTask(luigi.Task):

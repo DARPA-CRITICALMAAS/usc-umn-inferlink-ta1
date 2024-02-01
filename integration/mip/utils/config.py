@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import yaml
 
-from tasker.utils.options import Options
+from mip.utils.options import Options
 
 
 class Config:

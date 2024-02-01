@@ -1,9 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.utils.docker_task import DockerTask
-from tasker.module_tasks.registry import register_task
-from tasker.module_tasks.start_task_0 import StartTask0
-from tasker.utils.checker import check_directory_exists
+from mip.utils.docker_task import DockerTask
+from mip.module_tasks.registry import register_task
+from mip.module_tasks.start_task_0 import StartTask0
+from mip.utils.checker import check_directory_exists
 
 
 @register_task

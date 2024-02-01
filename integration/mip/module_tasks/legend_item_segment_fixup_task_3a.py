@@ -2,9 +2,9 @@
 
 import shutil
 
-from tasker.utils.simple_task import SimpleTask
-from tasker.module_tasks.legend_item_segment_task_3 import LegendItemSegmentTask3
-from tasker.module_tasks.registry import register_task
+from mip.utils.simple_task import SimpleTask
+from mip.module_tasks.legend_item_segment_task_3 import LegendItemSegmentTask3
+from mip.module_tasks.registry import register_task
 
 
 @register_task

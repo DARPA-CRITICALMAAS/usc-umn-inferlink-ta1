@@ -1,7 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.utils.docker_runner import DockerRunner
-from tasker.utils.simple_task import SimpleTask
+import datetime
+
+from mip.utils.docker_runner import DockerRunner
+from mip.utils.simple_task import SimpleTask
 
 
 class DockerTask(SimpleTask):
@@ -48,9 +50,11 @@ class DockerTask(SimpleTask):
 
         options = self.task_config.get_options()
 
+        container_name = f"{self.job_name}__{self.NAME}_{datetime.datetime.now().strftime('%H%M%S')}"
+
         container = DockerRunner(
             image=image_name,
-            name=f"{self.job_name}__{self.NAME}",
+            name=container_name,
             command=options,
             volumes=volumes,
             environment=environment,

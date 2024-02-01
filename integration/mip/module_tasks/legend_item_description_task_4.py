@@ -1,9 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.module_tasks.registry import register_task
-from tasker.utils.docker_task import DockerTask
-from tasker.module_tasks.legend_item_segment_fixup_task_3a import LegendItemSegmentFixupTask3a
-from tasker.utils.checker import check_file_exists
+from mip.module_tasks.registry import register_task
+from mip.utils.docker_task import DockerTask
+from mip.module_tasks.legend_item_segment_fixup_task_3a import LegendItemSegmentFixupTask3a
+from mip.utils.checker import check_file_exists
 
 
 @register_task

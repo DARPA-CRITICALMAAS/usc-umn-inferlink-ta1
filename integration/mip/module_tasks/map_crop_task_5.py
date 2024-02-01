@@ -1,9 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.utils.docker_task import DockerTask
-from tasker.module_tasks.legend_segment_task_2 import LegendSegmentTask2
-from tasker.utils.checker import check_directory_exists
-from tasker.module_tasks.registry import register_task
+from mip.utils.docker_task import DockerTask
+from mip.module_tasks.legend_segment_task_2 import LegendSegmentTask2
+from mip.utils.checker import check_directory_exists
+from mip.module_tasks.registry import register_task
 
 
 @register_task

@@ -1,9 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.utils.simple_task import SimpleTask
-from tasker.utils.checker import check_file_exists
-from tasker.module_tasks.registry import register_task
-from tasker.module_tasks.registry import register_task
+from mip.utils.simple_task import SimpleTask
+from mip.utils.checker import check_file_exists
+from mip.module_tasks.registry import register_task
+from mip.module_tasks.registry import register_task
 
 
 @register_task

@@ -1,9 +1,9 @@
 # Copyright 2024 InferLink Corporation
 
-from tasker.utils.docker_task import DockerTask
-from tasker.module_tasks.map_crop_task_5 import MapCropTask5
-from tasker.utils.checker import check_directory_exists
-from tasker.module_tasks.registry import register_task
+from mip.utils.docker_task import DockerTask
+from mip.module_tasks.map_crop_task_5 import MapCropTask5
+from mip.utils.checker import check_directory_exists
+from mip.module_tasks.registry import register_task
 
 
 @register_task

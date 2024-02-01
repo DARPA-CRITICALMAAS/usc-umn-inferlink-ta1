@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tasker"
+name = "mip"
 version = "0.1.0"
 description = ""
 authors = ["Michael P. Gerlek <mgerlek@inferlink.com>"]
@@ -7,10 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pytest = "^7.4.3"
 psutil = "^5.9.7"
 pydantic = "^2.5.2"
-pydot = "^1.4.2"
+pydot = "^2.0.0"
 pydantic-yaml = "^1.2.0"
 filelock = "^3.13.1"
 luigi = "^3.4.0"
