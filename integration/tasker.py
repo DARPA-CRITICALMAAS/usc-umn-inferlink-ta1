@@ -5,16 +5,22 @@ import sys
 
 import luigi
 
-from tasker.module_tasks.registry import registry_lookup
-import tasker.utils.config as config
-
+from tasker.module_tasks.registry import registry_lookup, get_task_names
+from tasker.module_tasks import *
+from tasker.utils.config import Config
+from tasker.utils.options import Options
 
 # datetime.datetime.now().strftime("%H.%M.%S")
 
 
 def main() -> int:
-    cfg = config.Config()
-    config.CONFIG = cfg
+    opts = Options()
+    if opts.list_tasks:
+        for task in get_task_names():
+            print(f"  {task}")
+        return 0
+
+    cfg = Config(opts)
 
     for p in [cfg.host_job_output_dir, cfg.host_job_temp_dir]:
         p.mkdir(parents=True, exist_ok=True)

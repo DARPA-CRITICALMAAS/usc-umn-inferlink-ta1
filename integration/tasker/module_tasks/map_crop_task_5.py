@@ -3,8 +3,10 @@
 from tasker.utils.docker_task import DockerTask
 from tasker.module_tasks.legend_segment_task_2 import LegendSegmentTask2
 from tasker.utils.checker import check_directory_exists
+from tasker.module_tasks.registry import register_task
 
 
+@register_task
 class MapCropTask5(DockerTask):
     NAME = "map_crop"
 

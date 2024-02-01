@@ -6,7 +6,7 @@ from typing import Optional
 
 import luigi
 
-import tasker.utils.config as config
+from tasker.utils.config import Config, TaskConfig
 
 
 class SimpleTask(luigi.Task):
@@ -18,8 +18,8 @@ class SimpleTask(luigi.Task):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.config = config.CONFIG
-        self.task_config = config.TaskConfig(self.config, self.NAME)
+        self.config = Config.CONFIG
+        self.task_config = TaskConfig(self.config, self.NAME)
         self.start_time: Optional[datetime] = None
         self.end_time: Optional[datetime] = None
 

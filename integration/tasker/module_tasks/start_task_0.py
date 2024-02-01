@@ -2,8 +2,11 @@
 
 from tasker.utils.simple_task import SimpleTask
 from tasker.utils.checker import check_file_exists
+from tasker.module_tasks.registry import register_task
+from tasker.module_tasks.registry import register_task
 
 
+@register_task
 class StartTask0(SimpleTask):
     NAME = "start"
 

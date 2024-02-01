@@ -1,5 +1,7 @@
 # Copyright 2024 InferLink Corporation
 
+from tasker.module_tasks.registry import register_task
+
 from tasker.utils.simple_task import SimpleTask
 from tasker.module_tasks.start_task_0 import StartTask0
 from tasker.module_tasks.legend_segment_task_2 import LegendSegmentTask2
@@ -13,6 +15,7 @@ from tasker.module_tasks.point_extract_task_9 import PointExtractTask9
 from tasker.module_tasks.georeference_task_10 import GeoreferenceTask10
 
 
+@register_task
 class EndTask(SimpleTask):
     NAME = "end"
 

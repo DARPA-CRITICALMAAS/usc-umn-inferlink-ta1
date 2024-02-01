@@ -1,31 +1,28 @@
 # Copyright 2024 InferLink Corporation
 
-import argparse
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Any, Optional
 
 import yaml
 
-DEFAULT_CONFIG_FILE = "config.yml"
+from tasker.utils.options import Options
 
 
 class Config:
-    def __init__(self):
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--config-file", type=str, default=DEFAULT_CONFIG_FILE)
-        parser.add_argument("--map-name", type=str, required=True)
-        parser.add_argument("--job-name", type=str, required=True)
-        parser.add_argument("--target-task-name", type=str, required=True)
+    # TODO: hack, because we don't know how to pass non-string state to Tasks
+    CONFIG: Optional[Config] = None
 
-        args = parser.parse_args()
+    def __init__(self, options: Options):
 
-        self.map_name: str = args.map_name
-        self.job_name: str = args.job_name
-        self.target_task_name: str = args.target_task_name
+        self.map_name: str = options.map_name
+        self.job_name: str = options.job_name
+        self.target_task_name: str = options.target_task_name
 
-        config_text = Path(args.config_file).read_text()
+        config_text = Path(options.config_file).read_text()
         self.data = yaml.load(config_text, Loader=yaml.FullLoader)
 
         self.openai_key = Path(f"{os.path.expanduser('~')}/.ssh/openai").read_text().strip()
@@ -40,6 +37,7 @@ class Config:
         self.host_job_output_dir = self.host_output_dir / self.job_name
         self.host_job_temp_dir = self.host_temp_dir / self.job_name
 
+        Config.CONFIG = self
 
 class TaskConfig:
     def __init__(self, config: Config, task_name: str):
@@ -81,6 +79,3 @@ class TaskConfig:
             s = s.replace("$TEMP_DIR", str(self.container_temp_dir))
             return s
         return str(s)
-
-
-CONFIG: Optional[Config] = None

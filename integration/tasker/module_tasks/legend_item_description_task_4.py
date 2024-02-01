@@ -1,16 +1,18 @@
 # Copyright 2024 InferLink Corporation
 
+from tasker.module_tasks.registry import register_task
 from tasker.utils.docker_task import DockerTask
-from tasker.module_tasks.legend_item_segment_task_3 import LegendItemSegmentTask3
+from tasker.module_tasks.legend_item_segment_fixup_task_3a import LegendItemSegmentFixupTask3a
 from tasker.utils.checker import check_file_exists
 
 
+@register_task
 class LegendItemDescriptionTask4(DockerTask):
     NAME = "legend_item_description"
 
     def requires(self):
         return [
-            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
+            LegendItemSegmentFixupTask3a(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_pre(self):

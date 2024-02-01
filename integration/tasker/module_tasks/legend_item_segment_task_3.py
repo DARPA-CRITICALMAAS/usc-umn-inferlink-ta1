@@ -3,8 +3,10 @@
 from tasker.utils.docker_task import DockerTask
 from tasker.module_tasks.text_spotting_task_6 import TextSpottingTask6
 from tasker.utils.checker import check_file_exists
+from tasker.module_tasks.registry import register_task
 
 
+@register_task
 class LegendItemSegmentTask3(DockerTask):
     NAME = "legend_item_segment"
 
