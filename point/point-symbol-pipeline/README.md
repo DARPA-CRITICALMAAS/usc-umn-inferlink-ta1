@@ -1,7 +1,7 @@
 ### Point symbol pipeline 
 
 
-##Command line 
+## Command line 
 
 ```python run_final.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --cropped_legend_dir /your/legend/directory --template_dir /your/template/directory --processed_legend_dir /your/processed/legend/directory --map_patches_dir /your/patches/directory --model_weights_dir /your/weights/directory --output_dir_root /your/output/root/directory```
 
