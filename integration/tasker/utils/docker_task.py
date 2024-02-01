@@ -32,7 +32,7 @@ class DockerTask(SimpleTask):
     def _make_container(self) -> DockerRunner:
         image_name = f"inferlink/ta1_{self.NAME}"
         gpus = self.GPU
-        docker_log = self.task_config.host_job_output_dir / f"{self.NAME}.docker.txt"
+        docker_log = self.task_config.host_output_dir / f"{self.NAME}.docker.txt"
 
         environment = [
             f"OPENAI_API_KEY={self.config.openai_key}"
@@ -41,9 +41,9 @@ class DockerTask(SimpleTask):
         user = self.USER
 
         volumes = [
-            f"{self.config.host_input_dir}:{self.config.container_input_dir}",
-            f"{self.task_config.host_job_output_dir}:{self.task_config.container_job_output_dir}",
-            f"{self.task_config.host_job_temp_dir}:{self.task_config.container_job_temp_dir}",
+            f"{self.task_config.host_input_dir}:{self.task_config.container_input_dir}",
+            f"{self.task_config.host_output_dir}:{self.task_config.container_output_dir}",
+            f"{self.task_config.host_temp_dir}:{self.task_config.container_temp_dir}",
         ]
 
         options = self.task_config.get_options()

@@ -52,8 +52,8 @@ legend_item_description:
     # inputs:
     map_dir: $INPUT_DIR/input/$MAP_NAME
     map_name: $MAP_NAME
-    legend_json_path: $OUTPUT_DIR}/legend_segment
-    symbol_json_dir: $OUTPUT_DIR}/legend_item_segment
+    legend_json_path: $OUTPUT_DIR/legend_segment
+    symbol_json_dir: $OUTPUT_DIR/legend_item_segment
     # outputs:
     gpt4_output_dir: $OUTPUT_DIR/legend_item_description
     # misc:
@@ -95,9 +95,9 @@ text_spotting:
 line_extract:
     # inputs:
     map_legend_json: $OUTPUT_DIR/legend_item_description
-    cropped_image_dir: $OUTPUT_DIR}/map_crop/$MAP_NAME_g256_s256"
+    cropped_image_dir: $OUTPUT_DIR/map_crop/$MAP_NAME_g256_s256"
     # outputs:
-    prediction_dir: $OUTPUT_DIR}/line_extract
+    prediction_dir: $OUTPUT_DIR/line_extract
     # misc:
     config: $INPUT_DIR/line_extract/usgs_railroads.yaml
     map_name: $MAP_NAME
@@ -120,3 +120,21 @@ polygon_extract:
     version: 0
     log: $OUTPUT_DIR/polygon_extract/log_file.txt"
     threads: 1
+
+
+# 9: uses 4 and 5
+# point - Leeje
+point_extract:
+    # inputs:
+    # outputs:
+    # misc:
+
+
+# 10: uses none
+# georeference - Weiwei
+georeference:
+    # inputs:
+    input_path: $INPUT_DIR/input/$MAP_NAME/$MAP_NAME.tif
+    # outputs:
+    output_path: $OUTPUT_DIR/georeference/$MAP_NAME.json
+    # misc:

@@ -57,5 +57,5 @@ class SimpleTask(luigi.Task):
         pass
 
     def output(self):
-        file = self.task_config.host_job_output_dir / f"{self.NAME}.task.txt"
+        file = self.task_config.host_output_dir / f"{self.NAME}.task.txt"
         return luigi.LocalTarget(file)
