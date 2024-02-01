@@ -213,7 +213,7 @@ def run(crop_size):
     worker_postprocessing(crop_size)
 
 
-def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_performance_evaluation=False, crop_size=256, input_thread):
+def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_performance_evaluation=False, crop_size=256):
     global solution_dir
     global path_to_tif
     global path_to_json
