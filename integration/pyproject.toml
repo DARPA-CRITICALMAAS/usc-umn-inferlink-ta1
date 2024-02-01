@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "task_graph"
+name = "tasker"
 version = "0.1.0"
 description = ""
 authors = ["Michael P. Gerlek <mgerlek@inferlink.com>"]
