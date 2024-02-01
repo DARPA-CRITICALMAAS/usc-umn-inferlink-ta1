@@ -9,7 +9,7 @@ To run the project, use the following command:
 ## Command Line Arguments:
 --map_dir: Directory to the original map data ended with .tif <br>
 --map_metadata_dir: Directory to map metadata that contains the 
-information about coordinate of legend and map dimension.
+information about coordinate of legend and map dimension. <br>
 --cropped_legend_dir: Directory to save the cropped legend  <br>
 --template_dir: Directory to the legend template  <br>
 --processed_legend_dir: Directory to save the processed cropped legend  <br>
