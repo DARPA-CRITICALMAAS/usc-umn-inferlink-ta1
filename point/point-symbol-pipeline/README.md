@@ -6,7 +6,7 @@ To run the project, use the following command:
 
 ``` python run_final.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --cropped_legend_dir /your/legend/directory --template_dir /your/template/directory --processed_legend_dir /your/processed/legend/directory --map_patches_dir /your/patches/directory --model_weights_dir /your/weights/directory --output_dir_root /your/output/root/directory ```
 
-##Command Line Arguments:
+## Command Line Arguments:
 --map_dir: Directory to the original map data ended with .tif <br>
 --map_metadata_dir: Directory to map metadata that contains the 
 information about coordinate of legend and map dimension.
