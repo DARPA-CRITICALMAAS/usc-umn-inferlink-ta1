@@ -16,12 +16,12 @@ class EndTask(SimpleTask):
 
     def requires(self):
         return [
-            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            # LineExtractTask7(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            # PolygonExtractTask8(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name),
+            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name),
+            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
+            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name),
+            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name),
+            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name),
+            # LineExtractTask7(job_name=self.config.job_name, map_name=self.config.map_name),
+            PolygonExtractTask8(job_name=self.config.job_name, map_name=self.config.map_name),
         ]

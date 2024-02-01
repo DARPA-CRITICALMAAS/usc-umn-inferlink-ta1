@@ -10,7 +10,7 @@ class LegendItemSegmentTask3(DockerTask):
 
     def requires(self):
         return [
-            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

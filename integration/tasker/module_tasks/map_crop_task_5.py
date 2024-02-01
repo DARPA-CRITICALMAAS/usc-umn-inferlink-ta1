@@ -10,7 +10,7 @@ class MapCropTask5(DockerTask):
 
     def requires(self):
         return [
-            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

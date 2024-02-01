@@ -10,8 +10,8 @@ class PolygonExtractTask8(DockerTask):
 
     def requires(self):
         return [
-            # LineExtractTask7(ob_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
-            LegendItemDescriptionTask4(ob_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            # LineExtractTask7(ob_name=self.config.job_name, map_name=self.config.map_name),
+            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

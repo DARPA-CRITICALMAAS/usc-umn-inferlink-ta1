@@ -10,7 +10,7 @@ class LegendSegmentTask2(DockerTask):
 
     def requires(self):
         return [
-            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

@@ -12,7 +12,7 @@ class TextSpottingTask6(DockerTask):
 
     def requires(self):
         return [
-            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

@@ -9,7 +9,7 @@ class LineExtractTask7(DockerTask):
 
     def requires(self):
         return [
-            LegendItemDescriptionTask4(ob_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            LegendItemDescriptionTask4(ob_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_post(self):

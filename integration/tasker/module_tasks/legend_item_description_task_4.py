@@ -10,7 +10,7 @@ class LegendItemDescriptionTask4(DockerTask):
 
     def requires(self):
         return [
-            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name, config=self.config),
+            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_pre(self):

@@ -13,4 +13,4 @@ RUN cp \
 # INCLUDEX perms.txt
 
 CMD []
-ENTRYPOINT [  "/ta1/dev/usc-umn-inferlink-ta1/integration/6_text_spotting/runme.sh" ]
+ENTRYPOINT [  "/ta1/dev/usc-umn-inferlink-ta1/integration/dockers/6_text_spotting/runme.sh" ]

@@ -3,7 +3,7 @@
 import argparse
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 
@@ -82,3 +82,6 @@ class TaskConfig:
             s = s.replace("$TEMP_DIR", str(self.container_job_temp_dir))
             return s
         return str(s)
+
+
+CONFIG: Optional[Config] = None
