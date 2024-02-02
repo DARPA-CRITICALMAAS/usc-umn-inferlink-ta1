@@ -37,11 +37,13 @@ class DockerTask(SimpleTask):
 
         status, log_data, elapsed = container.run(self.perf_collector)
 
-
         with open(docker_log_path, "a") as f:
             print(log_data, file=f)
             print("\n", file=f)
-            self._print_perf(f)
+
+            s = self.perf_collector.dump_report()
+            print(s, file=f)
+
             print(f"# elapsed: {elapsed} seconds", file=f)
             print(f"# exit_status: {status}", file=f)
 
@@ -51,45 +53,6 @@ class DockerTask(SimpleTask):
 
         if status:
             raise Exception(f"docker run failed: {self.NAME}")
-
-    def _print_perf(self, f: TextIO) -> None:
-        gb = 1024 * 1024 * 1024
-
-        host_data, container_data = self.perf_collector.get_peak_data()
-
-        host_mem_used = round(host_data.mem_used / gb, 1)
-        host_mem_avail = round(self.perf_collector.host_total_mem / gb, 1)
-        host_num_cpus = self.perf_collector.host_num_cpus
-        host_num_gpus = self.perf_collector.host_num_gpus
-        host_cpu_util = round(host_data.cpu_util)
-        host_gpu_util = round(host_data.gpu_util)
-        host_total_cpu = host_num_cpus * 100
-        host_total_gpu = host_num_gpus * 100
-
-        container_mem_used = round(container_data.mem_used / gb, 1)
-        container_mem_avail = round(self.perf_collector.container_total_mem / gb, 1)
-        container_num_cpus = self.perf_collector.container_num_cpus
-        container_num_gpus = self.perf_collector.container_num_gpus
-        container_cpu_util = round(container_data.cpu_util)
-        container_gpu_util = round(container_data.gpu_util)
-        container_total_cpu = container_num_cpus * 100
-        container_total_gpu = container_num_gpus * 100
-
-        print("\n", file=f)
-        print(f"# host peak_mem_used: {host_mem_used} GB", file=f)
-        print(f"# host total_mem: {host_mem_avail} GB", file=f)
-        print(f"# host peak_cpu: {host_cpu_util}%", file=f)
-        print(f"# host total_cpu: {host_total_cpu}%", file=f)
-        print(f"# host peak_gpu: {host_gpu_util}%", file=f)
-        print(f"# host total_gpu: {host_total_gpu}%", file=f)
-
-        print("\n", file=f)
-        print(f"# container peak_mem_used: {container_mem_used} GB", file=f)
-        print(f"# container total_mem: {container_mem_avail} GB", file=f)
-        print(f"# container peak_cpu: {container_cpu_util}%", file=f)
-        print(f"# container total_cpu: {container_total_cpu}%", file=f)
-        print(f"# container peak_gpu: {container_gpu_util}%", file=f)
-        print(f"# container total_gpu: {container_total_gpu}%", file=f)
 
     def _make_container(self) -> DockerRunner:
         image_name = f"inferlink/ta1_{self.NAME}"
