@@ -4,6 +4,7 @@ from Seperate_symbol_text import *
 from collections import defaultdict
 from pred_stitch_point_updated import *
 from geojson_to_raster import *
+from text_based_matching import *
 import os
 import time
 import argparse
