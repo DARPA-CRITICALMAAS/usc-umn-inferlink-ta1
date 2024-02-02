@@ -47,19 +47,21 @@ crop_legned(raw_map_path, metadata_path, cropped_path)
 
 target_color = [255, 255, 255]
 clean_background_and_remove_text(cropped_path, processed_path, target_color, threshold=50, crop=False, use_gpu=False)
-index_list_dict_rank = image_similarity(template_dir, processed_path, rank = 1)
+index_list_dict_rank = text_based_matching(metadata_path,input_dir_root)
+model_dict=index_list_dict_rank
+# index_list_dict_rank = image_similarity(template_dir, processed_path, rank = 1)
 
-files = glob.glob(os.path.join(processed_path, '*.jpeg'))
-# Extract filenames without the path
-filenames = [os.path.basename(file).split('_label_')[0] for file in files]
+# files = glob.glob(os.path.join(processed_path, '*.jpeg'))
+# # Extract filenames without the path
+# filenames = [os.path.basename(file).split('_label_')[0] for file in files]
 
-# Sort the filenames
-sorted_filenames = sorted(filenames)
-model_dict = defaultdict(set)
+# # Sort the filenames
+# sorted_filenames = sorted(filenames)
+# model_dict = defaultdict(set)
 
-for i, map in enumerate(sorted_filenames):
-    found_keys = [key + ".pt" for key, val_list in index_list_dict_rank.items() if i in val_list]
-    model_dict[map].update(found_keys)
+# for i, map in enumerate(sorted_filenames):
+#     found_keys = [key + ".pt" for key, val_list in index_list_dict_rank.items() if i in val_list]
+#     model_dict[map].update(found_keys)
 
 print(model_dict)
 
