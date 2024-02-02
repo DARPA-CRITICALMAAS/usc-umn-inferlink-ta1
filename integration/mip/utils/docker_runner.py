@@ -4,10 +4,13 @@ from pathlib import Path
 import requests  # needed for docker exceptions
 import time
 from typing import Any, Optional
+import logging
 
 import docker
 import docker.types
 import docker.errors
+
+logger = logging.getLogger('luigi-interface')
 
 
 class DockerRunner:
@@ -72,20 +75,18 @@ class DockerRunner:
         self.shell_command = f"# docker run {gpus_s} --user {user} {vs} -it --entrypoint bash {image}\n"
         self.run_command = f"# docker run {gpus_s} --user {user} {vs} {image} {options}\n"
 
-        print()
-        print("-----------------------------------------------")
-        print(self.shell_command)
-        print()
-        print(self.run_command)
-        print("-----------------------------------------------")
-        print()
+        logger.debug("-----------------------------------------------")
+        logger.debug(self.shell_command)
+        logger.debug("")
+        logger.debug(self.run_command)
+        logger.debug("-----------------------------------------------")
 
         with open(self._log_file, "w") as f:
             print(self.shell_command, file=f)
             print(self.run_command, file=f)
 
-    # returns (status code, log string)
-    def run(self) -> tuple[int, str, int]:
+    # returns status code
+    def run(self) -> int:
         start = time.time()
 
         self._container.start()
@@ -95,12 +96,8 @@ class DockerRunner:
         end = time.time()
         elapsed = round(end-start)
 
-        print(f"# elapsed: {elapsed} seconds")
-        print(f"# exit_status: {exit_status}")
-
         log = self._container.logs(stdout=True, stderr=True)
         log = log.decode("utf-8")
-        print(log)
 
         with open(self._log_file, "a") as f:
             print(log, file=f)
@@ -112,7 +109,11 @@ class DockerRunner:
             print(f"# peak_cpu: {self.cpu_perc}%", file=f)
             print(f"# max_cpu: {self.cpu_max_perc}%", file=f)
 
-        return exit_status, log, elapsed
+        logger.debug("-----------------------------------------------")
+        logger.debug(log)
+        logger.debug("-----------------------------------------------")
+
+        return exit_status
 
     def _wait_for_completion(self) -> int:
         # use the wait(timeout) call a perf stats collector (and potential heartbeat)

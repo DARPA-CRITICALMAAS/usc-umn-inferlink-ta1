@@ -1,9 +1,12 @@
 # Copyright 2024 InferLink Corporation
 
 import datetime
+import logging
 
 from mip.utils.docker_runner import DockerRunner
 from mip.utils.simple_task import SimpleTask
+
+logger = logging.getLogger('luigi-interface')
 
 
 class DockerTask(SimpleTask):
@@ -19,15 +22,7 @@ class DockerTask(SimpleTask):
 
         container = self._make_container()
 
-        status, log, elapsed = container.run()
-
-        print("-----------------------------------------------")
-        print(log)
-        print("")
-        print(f"status: {status}")
-        print(f"elapsed: {elapsed} secs")
-        print("-----------------------------------------------")
-
+        status = container.run()
         if status:
             raise Exception(f"docker run failed: {self.NAME}")
 
