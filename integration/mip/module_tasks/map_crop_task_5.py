@@ -9,11 +9,7 @@ from mip.module_tasks.registry import register_task
 @register_task
 class MapCropTask5(DockerTask):
     NAME = "map_crop"
-
-    def requires(self):
-        return [
-            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [LegendSegmentTask2]
 
     def run_post(self):
         d = self.task_config.host_task_output_dir

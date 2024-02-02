@@ -11,11 +11,7 @@ from mip.module_tasks.registry import register_task
 @register_task
 class LegendItemSegmentTask3(DockerTask):
     NAME = "legend_item_segment"
-
-    def requires(self):
-        return [
-            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [TextSpottingTask6]
 
     def run_post(self):
         d = self.task_config.host_task_output_dir

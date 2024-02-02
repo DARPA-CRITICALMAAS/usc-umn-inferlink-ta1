@@ -9,11 +9,9 @@ from mip.module_tasks.registry import register_task
 @register_task
 class PolygonExtractTask8(DockerTask):
     NAME = "polygon_extract"
-
-    def requires(self):
-        return [
-            # LineExtractTask7(ob_name=self.config.job_name, map_name=self.config.map_name),
-            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name),
+    REQUIRES = [
+            # LineExtractTask7,
+            LegendItemDescriptionTask4,
         ]
 
     def run_post(self):

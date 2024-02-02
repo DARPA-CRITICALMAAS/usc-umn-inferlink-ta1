@@ -10,12 +10,10 @@ from mip.module_tasks.registry import register_task
 @register_task
 class PointExtractTask9(DockerTask):
     NAME = "point_extract"
-
-    def requires(self):
-        return [
-            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name),
-            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [
+        LegendItemDescriptionTask4,
+        MapCropTask5,
+    ]
 
     def run_post(self):
         # TODO

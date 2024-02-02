@@ -18,17 +18,15 @@ from mip.module_tasks.georeference_task_10 import GeoreferenceTask10
 @register_task
 class EndTask(SimpleTask):
     NAME = "end"
-
-    def requires(self):
-        return [
-            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name),
-            LegendSegmentTask2(job_name=self.config.job_name, map_name=self.config.map_name),
-            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
-            LegendItemDescriptionTask4(job_name=self.config.job_name, map_name=self.config.map_name),
-            MapCropTask5(job_name=self.config.job_name, map_name=self.config.map_name),
-            TextSpottingTask6(job_name=self.config.job_name, map_name=self.config.map_name),
-            # LineExtractTask7(job_name=self.config.job_name, map_name=self.config.map_name),
-            PolygonExtractTask8(job_name=self.config.job_name, map_name=self.config.map_name),
-            PointExtractTask9(job_name=self.config.job_name, map_name=self.config.map_name),
-            GeoreferenceTask10(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [
+        StartTask0,
+        LegendSegmentTask2,
+        LegendItemSegmentTask3,
+        LegendItemDescriptionTask4,
+        MapCropTask5,
+        TextSpottingTask6,
+        # LineExtractTask7,
+        PolygonExtractTask8,
+        PointExtractTask9,
+        GeoreferenceTask10,
+    ]

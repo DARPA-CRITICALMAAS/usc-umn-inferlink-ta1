@@ -9,11 +9,7 @@ from mip.utils.checker import check_file_exists
 @register_task
 class LegendItemDescriptionTask4(DockerTask):
     NAME = "legend_item_description"
-
-    def requires(self):
-        return [
-            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [LegendItemSegmentTask3]
 
     def run_pre(self):
         d = self.task_config.host_task_temp_dir

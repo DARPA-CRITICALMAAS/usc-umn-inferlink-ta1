@@ -9,6 +9,7 @@ from mip.module_tasks.registry import register_task
 @register_task
 class StartTask0(SimpleTask):
     NAME = "start"
+    REQUIRES = []
 
     def run_body(self):
         (self.task_config.host_task_output_dir / "output.txt").write_text("ok\n")

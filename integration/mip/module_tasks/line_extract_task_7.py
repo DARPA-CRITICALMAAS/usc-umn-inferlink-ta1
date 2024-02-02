@@ -8,11 +8,7 @@ from mip.module_tasks.registry import register_task
 @register_task
 class LineExtractTask7(DockerTask):
     NAME = "line_extract"
-
-    def requires(self):
-        return [
-            LegendItemDescriptionTask4(ob_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [LegendItemDescriptionTask4]
 
     def run_post(self):
         # TODO

@@ -1,5 +1,7 @@
 # Copyright 2024 InferLink Corporation
 
+from __future__ import annotations
+
 from datetime import datetime
 import logging
 import shutil
@@ -14,6 +16,7 @@ logger = logging.getLogger('luigi-interface')
 
 class SimpleTask(luigi.Task):
     NAME = "__simple__"
+    REQUIRES: list[type[SimpleTask]] = None
 
     job_name = luigi.Parameter()
     map_name = luigi.Parameter()
@@ -33,11 +36,29 @@ class SimpleTask(luigi.Task):
             shutil.rmtree(p, ignore_errors=True)
             p.mkdir(parents=False, exist_ok=False)
 
-        self.run_pre()
+        try:
+            self.run_pre()
+        except Exception as ex:
+            logger.error(f"run_pre() failed: {self.task_config.task_name}", exc_info=ex)
+            raise
 
-        self.run_body()
+        logger.info(f"run_pre() completed: {self.task_config.task_name}")
 
-        self.run_post()
+        try:
+            self.run_body()
+        except Exception as ex:
+            logger.error(f"run_body() failed: {self.task_config.task_name}", exc_info=ex)
+            raise
+
+        logger.info(f"run_body() completed: {self.task_config.task_name}")
+
+        try:
+            self.run_post()
+        except Exception as ex:
+            logger.error(f"run_post() failed: {self.task_config.task_name}", exc_info=ex)
+            raise
+
+        logger.info(f"run_post() completed: {self.task_config.task_name}")
 
         self.end_time = datetime.now()
         elapsed = round((self.end_time-self.start_time).total_seconds())
@@ -67,3 +88,12 @@ class SimpleTask(luigi.Task):
 
     def output(self):
         return luigi.LocalTarget(self.task_config.host_task_file)
+
+    def requires(self):
+        # force each class to list their predecessors
+        assert self.REQUIRES is not None
+
+        return [
+            cls(job_name=self.config.job_name, map_name=self.config.map_name)
+            for cls in self.REQUIRES
+        ]

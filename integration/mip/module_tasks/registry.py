@@ -1,19 +1,22 @@
 # Copyright 2024 InferLink Corporation
 
-from typing import Callable, Optional
+from typing import Optional
 
-_TASKS: dict[str, Callable] = dict()
+from mip.utils.simple_task import SimpleTask
 
 
-def registry_lookup(name: str) -> Optional[Callable]:
+_TASKS: dict[str, type[SimpleTask]] = dict()
+
+
+def registry_lookup(name: str) -> Optional[SimpleTask]:
     return _TASKS.get(name, None)
 
 
 # class decorator
-def register_task(cls):
+def register_task(cls: type[SimpleTask]):
     _TASKS[cls.NAME] = cls
     return cls
 
 
-def get_task_names() -> list[str]:
-    return list(_TASKS.keys())
+def get_tasks() -> dict[str, type[SimpleTask]]:
+    return _TASKS

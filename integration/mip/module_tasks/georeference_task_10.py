@@ -9,11 +9,7 @@ from mip.utils.checker import check_directory_exists
 @register_task
 class GeoreferenceTask10(DockerTask):
     NAME = "georeference"
-
-    def requires(self):
-        return [
-            StartTask0(job_name=self.config.job_name, map_name=self.config.map_name),
-        ]
+    REQUIRES = [StartTask0]
 
     def run_post(self):
         # TODO
