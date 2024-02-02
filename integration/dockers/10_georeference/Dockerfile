@@ -19,5 +19,4 @@ RUN apt install -y libtiff-dev
 COPY . /ta1/dev/usc-umn-inferlink-ta1/
 
 CMD []
-ENTRYPOINT ["python"]
-
+ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/integration/docker-tools/always-pass.py"]

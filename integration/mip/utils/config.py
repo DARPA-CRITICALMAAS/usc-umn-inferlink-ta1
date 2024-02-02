@@ -24,7 +24,7 @@ class Config:
         config_text = Path(options.config_file).read_text()
         self.data = yaml.load(config_text, Loader=yaml.FullLoader)
 
-        self.openai_key = Path(f"{os.path.expanduser('~')}/.ssh/openai").read_text().strip()
+        self.openai_key = options.openai_key_file.read_text().strip()
 
         self.host_input_dir = Path(self.data["host"]["input_dir"])
         self.host_output_dir = Path(self.data["host"]["output_dir"])
@@ -57,6 +57,8 @@ class TaskConfig:
 
         self.host_task_output_dir = self.host_output_dir / task_name
         self.host_task_temp_dir = self.host_temp_dir / task_name
+
+        self.host_task_file = self.host_output_dir / f"{task_name}.task.txt"
 
     def get_options(self) -> list[str]:
         ret: list[str] = []
