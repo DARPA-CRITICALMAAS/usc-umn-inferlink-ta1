@@ -88,16 +88,16 @@ class DockerRunner:
     def _wait_for_completion(self, perf_collector: PerfCollector) -> int:
         # use the wait(timeout) call a perf stats collector (and potential heartbeat)
         while True:
+            host_data, container_data = perf_collector.update(self._container)
+            logger.info(f"host perf: {host_data}")
+            logger.info(f"container perf: {container_data}")
+
             try:
-                exit_status = self._container.wait(timeout=5)
+                exit_status = self._container.wait(timeout=10)
                 return exit_status["StatusCode"]
             except requests.exceptions.ConnectionError as ex:
                 if "read timed out" in str(ex).lower():
                     pass
-
-            host_data, container_data = perf_collector.update(self._container)
-            logger.info(f"host perf: {host_data}")
-            logger.info(f"container perf: {container_data}")
 
         # not reached
 

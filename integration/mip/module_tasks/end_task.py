@@ -25,8 +25,11 @@ class EndTask(SimpleTask):
         LegendItemDescriptionTask4,
         MapCropTask5,
         TextSpottingTask6,
-        # LineExtractTask7,
+        LineExtractTask7,
         PolygonExtractTask8,
         PointExtractTask9,
         GeoreferenceTask10,
     ]
+
+    def run_body(self):
+        pass

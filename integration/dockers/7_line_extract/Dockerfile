@@ -20,4 +20,4 @@ COPY . /ta1/dev/usc-umn-inferlink-ta1/
 
 CMD []
 #ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/line/run_line_extraction.py"]
-ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/integration/docker-tools/always-pass.py"]
+ENTRYPOINT ["python", "/ta1/dev/usc-umn-inferlink-ta1/integration/docker-tools/always_pass.py"]

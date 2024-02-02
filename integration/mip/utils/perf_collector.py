@@ -54,6 +54,20 @@ class PerfStats:
 
         return data
 
+    def get_average_data(self) -> PerfRecord:
+        cpu_util = sum([p.cpu_util for p in self._data]) / len(self._data)
+        mem_used = round(sum([p.mem_used for p in self._data]) / len(self._data))
+        gpu_util = sum([p.gpu_util for p in self._data]) / len(self._data)
+        gpu_mem_used = round(sum([p.gpu_mem_used for p in self._data]) / len(self._data))
+        data = PerfRecord(
+            timestamp=None,
+            cpu_util=cpu_util,
+            mem_used=mem_used,
+            gpu_util=gpu_util,
+            gpu_mem_used=gpu_mem_used)
+
+        return data
+
     def update_for_host(self) -> Optional[PerfRecord]:
         mem = psutil.virtual_memory()
         mem_bytes_used = mem.total - mem.available
@@ -124,29 +138,38 @@ class PerfStats:
 
         gb = 1024 * 1024 * 1024
 
-        data = self.get_peak_data()
+        peak_data = self.get_peak_data()
+        avg_data = self.get_average_data()
 
         num_cpus = self._num_cpus
-        cpu_util = round(data.cpu_util)
+        avg_cpu_util = round(avg_data.cpu_util)
+        peak_cpu_util = round(peak_data.cpu_util)
         total_cpu = num_cpus * 100
 
-        mem_used = round(data.mem_used / gb, 1)
+        avg_mem_used = round(avg_data.mem_used / gb, 1)
+        peak_mem_used = round(peak_data.mem_used / gb, 1)
         mem_avail = round(self._total_mem / gb, 1)
 
         num_gpus = self._num_gpus
-        gpu_util = round(data.gpu_util)
+        avg_gpu_util = round(avg_data.gpu_util)
+        peak_gpu_util = round(peak_data.gpu_util)
         total_gpu = num_gpus * 100
 
-        gpu_mem_used = round(data.gpu_mem_used / gb, 1)
+        avg_gpu_mem_used = round(avg_data.gpu_mem_used / gb, 1)
+        peak_gpu_mem_used = round(peak_data.gpu_mem_used / gb, 1)
         gpu_mem_avail = round(self._total_gpu_mem / gb, 1)
 
-        sprint(f"# peak_cpu: {cpu_util}%")
+        sprint(f"# avg_cpu: {avg_cpu_util}%")
+        sprint(f"# peak_cpu: {peak_cpu_util}%")
         sprint(f"# total_cpu: {total_cpu}%")
-        sprint(f"# peak_mem_used: {mem_used} GB")
+        sprint(f"# avg_mem_used: {avg_mem_used} GB")
+        sprint(f"# peak_mem_used: {peak_mem_used} GB")
         sprint(f"# total_mem: {mem_avail} GB")
-        sprint(f"# peak_gpu: {gpu_util}%")
+        sprint(f"# avg_gpu: {avg_gpu_util}%")
+        sprint(f"# peak_gpu: {peak_gpu_util}%")
         sprint(f"# total_gpu: {total_gpu}%")
-        sprint(f"# peak_gpu_mem_used: {gpu_mem_used} GB")
+        sprint(f"# avg_gpu_mem_used: {avg_gpu_mem_used} GB")
+        sprint(f"# peak_gpu_mem_used: {peak_gpu_mem_used} GB")
         sprint(f"# total_gpu_mem: {gpu_mem_avail} GB")
 
         return s
