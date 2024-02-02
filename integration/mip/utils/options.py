@@ -35,3 +35,6 @@ class Options:
                 parser.error("--map-name is required")
             if not self.job_name:
                 parser.error("--job-name is required")
+
+        if not self.target_task_names:
+            self.target_task_names = ["end"]
