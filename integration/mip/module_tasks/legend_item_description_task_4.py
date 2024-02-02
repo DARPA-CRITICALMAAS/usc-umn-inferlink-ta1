@@ -2,7 +2,7 @@
 
 from mip.module_tasks.registry import register_task
 from mip.utils.docker_task import DockerTask
-from mip.module_tasks.legend_item_segment_fixup_task_3a import LegendItemSegmentFixupTask3a
+from mip.module_tasks.legend_item_segment_task_3 import LegendItemSegmentTask3
 from mip.utils.checker import check_file_exists
 
 
@@ -12,7 +12,7 @@ class LegendItemDescriptionTask4(DockerTask):
 
     def requires(self):
         return [
-            LegendItemSegmentFixupTask3a(job_name=self.config.job_name, map_name=self.config.map_name),
+            LegendItemSegmentTask3(job_name=self.config.job_name, map_name=self.config.map_name),
         ]
 
     def run_pre(self):
