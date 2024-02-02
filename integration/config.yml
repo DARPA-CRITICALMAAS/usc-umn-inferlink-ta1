@@ -5,7 +5,7 @@
 #   $TEMP_DIR --> the value of {container.temp_dir} + `--job-name`
 
 host:
-    input_dir: /home/ubuntu/dev/ta1-input
+    input_dir: /home/ubuntu/dev/ta1_integration_inputs
     output_dir: /home/ubuntu/dev/ta1-output
     temp_dir: /home/ubuntu/dev/ta1-temp
 
@@ -21,7 +21,7 @@ container:
 # produces: X_map_segmentation.json
 legend_segment:
     # inputs:
-    input: $INPUT_DIR/input/$MAP_NAME
+    input: $INPUT_DIR/maps/$MAP_NAME
     # outputs:
     output: $OUTPUT_DIR/legend_segment
     # misc:
@@ -32,7 +32,7 @@ legend_segment:
 # segmentation/legend_item_segmentation - Fandel
 legend_item_segment:
     # inputs:
-    input_image: $INPUT_DIR/input/$MAP_NAME/$MAP_NAME.tif
+    input_image: $INPUT_DIR/maps/$MAP_NAME/$MAP_NAME.tif
     path_to_mapkurator_output: $OUTPUT_DIR/text_spotting/mapKurator_test/stitch/test/$MAP_NAME.geojson
     input_legend_segmentation: $INPUT_DIR/legend_item_segment/ch2_validation_evaluation_labels_coco.json
     # outputs:
@@ -50,11 +50,11 @@ legend_item_segment:
 # segmentation/legend_item_description_segment - Weiwei
 legend_item_description:
     # inputs:
-    map_dir: $INPUT_DIR/input/$MAP_NAME
+    map_dir: $INPUT_DIR/maps/$MAP_NAME
     map_name: $MAP_NAME
     legend_json_path: $OUTPUT_DIR/legend_segment
     ###symbol_json_dir: $OUTPUT_DIR/legend_item_segment
-    symbol_json_dir: $INPUT_DIR/input/$MAP_NAME/legend_item_segment
+    symbol_json_dir: $INPUT_DIR/maps/$MAP_NAME/legend_item_segment
     # outputs:
     gpt4_output_dir: $OUTPUT_DIR/legend_item_description
     # misc:
@@ -65,7 +65,7 @@ legend_item_description:
 # 5: uses nothing
 # system/image_crop - Weiwei
 map_crop:
-    input_dir: $INPUT_DIR/input/$MAP_NAME
+    input_dir: $INPUT_DIR/maps/$MAP_NAME
     map_name: $MAP_NAME
     output_dir: $OUTPUT_DIR/map_crop
     patch_sizes: [1000, 256]
@@ -113,7 +113,7 @@ line_extract:
 polygon_extract:
     # inputs:
     path_to_legend_solution: $OUTPUT_DIR/legend_item_segment/$MAP_NAME_PolygonType.geojson
-    path_to_tif: $INPUT_DIR/input/$MAP_NAME/$MAP_NAME.tif
+    path_to_tif: $INPUT_DIR/maps/$MAP_NAME/$MAP_NAME.tif
     path_to_json: $OUTPUT_DIR/legend_item_segment/$MAP_NAME_PolygonType_internal.json
     # outputs:
     dir_to_integrated_output: $OUTPUT_DIR/polygon_extract

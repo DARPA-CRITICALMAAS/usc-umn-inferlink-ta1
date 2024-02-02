@@ -8,7 +8,8 @@ import luigi.tools.deps_tree as deps_tree
 
 from mip.module_tasks import *  # force registration of all module tasks
 from mip.module_tasks.registry import registry_lookup, get_tasks
-from mip.utils.config import Config, TaskConfig
+from mip.utils.config import Config
+from mip.utils.task_config import TaskConfig
 from mip.utils.simple_task import SimpleTask
 from mip.apps.options import Options
 

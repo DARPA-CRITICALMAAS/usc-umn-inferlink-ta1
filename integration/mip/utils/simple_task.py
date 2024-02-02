@@ -9,7 +9,10 @@ from typing import Optional
 
 import luigi
 
-from mip.utils.config import Config, TaskConfig
+from mip.utils.config import Config
+from mip.utils.task_config import TaskConfig
+from mip.utils.perf_collector import PerfCollector
+
 
 logger = logging.getLogger('luigi-interface')
 
@@ -28,6 +31,8 @@ class SimpleTask(luigi.Task):
         self.task_config = TaskConfig(self.config, self.NAME)
         self.start_time: Optional[datetime] = None
         self.end_time: Optional[datetime] = None
+
+        self.perf_collector = PerfCollector()
 
     def run(self):
         self.start_time = datetime.now()

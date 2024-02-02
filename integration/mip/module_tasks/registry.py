@@ -8,7 +8,7 @@ from mip.utils.simple_task import SimpleTask
 _TASKS: dict[str, type[SimpleTask]] = dict()
 
 
-def registry_lookup(name: str) -> Optional[SimpleTask]:
+def registry_lookup(name: str) -> Optional[type[SimpleTask]]:
     return _TASKS.get(name, None)
 
 
