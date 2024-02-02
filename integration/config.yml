@@ -128,13 +128,13 @@ point_extract:
     # inputs:
     # outputs:
     # misc:
+    version: ""
 
 
 # 10: uses none
 # georeference - Weiwei
 georeference:
     # inputs:
-    input_path: $INPUT_DIR/input/$MAP_NAME/$MAP_NAME.tif
     # outputs:
-    output_path: $OUTPUT_DIR/georeference/$MAP_NAME.json
     # misc:
+    version: ""

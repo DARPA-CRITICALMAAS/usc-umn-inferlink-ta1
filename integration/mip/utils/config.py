@@ -20,7 +20,6 @@ class Config:
 
         self.map_name: str = options.map_name
         self.job_name: str = options.job_name
-        self.target_task_name: str = options.target_task_name
 
         config_text = Path(options.config_file).read_text()
         self.data = yaml.load(config_text, Loader=yaml.FullLoader)
@@ -38,6 +37,7 @@ class Config:
         self.host_job_temp_dir = self.host_temp_dir / self.job_name
 
         Config.CONFIG = self
+
 
 class TaskConfig:
     def __init__(self, config: Config, task_name: str):
