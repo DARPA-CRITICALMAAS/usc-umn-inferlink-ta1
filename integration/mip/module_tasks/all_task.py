@@ -16,8 +16,8 @@ from mip.module_tasks.georeference_task_10 import GeoreferenceTask10
 
 
 @register_task
-class EndTask(SimpleTask):
-    NAME = "end"
+class AllTask(SimpleTask):
+    NAME = "all"
     REQUIRES = [
         StartTask0,
         LegendSegmentTask2,

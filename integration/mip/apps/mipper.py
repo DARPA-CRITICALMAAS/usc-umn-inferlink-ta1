@@ -5,6 +5,7 @@ import sys
 
 import luigi
 import luigi.tools.deps_tree as deps_tree
+import nvidia_smi
 
 from mip.module_tasks import *  # force registration of all module tasks
 from mip.module_tasks.registry import registry_lookup, get_tasks
@@ -69,13 +70,19 @@ def main() -> int:
             task_config = TaskConfig(cfg, task_name)
             task_config.host_task_file.unlink(missing_ok=True)
 
+    nvidia_smi.nvmlInit()
+
     result = luigi.build(
         tasks=tasks,
         local_scheduler=True,
         detailed_summary=True
     )
 
-    return 0 if result.status == luigi.execution_summary.LuigiStatusCode.SUCCESS else 1
+    status = 0 if result.status == luigi.execution_summary.LuigiStatusCode.SUCCESS else 1
+
+    nvidia_smi.nvmlShutdown()
+
+    return status
 
 
 if __name__ == '__main__':

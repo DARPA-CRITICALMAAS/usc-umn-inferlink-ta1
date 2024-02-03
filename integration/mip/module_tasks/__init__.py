@@ -11,5 +11,5 @@ __all__ = [
     'polygon_extract_task_8',
     'point_extract_task_9',
     'georeference_task_10',
-    'end_task',
+    'all_task',
 ]

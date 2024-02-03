@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 DEFAULT_CONFIG_FILE = "./config.yml"
-DEFAULT_TASK_NAME = "end"
+DEFAULT_TASK_NAME = "all"
 DEFAULT_OPENAI_KEY_FILE = f"{os.path.expanduser('~')}/.ssh/openai"
 
 

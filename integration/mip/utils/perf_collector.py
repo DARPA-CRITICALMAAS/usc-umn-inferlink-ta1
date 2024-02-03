@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from docker.models.containers import Container
+import nvidia_smi
 import psutil
 
 
@@ -81,12 +82,36 @@ class PerfStats:
         if not self._num_cpus:
             self._num_cpus = num_cpus
 
+        gpu_bytes_used = 0
+        gpu_bytes_total = 0
+        gpu_perc = 0
+
+        if not self._num_gpus:
+            try:
+                num_gpus = nvidia_smi.nvmlDeviceGetCount()
+                self._num_gpus = num_gpus
+            except Exception:
+                pass
+
+        if self._num_gpus:
+            for i in range(self._num_gpus):
+                handle = nvidia_smi.nvmlDeviceGetHandleByIndex(i)
+
+                mem_info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
+                gpu_bytes_used += mem_info.used
+                gpu_bytes_total += mem_info.total
+
+                gpu_util = nvidia_smi.nvmlDeviceGetUtilizationRates(handle)
+                gpu_perc += gpu_util.gpu
+            gpu_perc /= self._num_gpus
+            self._total_gpu_mem = gpu_bytes_total
+
         data = PerfRecord(
             timestamp=datetime.now(),
             cpu_util=cpu_perc,
             mem_used=mem_bytes_used,
-            gpu_util=0.0,
-            gpu_mem_used=0)
+            gpu_util=gpu_perc,
+            gpu_mem_used=gpu_bytes_used)
 
         self._data.append(data)
         return data
