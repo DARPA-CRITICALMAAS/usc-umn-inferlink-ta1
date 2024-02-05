@@ -16,8 +16,10 @@ container:
     temp_dir: /ta1/temp
 
 
-# 2: uses nothing
-# integration/legend_segment - Uncharted
+# 2
+# where: integration/legend_segment
+# by: Uncharted
+# requires: (nothing)
 # produces: X_map_segmentation.json
 legend_segment:
     # inputs:
@@ -28,8 +30,11 @@ legend_segment:
     model: $INPUT_DIR/legend_segment/layoutlmv3_20230929
 
 
-# 3: uses 6
-# segmentation/legend_item_segmentation - Fandel
+# 3
+# where: segmentation/legend_item_segmentation
+# by: Fandel
+# requires: 6
+# produces: geojson
 legend_item_segment:
     # inputs:
     input_image: $INPUT_DIR/maps/$MAP_NAME/$MAP_NAME.tif
@@ -46,8 +51,11 @@ legend_item_segment:
     log: $OUTPUT_DIR/legend_item_segment/log_file.txt
 
 
-# 4: uses 2 and 3
-# segmentation/legend_item_description_segment - Weiwei
+# 4
+# where: segmentation/legend_item_description_segment
+# by: Weiwei
+# requires: 2, 3
+# produces: json
 legend_item_description:
     # inputs:
     map_dir: $INPUT_DIR/maps/$MAP_NAME
@@ -62,18 +70,27 @@ legend_item_description:
     gpt4_intermediate_dir: $TEMP_DIR/legend_item_description/gpt4_temp_dir
 
 
-# 5: uses nothing
-# system/image_crop - Weiwei
+# 5
+# where: system/image_crop
+# by: Weiwei
+# requires: (none)
+# produces: PNGs
 map_crop:
+    # inputs:
     input_dir: $INPUT_DIR/maps/$MAP_NAME
     map_name: $MAP_NAME
+    # outputs:
     output_dir: $OUTPUT_DIR/map_crop
+    # misc:
     patch_sizes: [1000, 256]
     strides: [1000, 256]
 
 
-# 6: uses 5
-# integration/text_spotting - Weiwei (Zekun)
+# 6
+# where: integration/text_spotting
+# by: Weiwei (Zekun)
+# requires: 5
+# produced: geojson
 text_spotting:
     # inputs:
     input_dir_path: $OUTPUT_DIR/map_crop/$MAP_NAME_g1000_s1000
@@ -91,8 +108,11 @@ text_spotting:
     module_img_geojson: ""
 
 
-# 7: uses 4 and 5
-# line - Weiwei
+# 7
+# where: line
+# by: Weiwei
+# requires: 4, 5
+# produces: geojson
 line_extract:
     # inputs:
     map_legend_json: $OUTPUT_DIR/legend_item_description
@@ -109,7 +129,10 @@ line_extract:
 
 
 # 8: uses 3 and 4
-# polygon - Fandel
+# where: polygon
+# by: Fandel
+# requires: 3
+# produces: geojson?
 polygon_extract:
     # inputs:
     path_to_legend_solution: $OUTPUT_DIR/legend_item_segment/$MAP_NAME_PolygonType.geojson
@@ -123,8 +146,11 @@ polygon_extract:
     threads: 1
 
 
-# 9: uses 4 and 5
-# point - Leeje
+# 9
+# where: point
+# by: Leeje
+# requires: 4, 5
+# produces: TIF, geojson
 point_extract:
     # inputs:
     # outputs:
@@ -132,8 +158,11 @@ point_extract:
     version: ""
 
 
-# 10: uses none
-# georeference - Weiwei
+# 10
+# where: georeference
+# by: Weiwei
+# requires: (none)
+# produces: json
 georeference:
     # inputs:
     # outputs:
