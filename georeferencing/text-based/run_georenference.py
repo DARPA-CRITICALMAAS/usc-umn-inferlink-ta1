@@ -15,7 +15,6 @@ import io
 import os
 
 
-
 Image.MAX_IMAGE_PIXELS = None
 
 # torch.cuda.empty_cache()
@@ -54,41 +53,6 @@ def load_data(topo_histo_meta_path, topo_current_meta_path):
 
     return bm25, df_merged
 
-
-def folium_plot_map(file, seg_bbox, top1):
-    image = Image.open(file) # read image with PIL library
-
-
-    left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
-    bounds = [(bottom, left), (top, right)]
-
-
-    # st.write("Plotting maps...")
-
-    m = folium.Map(location=[0.5*(top+bottom), 0.5*(left+right)], zoom_start=10)
-
-    # # add marker for Liberty Bell
-    # tooltip = "Manilla city"
-    # folium.Marker(
-    #     [14.599512, 120.984222], popup="This is it!", tooltip=tooltip
-    # ).add_to(m)
-
-
-    img = folium.raster_layers.ImageOverlay(
-        name="Geologic Map",
-        image=np.array(image)[seg_bbox[1]:seg_bbox[1]+seg_bbox[3],seg_bbox[0]:seg_bbox[0]+seg_bbox[2],:],
-        bounds=bounds,
-        opacity=0.9,
-        interactive=True,
-        cross_origin=False,
-        zindex=1,
-    )
-
-    img.add_to(m)
-    folium.LayerControl().add_to(m)
-
-    # call to render Folium map in Streamlit
-    folium_static(m)
 
 
 def get_topo_basemap(query_sentence, bm25, df_merged, device ):
@@ -153,14 +117,14 @@ def getTitle(base64_image):
     }
 
     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-    print(dir(response))
-    print(response.text)
+    
     return response.json()['choices'][0]['message']['content']
 
 
 
-#check and downscale:
-def downscale(image, max_size=9):
+# check and downscale:
+
+def downscale(image, max_size=10, max_dimension=9500):
 
     print("downscaling...")
 
@@ -170,8 +134,10 @@ def downscale(image, max_size=9):
 
     img_size = buffer.tell() / (1024 * 1024)
 
-    
-    if img_size > max_size:
+
+
+
+    if img_size > max_size or max(image.width, image.height) > max_dimension:
 
         downscale_factor = max_size / img_size
 
@@ -180,6 +146,17 @@ def downscale(image, max_size=9):
         new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
 
         while True:
+
+            # to aviod the case err "Maximum supported image dimension is 65500 pixels"
+            while max(image.width, image.height) > max_dimension:
+                print("---")
+                downscale_factor = max_dimension / max(image.width, image.height)
+                downscale_factor = max(downscale_factor, 0.1)
+                new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
+                image=image.resize(new_size)
+
+            print("out")
+
             downscaled_img = image.resize(new_size)
             buffer = io.BytesIO()
             downscaled_img.save(buffer, format="JPEG")
@@ -187,13 +164,16 @@ def downscale(image, max_size=9):
 
             print(downscaled_size)
 
-            if downscaled_size <= max_size:
+            print("downscaled x 1")
+
+            if downscaled_size < max_size or max(downscaled_img.width, downscaled_img.height) < max_dimension:
+                print("dimension now:")
+                print(max(downscaled_img.width, downscaled_img.height))
                 print("down.")
                 break  
             else:
                 downscale_factor *= 0.8 
 
-            print("downscaled x 1")
 
             new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
 
@@ -203,8 +183,11 @@ def downscale(image, max_size=9):
         downscaled_img = image.resize(new_size)
 
         return downscaled_img
+
     else:
+
         return image
+
 
 def to_camel(title):
     words = title.split()

@@ -76,28 +76,25 @@ def load_data(topo_histo_meta_path, topo_current_meta_path):
     return bm25, df_merged
 
 @st.cache_data
-def folium_plot_map(file, seg_bbox, top1):
-    image = Image.open(file) # read image with PIL library
+def folium_plot_map(file, downscale_factor, seg_bbox, top1):
+    if isinstance(file, str):
+        image = Image.open(file) # read image with PIL library
+    else:
+        image = file
 
 
     left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
     bounds = [(bottom, left), (top, right)]
 
-
-    # st.write("Plotting maps...")
-
     m = folium.Map(location=[0.5*(top+bottom), 0.5*(left+right)], zoom_start=10)
 
-    # # add marker for Liberty Bell
-    # tooltip = "Manilla city"
-    # folium.Marker(
-    #     [14.599512, 120.984222], popup="This is it!", tooltip=tooltip
-    # ).add_to(m)
-
+    img_left, img_top, img_width, img_height = seg_bbox[0], seg_bbox[1], seg_bbox[2], seg_bbox[3]
+    img_left, img_top, img_width, img_height = int(img_left * downscale_factor), int(img_top * downscale_factor), int(img_width * downscale_factor), int(img_height * downscale_factor)
 
     img = folium.raster_layers.ImageOverlay(
         name="Geologic Map",
-        image=np.array(image)[seg_bbox[1]:seg_bbox[1]+seg_bbox[3],seg_bbox[0]:seg_bbox[0]+seg_bbox[2],:],
+        # image=np.array(image)[seg_bbox[1]:seg_bbox[1]+seg_bbox[3],seg_bbox[0]:seg_bbox[0]+seg_bbox[2],:],
+        image = np.array(image)[img_top:img_top+img_height, img_left:img_left+img_width,:],
         bounds=bounds,
         opacity=0.9,
         interactive=True,
@@ -191,26 +188,66 @@ def getTitle(base64_image):
     return title 
 
 
-#check and downscale:
-def downscale(image, max_size=13):
-    
+
+# check and downscale:
+
+def downscale(image, max_size=10, max_dimension=9500):
+
+    print("downscaling...")
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG")  
+
     img_size = buffer.tell() / (1024 * 1024)
-    
-    if img_size > max_size:
+
+    if img_size > max_size or max(image.width, image.height) > max_dimension:
+
         downscale_factor = max_size / img_size
+
         downscale_factor = max(downscale_factor, 0.1)
-        
+
         new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
-        
+
+        while True:
+
+            # to aviod the case err "Maximum supported image dimension is 65500 pixels"
+            while max(image.width, image.height) > max_dimension:
+                print("---")
+                downscale_factor = max_dimension / max(image.width, image.height)
+                downscale_factor = max(downscale_factor, 0.1)
+                new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
+                image=image.resize(new_size)
+
+            print("out")
+
+            downscaled_img = image.resize(new_size)
+            buffer = io.BytesIO()
+            downscaled_img.save(buffer, format="JPEG")
+            downscaled_size = buffer.tell() / (1024 * 1024)
+
+            print(downscaled_size)
+
+            print("downscaled x 1")
+
+            if downscaled_size < max_size or max(downscaled_img.width, downscaled_img.height) < max_dimension:
+                print("dimension now:")
+                print(max(downscaled_img.width, downscaled_img.height))
+                print("down.")
+                break  
+            else:
+                downscale_factor *= 0.8 
+
+
+            new_size = (int(image.width * downscale_factor), int(image.height * downscale_factor))
+
+        print("after downscaled, the new size is: ")
+        print(new_size)
+
         downscaled_img = image.resize(new_size)
-        
-        # st.write(f"image has downscaled")
-        # st.image(downscaled_img)
-        
+
         return downscaled_img
+
     else:
+
         return image
 
 def to_camel(title):
@@ -266,6 +303,7 @@ file = st.file_uploader(label = "Upload your map", type=['png', 'jpg', 'jpeg', '
 
 if file:
     seg_mask, seg_bbox, image = run_segmentation(file)
+    orig_w, orig_h = image.size
 
     print(seg_bbox)
 
@@ -290,12 +328,14 @@ if file:
     
     image.save(jpg_file_path, format="JPEG")
   
-
     image =downscale(image)
+    down_w, down_h = image.size 
+    downscale_factor = down_w/orig_w
     
     # Getting the base64 string
     base64_image = encode_image(image)
     
+    os.remove("temp/output.jpg")
 
     # title = to_camel(getTitle(base64_image))
     if 'title' not in st.session_state:
@@ -303,10 +343,6 @@ if file:
 
     modefied = st.text_area("Title of the map:", st.session_state.title)
     
-
-
-    os.remove("temp/output.jpg")
-
 
     w1 = st.button("Start Processing")
     
@@ -321,7 +357,11 @@ if file:
         st.markdown("### Display Georeferencing Result")
         
         #show on the map: 
-        folium_plot_map(file, seg_bbox, top1)
+        # folium_plot_map(file, seg_bbox, top1)
+        folium_plot_map(image, downscale_factor, seg_bbox, top1)
+        
 
         # torch.cuda.empty_cache()
         del st.session_state.title
+
+    
