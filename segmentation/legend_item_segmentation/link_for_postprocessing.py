@@ -315,7 +315,7 @@ def generating_json(target_map_name, input_image, output_dir, path_to_intermedia
         this_legend_bounds = row['geometry'].bounds
         this_item = {}
         this_item['label'] = this_poly_name
-        this_item['points'] = [[this_legend_bounds[0], -1.0*this_legend_bounds[1]], [this_legend_bounds[2], -1.0*this_legend_bounds[3]]]
+        this_item['points'] = [[this_legend_bounds[0], this_legend_bounds[1]], [this_legend_bounds[2], this_legend_bounds[3]]]
         this_item['group_id'] = None
         this_item['shape_type'] = 'rectangle'
         this_item['flags']: None
@@ -340,7 +340,7 @@ def generating_json(target_map_name, input_image, output_dir, path_to_intermedia
         this_legend_bounds = row['geometry'].bounds
         this_item = {}
         this_item['label'] = this_poly_name
-        this_item['points'] = [[this_legend_bounds[0], -1.0*this_legend_bounds[1]], [this_legend_bounds[2], -1.0*this_legend_bounds[3]]]
+        this_item['points'] = [[this_legend_bounds[0], this_legend_bounds[1]], [this_legend_bounds[2], this_legend_bounds[3]]]
         this_item['group_id'] = None
         this_item['shape_type'] = 'rectangle'
         this_item['flags']: None
