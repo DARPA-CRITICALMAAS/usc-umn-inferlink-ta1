@@ -1,13 +1,16 @@
 
 import os
 import argparse
-import link_for_metadata_preprocessing
-import link_for_metadata_postprocessing
-import link_for_loam_inference
+#import link_for_processing
+import link_for_integrated_processing
 import link_for_postprocessing
-#import map_area_segmenter
 
+#import legend_item_vector_evaluation_v02
+
+import csv
 import sys
+
+from datetime import datetime
 
 
 def str_to_bool(value):
@@ -18,7 +21,243 @@ def str_to_bool(value):
     raise ValueError(f'{value} is not a valid boolean value')
 
 
+def batch_extract_main():
+    runningtime_start = datetime.now()
+    this_map_count = 0
+    total_map_count = len(os.listdir('Data/nickel/'))
+    for target_map_cand in os.listdir('Data/nickel/'):
+        if '.tif' in target_map_cand:
+            target_map = target_map_cand.split('.tif')[0]
+
+            target_map_name = str(target_map)+'.tif'
+            input_image = 'Data/nickel/'+str(target_map)+'.tif'
+            output_dir = 'Nickel_Output/Vectorization_Output/'
+            path_to_intermediate = 'Nickel_Output/LINK_Intermediate/'+str(target_map)+'/'
+            input_area_segmentation = None
+            input_legend_segmentation = 'Data/nickel_segmentation/'+str(target_map)+'_map_segmentation.json'
+            #path_to_mapkurator_output = 'MapKurator/ta1-feature-evaluation/'+str(target_map)+'.geojson'
+            path_to_mapkurator_output = 'None.geojson'
+
+            preprocessing_for_cropping = None
+            postprocessing_for_crs = True
+            competition_custom = False
+            this_version = '1.2'
+
+            path_to_log = 'Nickel_Output/'+str(target_map)+'.log'
+            os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+
+            class Logger(object):
+                def __init__(self):
+                    self.terminal = sys.stdout
+                    self.log = open(path_to_log, 'a')
+                def write(self, message):
+                    self.terminal.write(message)
+                    try:
+                        self.log.write(message)
+                    except:
+                        self.log.write('\n  Unable to write to log file due to encoding issues...')
+                        print('\n  Unable to write to log file due to encoding issues...')
+                def flush(self):
+                    pass
+            sys.stdout = Logger()
+            
+            
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, this_version)
+            if flagging == True:
+                link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+                print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
+            else:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+            #start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            this_map_count += 1
+
+
+
+def batch_main():
+    missing_list = []
+    with open('missing.csv', newline='') as fdd:
+        reader = csv.reader(fdd)
+        for row in reader:
+            missing_list.append(row[0])
+    print(missing_list)
+
+
+    runningtime_start = datetime.now()
+    this_map_count = 0
+    total_map_count = int(len(os.listdir('Data/testing/'))/2)
+    for target_map_cand in os.listdir('Data/testing/'):
+        if '.tif' in target_map_cand:
+            target_map = target_map_cand.split('.tif')[0]
+            if target_map_cand in missing_list:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+                this_map_count += 1
+                continue
+
+            target_map_name = str(target_map)+'.tif'
+            input_image = 'Data/testing/'+str(target_map)+'.tif'
+            groundtruth_dir = 'Data/testing_groundtruth'
+            output_dir = 'Example_Output/Vectorization_Output/'
+            path_to_intermediate = 'Example_Output/LINK_Intermediate/testing/'+str(target_map)+'/'
+            input_area_segmentation = None
+            input_legend_segmentation = 'Uncharted/ch2_validation_evaluation_labels_coco.json'
+            path_to_mapkurator_output = 'MapKurator/ta1-feature-evaluation/'+str(target_map)+'.geojson'
+
+            preprocessing_for_cropping = None
+            postprocessing_for_crs = True
+            competition_custom = True
+            this_version = '1.2'
+
+            path_to_log = 'Example_Output/'+str(target_map)+'.log'
+            os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+
+            class Logger(object):
+                def __init__(self):
+                    self.terminal = sys.stdout
+                    self.log = open(path_to_log, 'a')
+                def write(self, message):
+                    self.terminal.write(message)
+                    try:
+                        self.log.write(message)
+                    except:
+                        self.log.write('\n  Unable to write to log file due to encoding issues...')
+                        print('\n  Unable to write to log file due to encoding issues...')
+                def flush(self):
+                    pass
+            sys.stdout = Logger()
+            
+            
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            if flagging == True:
+                link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+                print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
+                #legend_item_vector_evaluation_v02.single_evaluation(target_map_name, output_dir, groundtruth_dir, 'Example_Output', str(datetime.now()-runningtime_start))
+            else:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+            #start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            this_map_count += 1
+
+
+
+    runningtime_start = datetime.now()
+    this_map_count = 0
+    total_map_count = int(len(os.listdir('Data/validation/'))/2)
+    for target_map_cand in os.listdir('Data/validation/'):
+        if '.tif' in target_map_cand:
+            target_map = target_map_cand.split('.tif')[0]
+            if target_map_cand in missing_list:
+                this_map_count += 1
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+                continue
+
+            target_map_name = str(target_map)+'.tif'
+            input_image = 'Data/validation/'+str(target_map)+'.tif'
+            groundtruth_dir = 'Data/validation_groundtruth'
+            path_to_intermediate = 'Example_Output/LINK_Intermediate/validation/'+str(target_map)+'/'
+            input_area_segmentation = None
+            input_legend_segmentation = 'Uncharted/ch2_validation_evaluation_labels_coco.json'
+            path_to_mapkurator_output = 'MapKurator/ta1-feature-validation/'+str(target_map)+'.geojson'
+
+            path_to_log = 'Example_Output/'+str(target_map)+'.log'
+            os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+
+            class Logger(object):
+                def __init__(self):
+                    self.terminal = sys.stdout
+                    self.log = open(path_to_log, 'a')
+                def write(self, message):
+                    self.terminal.write(message)
+                    try:
+                        self.log.write(message)
+                    except:
+                        self.log.write('\n  Unable to write to log file due to encoding issues...')
+                        print('\n  Unable to write to log file due to encoding issues...')
+                def flush(self):
+                    pass
+            sys.stdout = Logger()
+
+            
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            if flagging == True:
+                link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+                print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
+                #legend_item_vector_evaluation_v02.single_evaluation(target_map_name, output_dir, groundtruth_dir, 'Example_Output', str(datetime.now()-runningtime_start))
+            else:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+            #start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            this_map_count += 1
+
+
+
+    runningtime_start = datetime.now()
+    this_map_count = 0
+    total_map_count = int(len(os.listdir('Data/training/'))/2)
+    for target_map_cand in os.listdir('Data/training/'):
+        if '.tif' in target_map_cand:
+            target_map = target_map_cand.split('.tif')[0]
+            if target_map_cand in missing_list:
+                this_map_count += 1
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+                continue
+
+            target_map_name = str(target_map)+'.tif'
+            input_image = 'Data/training/'+str(target_map)+'.tif'
+            groundtruth_dir = 'Data/training_groundtruth'
+            path_to_intermediate = 'Example_Output/LINK_Intermediate/training/'+str(target_map)+'/'
+            input_area_segmentation = None
+            input_legend_segmentation = 'Uncharted/ch2_training_labels_coco.json'
+            path_to_mapkurator_output = 'MapKurator/ta1-feature-training/'+str(target_map)+'.geojson'
+
+            path_to_log = 'Example_Output/'+str(target_map)+'.log'
+            os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+
+            class Logger(object):
+                def __init__(self):
+                    self.terminal = sys.stdout
+                    self.log = open(path_to_log, 'a')
+                def write(self, message):
+                    self.terminal.write(message)
+                    try:
+                        self.log.write(message)
+                    except:
+                        self.log.write('\n  Unable to write to log file due to encoding issues...')
+                        print('\n  Unable to write to log file due to encoding issues...')
+                def flush(self):
+                    pass
+            sys.stdout = Logger()
+
+            
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            if flagging == True:
+                link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+                print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
+                #legend_item_vector_evaluation_v02.single_evaluation(target_map_name, output_dir, groundtruth_dir, 'Example_Output', str(datetime.now()-runningtime_start))
+            else:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+            #start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            this_map_count += 1
+
+    
+
+
+
 def main():
+    this_batch_processing = str_to_bool(args.batch_processing)
+    this_hackathon = str_to_bool(args.hackathon)
+    if this_hackathon == True:
+        batch_extract_main()
+        return True
+    if this_batch_processing == True:
+        batch_main()
+        return True
+
     os.makedirs(os.path.dirname(args.log), exist_ok=True)
     os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
     os.makedirs(os.path.dirname(args.path_to_intermediate), exist_ok=True)
@@ -57,38 +296,20 @@ def main():
     postprocessing_for_crs = str_to_bool(args.postprocessing_for_crs)
     competition_custom = str_to_bool(args.competition_custom)
 
+    this_version = args.version
+
     
     input_groundtruth_dir = 'None'
     os.makedirs(os.path.dirname(path_to_intermediate2), exist_ok=True)
 
-    
-    target_dir_img = 'LOAM_Intermediate/data/cma/imgs'
-    target_dir_mask = 'LOAM_Intermediate/data/cma/masks'
 
-    target_dir_img_small = 'LOAM_Intermediate/data/cma_small/imgs'
-    target_dir_mask_small = 'LOAM_Intermediate/data/cma_small/masks'
-
-    link_for_metadata_preprocessing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom)
-    link_for_metadata_postprocessing.start_data_postprocessing(target_map_name, path_to_intermediate, input_groundtruth_dir, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, 1024, False)
-    link_for_loam_inference.loam_inference(
-            input_filtering_new_dataset = False,
-            input_filtering_threshold = 0.02,
-            input_k_fold_testing = 1,
-            input_crop_size = 1024,
-            input_separate_validating_set = False,
-            input_reading_predefined_testing = True,
-            input_training_needed = False,
-            input_targeted_map_file = 'targeted_map.csv',
-            input_path_to_tif = input_image,
-            input_groundtruth_dir = 'None',
-            input_performance_evaluation = False
-        )
-    
-    link_for_postprocessing.start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate2, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
-    
+    flagging = link_for_integrated_processing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, this_version)
+    if flagging == True:
+        link_for_postprocessing.start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate2, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+    else:
+        print('Disintegrity in map, please check the legend-area segmentation file. The targeted map may be missing from the json file if you have set "--competition_custom" to True...')
     return True
     
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -103,9 +324,13 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_mapkurator_output', type=str, default='Legend/Map_Legend_Detection/ta1-feature-validation')
 
     parser.add_argument('--competition_custom', type=str, default='False')
+    parser.add_argument('--batch_processing', type=str, default='False')
+    parser.add_argument('--hackathon', type=str, default='False')
 
-    parser.add_argument('--version', type=str, default='0')
+    parser.add_argument('--version', type=str, default='1.2')
     parser.add_argument('--log', type=str, default='log_file.txt')
+
+
 
     args = parser.parse_args()
     main()
