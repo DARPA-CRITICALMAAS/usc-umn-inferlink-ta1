@@ -562,9 +562,18 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     _, threshold = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
 
     # using a findContours() function
-    contours, hierarchy = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    kernel = np.ones((2, 4), np.uint8)
+    threshold_dilate = cv2.dilate(255-threshold, kernel, iterations = 1)
+    #threshold_dilate = cv2.erode(threshold_dilate, kernel, iterations = 1)
+    threshold_dilate = 255 - threshold_dilate
+
+    _, threshold_dilate = cv2.threshold(threshold_dilate, 127, 255, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(threshold_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    #contours, hierarchy = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     adaptive_threshold = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 4)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed.tif')), threshold)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_0.tif')), threshold)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_1.tif')), threshold_dilate)
     cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_adaptive.tif')), adaptive_threshold)
 
 
@@ -669,7 +678,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     # list for storing names of shapes
     for i in range(0,len(valid_contours)):
         # using drawContours() function
-        cv2.drawContours(poly_img, [valid_contours[i]], 0, (0, 0, 255), 5)
+        cv2.drawContours(poly_img, [valid_contours[i]], 0, (0, 0, 255), 1)
     poly_img = cv2.cvtColor(poly_img, cv2.COLOR_RGB2GRAY)
 
     # flood fill background to find inner holes
@@ -681,6 +690,8 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     holes = cv2.bitwise_not(holes)
     valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
     floodfill_block = cv2.bitwise_and(255-poly_img, valid_holes)
+    #print(np.unique(floodfill_block))
+    floodfill_block[floodfill_block > 0] = 255 # 254
     cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), floodfill_block)
     shutil.copyfile(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), 
                     os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly_source.tif')))
@@ -805,12 +816,12 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
 
         ######
         poly_candidate_sweeping = np.copy(poly_candidate)
-        for sweeping in range(0, 200):
+        for sweeping in range(0, 300):
             kernel = np.ones((1, 2), np.uint8)
             poly_candidate_sweeping = cv2.dilate(poly_candidate_sweeping, kernel, iterations = 1)
             poly_candidate_sweeping = cv2.bitwise_and(poly_candidate_sweeping, column_summary)
-        kernel = np.ones((5, 5), np.uint8) #
-        poly_candidate_sweeping = cv2.erode(poly_candidate_sweeping, kernel, iterations = 1) #
+        #kernel = np.ones((5, 5), np.uint8) #
+        #poly_candidate_sweeping = cv2.erode(poly_candidate_sweeping, kernel, iterations = 1) #
         poly_candidate_sweeping = cv2.bitwise_and(poly_candidate_sweeping, cv2.bitwise_or(roi_poly, roi_ptln))
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), poly_candidate_sweeping)
 
@@ -1048,7 +1059,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         # list for storing names of shapes
         for i in range(0,len(ptln_valid_contours)):
             # using drawContours() function
-            cv2.drawContours(ptln_img, [ptln_valid_contours[i]], 0, (0, 0, 255), 5)
+            cv2.drawContours(ptln_img, [ptln_valid_contours[i]], 0, (0, 0, 255), 1)
         ptln_img = cv2.cvtColor(ptln_img, cv2.COLOR_RGB2GRAY)
 
         # flood fill background to find inner holes
@@ -1063,6 +1074,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         
         ptln_candidate_sweeping = np.copy(floodfill_block)
     
+    ptln_candidate_sweeping[ptln_candidate_sweeping > 0] = 255 # 254
     cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
 
     '''
