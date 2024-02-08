@@ -72,9 +72,9 @@ def get_map_area_by_iou(sam_result):
     return map_plot_area
 
 
-def run_sam(image, resized_img, scaling_factor, device):
+def run_sam(image, resized_img, scaling_factor, device, support_path):
 
-    sam = sam_model_registry[MODEL_TYPE](checkpoint=checkpoint_path)
+    sam = sam_model_registry[MODEL_TYPE](checkpoint=f"{support_path}/{checkpoint_path}")
     sam.to(device)
     mask_generator = SamAutomaticMaskGenerator(sam)
     
