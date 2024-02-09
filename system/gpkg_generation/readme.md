@@ -23,9 +23,9 @@ outputs
 |   |
 |   |__map_name1.tif
 |
-|__legend_segment_outputs
+|__legend_item_segment_outputs
 |		|
-|		|__map_name1_map_segmentation.json
+|		|__map_name1_line.json
 |
 |___georeference_outputs
 |		|
