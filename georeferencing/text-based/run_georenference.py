@@ -25,19 +25,19 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 
 
-def run_segmentation(file):
+def run_segmentation(file, support_path):
     image = Image.open(file) # read image with PIL library
 
     print('image_size',image.size)
 
     resized_img, scaling_factor = resize_img(np.array(image))
-    seg_mask, bbox = run_sam(np.array(image), resized_img, scaling_factor, device)
+    seg_mask, bbox = run_sam(np.array(image), resized_img, scaling_factor, device, support_path)
 
     return seg_mask, bbox, image, image.width, image.height
 
 
 def load_data(topo_histo_meta_path, topo_current_meta_path):
-
+    
     # topo_histo_meta_path = 'support_data/historicaltopo.csv'
     df_histo = pd.read_csv(topo_histo_meta_path) 
             
@@ -196,19 +196,22 @@ def to_camel(title):
 
 def run_georeferencing(args):
 
+    support_path = f"{args.support_path}/support_data"
+    temp_path  = f"{args.temp_path}/temp"
+
     # input_path = '../input_data/CO_Frisco.png' # supported file format: png, jpg, jpeg, tif
     input_path = args.input_path
 
     # load data store in bm25 & df_merged
-    bm25, df_merged = load_data(topo_histo_meta_path = 'support_data/historicaltopo.csv',
-        topo_current_meta_path = 'support_data/ustopo_current.csv')
+    bm25, df_merged = load_data(topo_histo_meta_path = f'{support_path}/historicaltopo.csv',
+        topo_current_meta_path = f'{support_path}/ustopo_current.csv')
     
-    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path)
+    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path, args.support_path)
 
-    if not os.path.isdir('temp'):
-        os.makedirs('temp')
+    if not os.path.isdir(temp_path):
+        os.makedirs(temp_path)
     
-    jpg_file_path = "temp/output.jpg"
+    jpg_file_path = f"{temp_path}/output.jpg"
 
     image.save(jpg_file_path, format="JPEG")
 
@@ -217,7 +220,7 @@ def run_georeferencing(args):
     base64_image = encode_image(image)
     title = to_camel(getTitle(base64_image))
 
-    os.remove("temp/output.jpg")
+    os.remove(f"{temp_path}/output.jpg")
 
     query_sentence = title
 
@@ -321,6 +324,8 @@ def main():
 
     parser.add_argument('--input_path', type=str, default=None)
     parser.add_argument('--output_path', type=str, default=None) 
+    parser.add_argument('--temp_path', type=str, default=None) 
+    parser.add_argument('--support_path', type=str, default=None) 
     args = parser.parse_args()
     print('\n')
     print(args)
@@ -328,7 +333,11 @@ def main():
 
     assert args.input_path is not None
     assert args.output_path is not None 
-    
+    if args.support_path is None:
+        args.support_path = "."
+    if args.temp_path is None:
+        args.temp_path = "."
+
     seg_bbox, top1, image_width, image_height = run_georeferencing(args)
 
     # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)

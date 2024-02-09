@@ -30,27 +30,25 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
      
-        map_name = args.map_name
-        layout_output_path = os.path.join(args.layout_output_dir, map_name+'_line.json')
-        georef_output_path = os.path.join(args.georef_output_dir, map_name+'.json')
-        poly_output_dir = os.path.join(args.poly_output_dir, map_name)
-        ln_output_dir = os.path.join(args.ln_output_dir, map_name)
-        if not os.path.exists(ln_output_dir):
-            continue
-        pt_output_path = os.path.join(args.pt_output_dir, map_name+'.geojson')
-        nongeoref_map_dir = args.nongeoref_map_dir
-        georef_map_output_dir = args.georef_map_output
-        
-        if not os.path.exists(georef_output_path):
-            continue
+    map_name = args.map_name
+    layout_output_path = os.path.join(args.layout_output_dir, map_name+'_line.json')
+    georef_output_path = os.path.join(args.georef_output_dir, map_name+'.json')
+    poly_output_dir = os.path.join(args.poly_output_dir, map_name)
+    ln_output_dir = os.path.join(args.ln_output_dir, map_name)
+
+    pt_output_path = os.path.join(args.pt_output_dir, map_name+'.geojson')
+    nongeoref_map_dir = args.nongeoref_map_dir
+    georef_map_output_dir = args.georef_map_output
+
+    if os.path.exists(georef_output_path):
         run_georeference_map(map_name, nongeoref_map_dir, georef_output_path, georef_map_output_dir)
         write_geo_gpkg(output_dir, map_name, layout_output_path, georef_output_path, \
                    poly_output_dir, ln_output_dir, pt_output_path)
-        
-        output_img_coord_dir = output_dir+'_img'
-        if not os.path.exists(output_img_coord_dir):
-            os.mkdir(output_img_coord_dir)
-        
-        write_img_gpkg(output_img_coord_dir, map_name, layout_output_path, georef_output_path, \
-                   poly_output_dir, ln_output_dir, pt_output_path)
+
+    output_img_coord_dir = output_dir+'_img'
+    if not os.path.exists(output_img_coord_dir):
+        os.mkdir(output_img_coord_dir)
+
+    write_img_gpkg(output_img_coord_dir, map_name, layout_output_path, georef_output_path, \
+               poly_output_dir, ln_output_dir, pt_output_path)
         
