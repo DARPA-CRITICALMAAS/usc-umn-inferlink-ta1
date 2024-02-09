@@ -123,23 +123,17 @@ def write_georef_into_gpkg(db, gcp, map_name, projection='EPSG:4326'):
 @mark.parametrize("engine", ["fiona", "pyogrio"])
 def write_poly_into_gpkg(db, feat_list, gcp, map_name):     
     from sqlalchemy import create_engine
-#     engine = create_engine('sqlite:///AK_Dillingham_debug.gpkg')
-    engine = 'pyogrio' #db.engine
+    engine = 'pyogrio' 
     global poly_id
     geo_unit_list = []
     poly_type_list = []
     poly_geom, poly_property = [], []
     
     for ind, feat in enumerate(feat_list):        
-        geo_unit_feat = {'id': str(poly_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age':10 if isinstance(feat['properties']['GeologicUnit']['t_age'], str) else feat['properties']['GeologicUnit']['t_age'], 'b_age':10 if isinstance(feat['properties']['GeologicUnit']['b_age'], str) else feat['properties']['GeologicUnit']['b_age'],'lithology':feat['properties']['GeologicUnit']['lithology']}
-        
-        geo_unit_list.append(geo_unit_feat)
-        
-        poly_type_feat = {'id': str(poly_id), 'name': "geologic unit", 'description': feat['properties']['PolygonType']['description'], 'color': feat['properties']['PolygonType']['color'] if feat['properties']['PolygonType']['color'] else 'not detected', 'pattern': feat['properties']['PolygonType']['pattern'], 'abbreviation': feat['properties']['PolygonType']['abbreviation'], 'category': feat['properties']['PolygonType']['category'], 'map_unit': str(poly_id)}
-        
-        poly_type_list.append(poly_type_feat)
-
         geo_poly = img2geo_geometry(feat['geometry']['coordinates'], gcp[0], gcp[1], 'polygon')
+        
+        if len(geo_poly[0]) == 0: # skip empty geom
+            continue
         
         poly_feat = {"id":str(poly_id),
                     "map_id": map_name,
@@ -149,6 +143,15 @@ def write_poly_into_gpkg(db, feat_list, gcp, map_name):
                     "geometry": MultiPolygon(geo_poly),
                 }
         poly_geom.append(poly_feat)
+        
+        geo_unit_feat = {'id': str(poly_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age':10 if isinstance(feat['properties']['GeologicUnit']['t_age'], str) else feat['properties']['GeologicUnit']['t_age'], 'b_age':10 if isinstance(feat['properties']['GeologicUnit']['b_age'], str) else feat['properties']['GeologicUnit']['b_age'],'lithology':feat['properties']['GeologicUnit']['lithology']}
+        
+        geo_unit_list.append(geo_unit_feat)
+        
+        poly_type_feat = {'id': str(poly_id), 'name': "geologic unit", 'description': feat['properties']['PolygonType']['description'], 'color': feat['properties']['PolygonType']['color'] if feat['properties']['PolygonType']['color'] else 'not detected', 'pattern': feat['properties']['PolygonType']['pattern'], 'abbreviation': feat['properties']['PolygonType']['abbreviation'], 'category': feat['properties']['PolygonType']['category'], 'map_unit': str(poly_id)}
+        
+        poly_type_list.append(poly_type_feat)
+        
         poly_id += 1
         
         
@@ -169,17 +172,24 @@ def write_poly_into_gpkg(db, feat_list, gcp, map_name):
         promote_to_multi=True,
     )
     
+#     db.write_features("polygon_feature", poly_feats)
+
+        
 def write_pt_into_gpkg(db, feat_list, gcp, map_name):   
     global pt_id
+    engine = 'pyogrio'
     pt_type_list = []
     pt_feat_list = []
     for ind, feat in enumerate(feat_list):
-        pt_type = {'id':str(pt_id), 'name':"other", 'description':None}
+        pt_type = {'id':str(pt_id), 'name':"other", 'description':feat['properties']['type']}
         pt_type_list.append(pt_type)
 
-        geo_pt = mg2geo_geometry(feat['geometry']['coordinates'], gcp[0], gcp[1], 'point')
+        geo_pt = img2geo_geometry(feat['geometry']['coordinates'], gcp[0], gcp[1], 'point')
         
-        poly_feat = {"id":str(pt_id),
+        if len(geo_pt) == 0:
+            continue # skip the empty geom
+            
+        pt_feat = {"id":str(pt_id),
                     "map_id": map_name,
                     "type": str(pt_id),
                     "dip_direction": 0,
@@ -191,6 +201,8 @@ def write_pt_into_gpkg(db, feat_list, gcp, map_name):
         pt_feat_list.append(pt_feat)
         pt_id += 1
     
+    if len(pt_feat_list) == 0:
+        return 
     df_pt_type = pd.DataFrame(pt_type_list)
     df_pt_type.to_sql('point_type', db.engine , if_exists='append', index=False)
     
@@ -204,18 +216,18 @@ def write_pt_into_gpkg(db, feat_list, gcp, map_name):
         engine=engine,
         promote_to_multi=True,
     )
-        
+    return    
         
 def write_ln_into_gpkg(db, feat_list, gcp, map_name): 
     global ln_id
+    engine = 'pyogrio'
     ln_type_list, ln_feat_list = [], []
     for ind, feat in enumerate(feat_list):
-        ln_type = {'id':str(ln_id), 'name':"fault", 'description':feat['properties']['descript'], \
-                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
-        ln_type_list.append(ln_type)
+        ln_geom = img2geo_geometry(feat['geometry']['coordinates'], gcp[0], gcp[1], 'line')
         
-        ln_geom = MultiLineString(img2geo_geometry(feat['geometry']['coordinates'], gcp[0], gcp[1], 'line'))
-
+        if len(ln_geom[0]) == 0: # skip the empty geom
+            continue
+        
         ln_feat = {
                     "id":str(ln_id),
                     "map_id": map_name,
@@ -224,11 +236,19 @@ def write_ln_into_gpkg(db, feat_list, gcp, map_name):
                     "polarity": 0, 
                     "confidence": None,
                     "provenance": 'modelled',
-                    "geometry": ln_geom
+                    "geometry": MultiLineString(ln_geom)
                     }
-        ln_feat_list.append(ln_feat)            
+        ln_feat_list.append(ln_feat)  
+        
+        ln_type = {'id':str(ln_id), 'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
+                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
+        ln_type_list.append(ln_type)
+        
         ln_id += 1
-
+   
+    if len(ln_feat_list) == 0:
+        return
+    
     df_ln_type = pd.DataFrame(ln_type_list)
     df_ln_type.to_sql('line_type', db.engine , if_exists='append', index=False)
     
@@ -242,7 +262,7 @@ def write_ln_into_gpkg(db, feat_list, gcp, map_name):
         engine=engine,
         promote_to_multi=True,
     )
-
+    return
     
 def write_gpkg(output_dir, map_name, \
                layout_output_path, georef_output_path, poly_output_path, ln_output_path, pt_output_path):    
@@ -250,35 +270,39 @@ def write_gpkg(output_dir, map_name, \
     with open(layout_output_path, 'r') as json_file:
         legend_item_descr_json = json.load(json_file)
         
-    out_gpkg_path = f'./{map_name}.gpkg'    
+    out_gpkg_path = f'{output_dir}/{map_name}.gpkg'    
     db_instance = create_gpkg(out_gpkg_path, legend_item_descr_json, map_name)
     
-    # write ground control points
+    # read ground control points
     # gcp is [img_gcp, geo_gcp]
     gcp = get_gcp_from_geojson(georef_output_path) 
     write_georef_into_gpkg(db_instance, gcp, map_name)
     
     # write polygon features    
-    poly_files = os.listdir(poly_output_path)
-    for poly_geojson in poly_files:
-        if '.geojson' not in poly_geojson:
-            continue
-        geojson_path = os.path.join(poly_output_path, poly_geojson)
-        features = get_feature_from_geojson(geojson_path)    
-        write_poly_into_gpkg(db_instance, features[:], gcp, map_name)                    
+    if os.path.exists(poly_output_path):
+        poly_files = os.listdir(poly_output_path)
+        for poly_geojson in poly_files:
+            if '.geojson' not in poly_geojson:
+                continue
+            geojson_path = os.path.join(poly_output_path, poly_geojson)
+            features = get_feature_from_geojson(geojson_path)    
+            write_poly_into_gpkg(db_instance, features[:], gcp, map_name)
+                    
     
     # write point features
-    features = get_feature_from_geojson(pt_output_path)
-    write_pt_into_gpkg(db_instance, features[:10], gcp)
+    if os.path.exists(pt_output_path):
+        features = get_feature_from_geojson(pt_output_path)    
+        write_pt_into_gpkg(db_instance, features[:], gcp, map_name)
     
     # write line features
-    ln_files = os.listdir(ln_output_path)
-    for ln_geojson in ln_files:
-        if '.geojson' not in ln_geojson:
-            continue
-        ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
-        features = get_feature_from_geojson(ln_geojson_path)
-        write_ln_into_gpkg(db_instance, features[:], gcp, map_name)
+    if os.path.exists(ln_output_path):
+        ln_files = os.listdir(ln_output_path)
+        for ln_geojson in ln_files:
+            if '.geojson' not in ln_geojson:
+                continue
+            ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
+            features = get_feature_from_geojson(ln_geojson_path)
+            write_ln_into_gpkg(db_instance, features[:], gcp, map_name)
 
 if __name__ == '__main__':
     write_gpkg('', '', '', '', '','', '')
