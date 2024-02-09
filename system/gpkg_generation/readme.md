@@ -11,7 +11,7 @@ This module combines outputs from other modules in th system into a single GeoPa
 
 ## Running Command
 ```sh
-python run_gpkg_writer.py --output_dir /dir/to/save/gpkg --map_name '22253_25695' --layout_output_dir /dir/to/outputs/of/legend/sgement/module --georef_output_dir /dir/to/outputs/of/georef/module --poly_output_dir /dir/to/outputs/of/polygon/module --ln_output_dir /dir/to/outputs/of/line/module --pt_output_dir /dir/to/outputs/of/point/module --nongeoref_map_dir /dir/to/tif/map --georef_map_output /dir/to/save/georeferenced/map
+python run_gpkg_writer.py --output_dir /dir/to/save/gpkg --map_name '22253_25695' --layout_output_dir /dir/to/outputs/of/legend/item-description/sgement/module --georef_output_dir /dir/to/outputs/of/georef/module --poly_output_dir /dir/to/outputs/of/polygon/module --ln_output_dir /dir/to/outputs/of/line/module --pt_output_dir /dir/to/outputs/of/point/module --nongeoref_map_dir /dir/to/tif/map --georef_map_output /dir/to/save/georeferenced/map
 ```
 Notes: 
 - This module has three outputs: 1. georeferenced tif map, 2. GeoPackage in EPSG:4236 and 3.  GeoPackage in image coordinates
