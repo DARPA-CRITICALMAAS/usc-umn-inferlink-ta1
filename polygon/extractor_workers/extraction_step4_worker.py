@@ -53,8 +53,12 @@ def extraction_step4_worker(legend, map_name, legend_name, solutiona_dir, print_
             masked_update_np = np.copy(masked_update_hsv[:,:,dimension]).astype(float)
             masked_update_np[masked_update_np==0] = np.nan
 
-            color_dynamic_placeholder_hsv_0.append(int(np.nanquantile(masked_update_np,.05)))
-            color_dynamic_placeholder_hsv_1.append(int(np.nanquantile(masked_update_np,.95)))
+            try:
+                color_dynamic_placeholder_hsv_0.append(int(np.nanquantile(masked_update_np,.05)))
+                color_dynamic_placeholder_hsv_1.append(int(np.nanquantile(masked_update_np,.95)))
+            except:
+                color_dynamic_placeholder_hsv_0.append(0)
+                color_dynamic_placeholder_hsv_1.append(0)
 
 
 

@@ -20,10 +20,10 @@ class LOAM(nn.Module):
         self.sa = (sa_layer(1024))
         self.fc1 = (Dense(32, 64)) # 10 * 3 + 2
         self.fc2 = (Dense(64, 128))
-        self.fc3 = (Dense(128, 16)) # 64
+        self.fc3 = (Dense(128, 64)) # 16
 
         self.fm1 = (Dense(9, 32))
-        self.fm2 = (Dense(32, 16)) # 64
+        self.fm2 = (Dense(32, 64)) # 16
 
         self.mf = (mf_layer(1024))
 

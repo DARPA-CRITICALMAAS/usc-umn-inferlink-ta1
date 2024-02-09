@@ -854,7 +854,6 @@ def worker_auxiliary_info():
     print('=== Extract auxiliary information from the maps ===')
     runningtime_start_global = datetime.now()
 
-
     if printing_auxiliary_information == True:
         # auxiliary information needs to be printed:
         ### number of legends in one map
@@ -2991,7 +2990,7 @@ def worker_main_component():
                 
 
                     
-                if poly_counter >= 5 and poly_counter <= 150:
+                if poly_counter >= 5 and poly_counter <= 150 and fast_processing == False:
                     print('proceed to text-pattern matching with connected-component analysis...')
 
                     img_backgroun_v0 = np.copy(img_rb)
@@ -3376,9 +3375,9 @@ path_to_json = 'input.json'
 path_to_bound = 'bound.geojson'
 
 target_map_name = 'intput'
+fast_processing = False
 
-
-def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread):
+def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread, input_fast_processing):
     global solutiona_dir
     global map_preprocessing
     global generate_boundary_extraction
@@ -3389,6 +3388,8 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     global path_to_json
     global path_to_bound
     global target_map_name
+
+    global fast_processing
 
     global PROCESSES
 
@@ -3407,6 +3408,8 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     generate_boundary_extraction = True
     printing_auxiliary_information = True
     preprocessing_recoloring = True
+
+    fast_processing = input_fast_processing
 
     PROCESSES = input_thread
 

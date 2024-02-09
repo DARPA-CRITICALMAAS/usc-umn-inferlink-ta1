@@ -75,116 +75,128 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     #print(box_diff_x, box_diff_y)
     ##print(img_legend_v1.shape)
 
-
+    
     current_x_0 = int(img_legend_v0.shape[0]*4.0/16.0)
     current_x_1 = int(img_legend_v0.shape[0]*12.0/16.0)
     current_y_0 = int(img_legend_v0.shape[1]*4.0/16.0)
     current_y_1 = int(img_legend_v0.shape[1]*12.0/16.0)
     unit_x = max(1, int(img_legend_v0.shape[0]*1.0/64.0))
     unit_y = max(1, int(img_legend_v0.shape[1]*1.0/64.0))
+    '''
+    current_x_0 = int(img_legend_v0.shape[0]*1.0/16.0)
+    current_x_1 = int(img_legend_v0.shape[0]*15.0/16.0)
+    current_y_0 = int(img_legend_v0.shape[1]*1.0/16.0)
+    current_y_1 = int(img_legend_v0.shape[1]*15.0/16.0)
+    unit_x = max(1, int(img_legend_v0.shape[0]*1.0/64.0))
+    unit_y = max(1, int(img_legend_v0.shape[1]*1.0/64.0))
+    '''
 
     abort_threshold = 50
 
-    acc_abort = 0
-    while top_left[0] <= 0 and current_x_0 > 0: # up
-        current_x_0 = max(0, current_x_0 - unit_x)
-        img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
+    mask_box_legend_backup = np.copy(mask_box_legend)
 
-        lower_black_text = np.array([0,0,0])
-        upper_black_text = np.array([80,80,80])
-        mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
+    try:
+        acc_abort = 0
+        while top_left[0] <= 0 and current_x_0 > 0: # up
+            current_x_0 = max(0, current_x_0 - unit_x)
+            img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
 
-        mask_box_legend = cv2.medianBlur(mask_box_legend,3)
+            lower_black_text = np.array([0,0,0])
+            upper_black_text = np.array([80,80,80])
+            mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
 
-        # Make sure image is binary (the one you posted was not, probably due to interpolation)
-        #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
-        image_binary = np.copy(mask_box_legend)
-        image_binary[mask_box_legend > 0] = 255
+            mask_box_legend = cv2.medianBlur(mask_box_legend,3)
 
-        # Find top left and bottom right coords for non-background pixels
-        active_pixels = np.stack(np.where(image_binary))
-        top_left = np.min(active_pixels, axis=1).astype(np.int32)
-        bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
+            # Make sure image is binary (the one you posted was not, probably due to interpolation)
+            #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
+            image_binary = np.copy(mask_box_legend)
+            image_binary[mask_box_legend > 0] = 255
 
-        acc_abort = acc_abort + 1
-        if acc_abort > abort_threshold:
-            break
-    
-    acc_abort = 0
-    while top_left[1] <= 0 and current_y_0 > 0: # left
-        current_y_0 = max(0, current_y_0 - unit_y)
-        img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
+            # Find top left and bottom right coords for non-background pixels
+            active_pixels = np.stack(np.where(image_binary))
+            top_left = np.min(active_pixels, axis=1).astype(np.int32)
+            bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
 
-        lower_black_text = np.array([0,0,0])
-        upper_black_text = np.array([80,80,80])
-        mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
+            acc_abort = acc_abort + 1
+            if acc_abort > abort_threshold:
+                break
         
-        mask_box_legend = cv2.medianBlur(mask_box_legend,3)
+        acc_abort = 0
+        while top_left[1] <= 0 and current_y_0 > 0: # left
+            current_y_0 = max(0, current_y_0 - unit_y)
+            img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
 
-        # Make sure image is binary (the one you posted was not, probably due to interpolation)
-        #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
-        image_binary = np.copy(mask_box_legend)
-        image_binary[mask_box_legend > 0] = 255
+            lower_black_text = np.array([0,0,0])
+            upper_black_text = np.array([80,80,80])
+            mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
+            
+            mask_box_legend = cv2.medianBlur(mask_box_legend,3)
 
-        # Find top left and bottom right coords for non-background pixels
-        active_pixels = np.stack(np.where(image_binary))
-        top_left = np.min(active_pixels, axis=1).astype(np.int32)
-        bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
+            # Make sure image is binary (the one you posted was not, probably due to interpolation)
+            #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
+            image_binary = np.copy(mask_box_legend)
+            image_binary[mask_box_legend > 0] = 255
 
-        acc_abort = acc_abort + 1
-        if acc_abort > abort_threshold:
-            break
+            # Find top left and bottom right coords for non-background pixels
+            active_pixels = np.stack(np.where(image_binary))
+            top_left = np.min(active_pixels, axis=1).astype(np.int32)
+            bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
 
-    acc_abort = 0
-    while bottom_right[0] >= img_legend_v1.shape[0]-1 and bottom_right[0] < img_legend_v0.shape[0]: # bottom
-        current_x_1 = current_x_1 + unit_x
-        img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
+            acc_abort = acc_abort + 1
+            if acc_abort > abort_threshold:
+                break
 
-        lower_black_text = np.array([0,0,0])
-        upper_black_text = np.array([80,80,80])
-        mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
-        
-        mask_box_legend = cv2.medianBlur(mask_box_legend,3)
+        acc_abort = 0
+        while bottom_right[0] >= img_legend_v1.shape[0]-1 and bottom_right[0] < img_legend_v0.shape[0]: # bottom
+            current_x_1 = current_x_1 + unit_x
+            img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
 
-        # Make sure image is binary (the one you posted was not, probably due to interpolation)
-        #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
-        image_binary = np.copy(mask_box_legend)
-        image_binary[mask_box_legend > 0] = 255
+            lower_black_text = np.array([0,0,0])
+            upper_black_text = np.array([80,80,80])
+            mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
+            
+            mask_box_legend = cv2.medianBlur(mask_box_legend,3)
 
-        # Find top left and bottom right coords for non-background pixels
-        active_pixels = np.stack(np.where(image_binary))
-        top_left = np.min(active_pixels, axis=1).astype(np.int32)
-        bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
+            # Make sure image is binary (the one you posted was not, probably due to interpolation)
+            #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
+            image_binary = np.copy(mask_box_legend)
+            image_binary[mask_box_legend > 0] = 255
 
-        acc_abort = acc_abort + 1
-        if acc_abort > abort_threshold:
-            break
+            # Find top left and bottom right coords for non-background pixels
+            active_pixels = np.stack(np.where(image_binary))
+            top_left = np.min(active_pixels, axis=1).astype(np.int32)
+            bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
 
-    acc_abort = 0
-    while bottom_right[1] >= img_legend_v1.shape[1]-1 and bottom_right[1] < img_legend_v0.shape[1]: # right
-        current_y_1 = current_y_1 + unit_y
-        img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
+            acc_abort = acc_abort + 1
+            if acc_abort > abort_threshold:
+                break
 
-        lower_black_text = np.array([0,0,0])
-        upper_black_text = np.array([80,80,80])
-        mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
-        
-        mask_box_legend = cv2.medianBlur(mask_box_legend,3)
+        acc_abort = 0
+        while bottom_right[1] >= img_legend_v1.shape[1]-1 and bottom_right[1] < img_legend_v0.shape[1]: # right
+            current_y_1 = current_y_1 + unit_y
+            img_legend_v1 = img_legend_v0[current_x_0:current_x_1, current_y_0:current_y_1]
 
-        # Make sure image is binary (the one you posted was not, probably due to interpolation)
-        #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
-        image_binary = np.copy(mask_box_legend)
-        image_binary[mask_box_legend > 0] = 255
+            lower_black_text = np.array([0,0,0])
+            upper_black_text = np.array([80,80,80])
+            mask_box_legend = cv2.inRange(img_legend_v1, lower_black_text, upper_black_text)
+            
+            mask_box_legend = cv2.medianBlur(mask_box_legend,3)
 
-        # Find top left and bottom right coords for non-background pixels
-        active_pixels = np.stack(np.where(image_binary))
-        top_left = np.min(active_pixels, axis=1).astype(np.int32)
-        bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
+            # Make sure image is binary (the one you posted was not, probably due to interpolation)
+            #_, image_binary = cv2.threshold(mask_box_legend, 80, 255, cv2.THRESH_BINARY)
+            image_binary = np.copy(mask_box_legend)
+            image_binary[mask_box_legend > 0] = 255
 
-        acc_abort = acc_abort + 1
-        if acc_abort > abort_threshold:
-            break
+            # Find top left and bottom right coords for non-background pixels
+            active_pixels = np.stack(np.where(image_binary))
+            top_left = np.min(active_pixels, axis=1).astype(np.int32)
+            bottom_right = np.max(active_pixels, axis=1).astype(np.int32)
 
+            acc_abort = acc_abort + 1
+            if acc_abort > abort_threshold:
+                break
+    except:
+        mask_box_legend = np.copy(mask_box_legend_backup)
     
 
     if print_intermediate_image == True:
@@ -192,8 +204,9 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
         cv2.imwrite(out_file_path0, mask_box_legend)
 
 
-    box_diff_y = abs(bottom_right[0] - top_left[0])
-    box_diff_x = abs(bottom_right[1] - top_left[1])
+    box_diff_y = max(1, abs(bottom_right[0] - top_left[0]))
+    box_diff_x = max(1, abs(bottom_right[1] - top_left[1]))
+
 
     ##print('---')
     ##print(top_left, bottom_right)

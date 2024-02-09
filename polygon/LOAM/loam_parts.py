@@ -121,8 +121,8 @@ class mf_layer(nn.Module):
         x_0, x_1 = x.chunk(2, dim=1)
 
         # channel attention
-        #self.avg_pool1d = nn.AdaptiveAvgPool1d(b * self.groups)
-        self.avg_pool1d = nn.AdaptiveAvgPool1d(int(b * self.groups / 4))
+        self.avg_pool1d = nn.AdaptiveAvgPool1d(b * self.groups)
+        #self.avg_pool1d = nn.AdaptiveAvgPool1d(int(b * self.groups / 4))
 
         zc = self.avg_pool1d(zc0)
         zc = self.cweight * zc + self.cbias
