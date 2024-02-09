@@ -21,7 +21,7 @@ outputs
 |
 |__tif_maps
 |   |
-|   |__map_name1.json
+|   |__map_name1.tif
 |
 |__legend_segment_outputs
 |		|
