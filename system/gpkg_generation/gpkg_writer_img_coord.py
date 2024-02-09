@@ -157,7 +157,7 @@ def write_ln_into_gpkg(db, feat_list, map_name):
                     }
         ln_feat_list.append(ln_feat)            
         
-        ln_type = {'id':str(ln_id), 'name':"fault", 'description':feat['properties']['descript'], \
+        ln_type = {'id':str(ln_id), 'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
                    'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
         ln_type_list.append(ln_type)
         
