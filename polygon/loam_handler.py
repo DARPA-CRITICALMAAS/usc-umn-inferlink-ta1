@@ -431,7 +431,7 @@ def main():
     os.makedirs(os.path.dirname(dir_to_intermediate_preprocessing), exist_ok=True)
     
     path_to_checkpoints = os.path.join(dir_to_intermediate, 'checkpoints')
-    os.makedirs(os.path.dirname(path_to_checkpoints), exist_ok=True)
+    os.makedirs(path_to_checkpoints, exist_ok=True)
 
     with open(os.path.join(dir_to_intermediate, 'checkpoints/epoch.txt'), 'w') as file:
         file.write('14')
