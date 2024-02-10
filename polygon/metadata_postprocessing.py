@@ -47,30 +47,32 @@ def multiprocessing_setting():
 
 
 def dir_setting():
-    if not os.path.exists(os.path.join('LOAM_Intermediate', 'data')):
-        os.makedirs(os.path.join('LOAM_Intermediate', 'data'))
-    if not os.path.exists(os.path.join('LOAM_Intermediate', 'data', 'cma')):
-        os.makedirs(os.path.join('LOAM_Intermediate', 'data', 'cma'))
-    if not os.path.exists(os.path.join('LOAM_Intermediate', 'data', 'cma_small')):
-        os.makedirs(os.path.join('LOAM_Intermediate', 'data', 'cma_small'))
+    os.makedirs(os.path.dirname(os.path.join(solution_dir, 'LOAM_Intermediate', 'data/')), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'cma/')), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'cma_small/')), exist_ok=True)
 
-    if not os.path.exists(target_dir_img):
-        os.makedirs(target_dir_img)
-        os.makedirs(os.path.join(target_dir_img, 'sup'))
-    if not os.path.exists(target_dir_mask):
-        os.makedirs(target_dir_mask)
-        os.makedirs(os.path.join(target_dir_mask, 'sup'))
-    if not os.path.exists(target_dir_img_small):
-        os.makedirs(target_dir_img_small)
-        os.makedirs(os.path.join(target_dir_img_small, 'sup'))
-    if not os.path.exists(target_dir_mask_small):
-        os.makedirs(target_dir_mask_small)
-        os.makedirs(os.path.join(target_dir_mask_small, 'sup'))
+    global target_dir_img
+    global target_dir_mask
+    global target_dir_img_small
+    global target_dir_mask_small
+
+    target_dir_img = os.path.join(solution_dir, 'LOAM_Intermediate/data/cma/imgs/')
+    target_dir_mask = os.path.join(solution_dir, 'LOAM_Intermediate/data/cma/masks/')
+    target_dir_img_small = os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs/')
+    target_dir_mask_small = os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks/')
+
+    os.makedirs(os.path.dirname(target_dir_img), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(target_dir_img, 'sup/')), exist_ok=True)
+    os.makedirs(os.path.dirname(target_dir_mask), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(target_dir_mask, 'sup/')), exist_ok=True)
+    os.makedirs(os.path.dirname(target_dir_img_small), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(target_dir_img_small, 'sup/')), exist_ok=True)
+    os.makedirs(os.path.dirname(target_dir_mask_small), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(target_dir_mask_small, 'sup/')), exist_ok=True)
 
     #shutil.copyfile('targeted_map.csv', 'LOAM_Intermediate/targeted_map.csv')
-    shutil.copyfile(solution_dir+'intermediate9/auxiliary_info.csv', 'LOAM_Intermediate/data/auxiliary_info.csv')
-
-    print('Set up directories in "LOAM_Intermediate/data"')
+    shutil.copyfile(os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate9/auxiliary_info.csv'), os.path.join(solution_dir, 'LOAM_Intermediate/data/auxiliary_info.csv'))
+    print('Set up directories in "'+str(os.path.join(solution_dir, 'LOAM_Intermediate/data'))+'"')
 
 
 def file_summary():
@@ -137,12 +139,12 @@ def file_summary():
 
 
 def worker_postprocessing(crop_size):
-    data_dir0 = solution_dir + str('intermediate7_2')
+    data_dir0 = os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate7_2/')
     data_dir1 = dir_to_groundtruth
 
-    data_dir2 = solution_dir + str('intermediate7')
-    data_dir3 = solution_dir + str('intermediate5')
-    data_dir4 = solution_dir + str('intermediate8_2')
+    data_dir2 = os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate7/')
+    data_dir3 = os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate5/')
+    data_dir4 = os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate8_2/')
 
 
     info_set = []
@@ -185,19 +187,19 @@ def worker_postprocessing(crop_size):
 
         runningtime_end = datetime.now()-runningtime_start
 
-        if os.path.isfile('LOAM_Intermediate/data/'+'running_time_record_v1.csv') == False:
-            with open('LOAM_Intermediate/data/'+'running_time_record_v1.csv','w') as fd:
+        if os.path.isfile(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'running_time_record_v1.csv')) == False:
+            with open(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'running_time_record_v1.csv'),'w') as fd:
                 fd.write('Map_Id,Map_Name,Legend_Count,RunningTime\n')
                 fd.close()
-        if os.path.isfile('LOAM_Intermediate/data/'+'generated_grids_record_v1.csv') == False:
-            with open('LOAM_Intermediate/data/'+'generated_grids_record_v1.csv','w') as fd:
+        if os.path.isfile(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'generated_grids_record_v1.csv')) == False:
+            with open(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'generated_grids_record_v1.csv'),'w') as fd:
                 fd.write('Map_Id,Map_Name,Legend_Count,GeneratedGrids\n')
                 fd.close()
 
-        with open('LOAM_Intermediate/data/'+'running_time_record_v1.csv','a') as fd:
+        with open(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'running_time_record_v1.csv'),'a') as fd:
             fd.write(str(map_id)+','+candidate_map_name_for_polygon[map_id]+','+str(len(legend_for_multiprocessing))+','+str(runningtime_end)+'\n')
             fd.close()
-        with open('LOAM_Intermediate/data/'+'generated_grids_record_v1.csv','a') as fd:
+        with open(os.path.join(solution_dir, 'LOAM_Intermediate', 'data', 'generated_grids_record_v1.csv'),'a') as fd:
             fd.write(str(map_id)+','+candidate_map_name_for_polygon[map_id]+','+str(len(legend_for_multiprocessing))+','+str(grid_counter)+'\n')
             fd.close()
 
@@ -213,7 +215,7 @@ def run(crop_size):
     worker_postprocessing(crop_size)
 
 
-def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_performance_evaluation=False, crop_size=256):
+def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_performance_evaluation=False, crop_size=1024):
     global solution_dir
     global path_to_tif
     global path_to_json
@@ -240,8 +242,8 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
     print('*Intput map tif for polygon extraction => "' + path_to_tif + '"')
     print('*Intput map json for polygon extraction => "' + path_to_json + '"')
 
-    print('*Postprocessing input directory => "LOAM_Intermediate/Metadata_Preprocessing/"')
-    print('*Postprocessing output directory => "LOAM_Intermediate/data/"')
+    print('*Postprocessing input directory => "' + os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing/') + '"')
+    print('*Postprocessing output directory => "' + os.path.join(solution_dir, 'LOAM_Intermediate/data/') + '"')
 
     print('===============================================================================================================================================')
     run(crop_size)

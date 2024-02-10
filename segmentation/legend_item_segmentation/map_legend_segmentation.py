@@ -24,26 +24,34 @@ def str_to_bool(value):
 def batch_extract_main():
     runningtime_start = datetime.now()
     this_map_count = 0
-    total_map_count = len(os.listdir('Data/nickel/'))
-    for target_map_cand in os.listdir('Data/nickel/'):
+    total_map_count = len(os.listdir('Data/nickel_new/'))
+    for target_map_cand in os.listdir('Data/nickel_new/'):
         if '.tif' in target_map_cand:
             target_map = target_map_cand.split('.tif')[0]
 
             target_map_name = str(target_map)+'.tif'
-            input_image = 'Data/nickel/'+str(target_map)+'.tif'
-            output_dir = 'Nickel_Output/Vectorization_Output/'
-            path_to_intermediate = 'Nickel_Output/LINK_Intermediate/'+str(target_map)+'/'
+            input_image = 'Data/nickel_new/'+str(target_map)+'.tif'
+            output_dir = 'Nickel_New_Output/Vectorization_Output/'
+            path_to_intermediate = 'Nickel_New_Output/LINK_Intermediate/'+str(target_map)+'/'
             input_area_segmentation = None
-            input_legend_segmentation = 'Data/nickel_segmentation/'+str(target_map)+'_map_segmentation.json'
+            input_legend_segmentation = 'Data/nickel_new_segmentation/'+str(target_map)+'_map_segmentation.json'
             #path_to_mapkurator_output = 'MapKurator/ta1-feature-evaluation/'+str(target_map)+'.geojson'
             path_to_mapkurator_output = 'None.geojson'
+
+            if os.path.isfile(input_legend_segmentation) == False:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+                this_map_count += 1
+                with open('missing.csv', 'a') as filev:
+                    filev.write(str(target_map)+'\n')
+                    filev.close()
+                continue
 
             preprocessing_for_cropping = None
             postprocessing_for_crs = True
             competition_custom = False
             this_version = '1.2'
 
-            path_to_log = 'Nickel_Output/'+str(target_map)+'.log'
+            path_to_log = 'Nickel_New_Output/'+str(target_map)+'.log'
             os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
             os.makedirs(os.path.dirname(output_dir), exist_ok=True)
             os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)

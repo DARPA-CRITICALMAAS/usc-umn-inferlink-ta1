@@ -82,7 +82,7 @@ PROCESSES = 10
 from loss import losses
 
 
-crop_size = 256
+crop_size = 1024
 
 filtering_new_dataset = True # Set to [True] if one wants to filter a new dataset
 filtering_threshold = 0.33 # An image must have more than [0.33] labeled pixels to be filtered as a valid image candidate for training
@@ -110,6 +110,8 @@ dir_img_testing = Path('LOAM_Intermediate/data/cma_small/imgs/')
 dir_mask_testing = Path('LOAM_Intermediate/data/cma_small/masks/')
 
 
+solution_dir = 'Example_Output'
+
 
 
 def multiprocessing_setting():
@@ -124,7 +126,7 @@ auxiliary_dict_indexed = {}
 def setup_auxiliary():
     global auxiliary_dict_indexed
 
-    auxiliary_info_source = Path('LOAM_Intermediate/data/auxiliary_info.csv')
+    auxiliary_info_source = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/auxiliary_info.csv'))
 
     auxiliary_info = np.genfromtxt(auxiliary_info_source, delimiter=',', dtype=None, encoding='utf8')
     print('auxiliary_info shape:', auxiliary_info.shape)
@@ -136,16 +138,32 @@ def setup_auxiliary():
 
 
 def setup_directory():
-    if not os.path.exists(dir_img):
-        os.makedirs(dir_img)
-    if not os.path.exists(os.path.join(dir_img, 'sup')):
-        os.makedirs(os.path.join(dir_img, 'sup'))
-    if not os.path.exists(dir_mask):
-        os.makedirs(dir_mask)
-    if not os.path.exists('LOAM_Intermediate/output'):
-        os.makedirs('LOAM_Intermediate/output')
-    if not os.path.exists('LOAM_Intermediate/predict'):
-        os.makedirs('LOAM_Intermediate/predict')
+    global dir_source
+    global dir_img_0
+    global dir_mask_0
+    global dir_checkpoint
+    global dir_img
+    global dir_mask
+    global dir_img_testing
+    global dir_mask_testing
+
+    dir_source = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma/imgs/'))
+    dir_img_0 = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs/'))
+    dir_mask_0 = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks/'))
+    dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
+    dir_img = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs_2/'))
+    dir_mask = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks_2/'))
+    dir_img_testing = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs/'))
+    dir_mask_testing = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks/'))
+
+    os.makedirs(os.path.dirname(dir_img), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(dir_img, 'sup')), exist_ok=True)
+    os.makedirs(os.path.dirname(dir_mask), exist_ok=True)
+
+    os.makedirs(os.path.dirname(os.path.join(solution_dir, 'LOAM_Intermediate', 'output')), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.join(solution_dir, 'LOAM_Intermediate', 'predict')), exist_ok=True)
+
+
 
 
 def filter_training():
@@ -161,8 +179,8 @@ def filter_training():
 
 
 
-        if os.path.isfile('LOAM_Intermediate/data/cma_small/polygon_area_record.csv') == False:
-            with open('LOAM_Intermediate/data/cma_small/polygon_area_record.csv','w') as fd:
+        if os.path.isfile(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/polygon_area_record.csv')) == False:
+            with open(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/polygon_area_record.csv'),'w') as fd:
                 fd.write('Key_Name,Area\n')
                 fd.close()
 
@@ -206,7 +224,7 @@ def filter_training():
 
                     counter_1 = counter_1 +1
 
-                with open('LOAM_Intermediate/data/cma_small/polygon_area_record.csv','a') as fd:
+                with open(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/polygon_area_record.csv'),'a') as fd:
                     fd.write(str(filtering_training_set.split('.')[0])+','+str(this_area)+'\n')
                     fd.close()
             else:
@@ -214,7 +232,7 @@ def filter_training():
                     this_area = 1.0
                 else:
                     this_area = 0.0
-                with open('LOAM_Intermediate/data/cma_small/polygon_area_record.csv','a') as fd:
+                with open(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/polygon_area_record.csv'),'a') as fd:
                     fd.write(str(filtering_training_set.split('.')[0])+','+str(this_area)+'\n')
                     fd.close()
             
@@ -314,7 +332,7 @@ def identify_dataset():
             batch_map.append(target_map_list[int(folded_count*kb): int(folded_count*(kb+1))])
             print(batch_map[kb])
 
-        with open('LOAM_Intermediate/output/batch_map.csv', 'w', newline="") as fd:
+        with open(os.path.join(solution_dir, 'LOAM_Intermediate/output/batch_map.csv'), 'w', newline="") as fd:
             writer = csv.writer(fd)
             writer.writerows(batch_map)
 
@@ -690,13 +708,14 @@ def mask_to_image(mask: np.ndarray, mask_values):
 
 
 def print_model_summary():
-    from torchinfo import summary
-    from LOAM.loam_model import LOAM
+    #from torchinfo import summary
+    #from LOAM.loam_model import LOAM
 
-    temp_model = LOAM(n_channels=7, n_classes=2, bilinear=False)
-    summary(temp_model, input_size=[(1,7,crop_size,crop_size), (1,32), (1,9)])
+    #temp_model = LOAM(n_channels=7, n_classes=2, bilinear=False)
+    #summary(temp_model, input_size=[(1,7,crop_size,crop_size), (1,32), (1,9)])
 
     # print(LOAM(n_channels=4, n_classes=2, bilinear=False))
+    return 
 
 
 
@@ -712,7 +731,7 @@ def model_training():
 
         runningtime_start_global = datetime.now()
         #dir_checkpoint = Path('checkpoints/fold_'+str(k)+'/')
-        dir_checkpoint = Path('checkpoints/fold_0/')
+        dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
 
         ''' Setup training arguments '''
         args = {
@@ -799,10 +818,7 @@ def model_training():
 def model_testing():
     targeted_epoch_found = False
     targeted_epoch = -1
-    dir_checkpoint = Path('checkpoints/fold_0/')
-
-    if os.path.isdir('checkpoints/fold_0/') == False:
-        dir_checkpoint = Path('checkpoints/')
+    dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
 
     for epoch_id in range(20, 0, -1):
         if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(epoch_id)+'.pth')):
@@ -812,6 +828,7 @@ def model_testing():
 
     if targeted_epoch_found == False:
         print('No epoch for a successfully trained model is found...')
+        return(1)
     else:
         epoch_id_mod = epoch_id
         if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(epoch_id_mod)+'.pth')):
@@ -826,15 +843,13 @@ def model_testing():
     for k in range(0, k_fold_testing):
 
         ''' Setup predicting arguments '''
-        dir_pred_testing = Path('LOAM_Intermediate/predict/cma_small/')
-        dir_pred_testing1 = Path('LOAM_Intermediate/predict/cma/')
-        #dir_pred_testing = Path('LOAM_Intermediate/predict/fold_0/cma_small/predict/')
-        #dir_pred_testing1 = Path('LOAM_Intermediate/predict/fold_0/cma/predict/')
+        dir_pred_testing = Path(os.path.join(solution_dir, 'LOAM_Intermediate', 'predict', 'cma_small'))
+        dir_pred_testing1 = Path(os.path.join(solution_dir, 'LOAM_Intermediate', 'predict', 'cma'))
 
-        if not os.path.exists(dir_pred_testing):
-            os.makedirs(dir_pred_testing)
-        if not os.path.exists(dir_pred_testing1):
-            os.makedirs(dir_pred_testing1)
+        print(dir_pred_testing)
+        os.makedirs(os.path.join(solution_dir, 'LOAM_Intermediate', 'predict', 'cma_small'), exist_ok=True)
+        os.makedirs(os.path.join(solution_dir, 'LOAM_Intermediate', 'predict', 'cma'), exist_ok=True)
+
 
         args = {
             "model": os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(targeted_epoch)+'.pth'),
@@ -1023,7 +1038,7 @@ def model_testing():
                     print('no groundturht provided... ', groundtruth_filename)
                     continue
 
-                prediction_source_filename = os.path.join('LOAM_Intermediate/data/cma/imgs', map_name+'_'+label_name+str('.png')) # Path to the output
+                prediction_source_filename = os.path.join(solution_dir, 'LOAM_Intermediate/data/cma/imgs', map_name+'_'+label_name+str('.png')) # Path to the output
 
                 info_set_placeholder = []
                 info_set_placeholder.append(map_filename)
@@ -1041,8 +1056,8 @@ def model_testing():
             #runningtime_start=datetime.now()
             performance_block = []
 
-            if os.path.isfile('LOAM_Intermediate/output/performance_folded.csv') == False:
-                with open('LOAM_Intermediate/output/performance_folded.csv','w') as fd:
+            if os.path.isfile(os.path.join(solution_dir, 'LOAM_Intermediate/output/performance_folded.csv')) == False:
+                with open(os.path.join(solution_dir, 'LOAM_Intermediate/output/performance_folded.csv'),'w') as fd:
                     fd.write('Fold,Map_Name,Key_Name,Precision,Recall,F1_Score\n')
                     fd.close()
 
@@ -1068,12 +1083,12 @@ def model_testing():
                                 print(map_name, legend_name, precision_0, recall_0, f_score_0)
                                 performance_block.append(returned)
 
-                                with open('LOAM_Intermediate/output/performance_folded.csv','a') as fd:
+                                with open(os.path.join(solution_dir, 'LOAM_Intermediate/output/performance_folded.csv'),'a') as fd:
                                     fd.write(str(k)+','+map_name+','+legend_name+','+str(precision_0)+','+str(recall_0)+','+str(f_score_0)+','+'\n')
                                     fd.close()
                                     pbar0.update(1)
                             except:
-                                with open('LOAM_Intermediate/output/performance_folded.csv','a') as fd:
+                                with open(os.path.join(solution_dir, 'LOAM_Intermediate/output/performance_folded.csv'),'a') as fd:
                                     fd.write(str(k)+','+'error,error\n')
                                     fd.close()
                                     pbar0.update(1)
@@ -1123,10 +1138,11 @@ def loam_inference(
         input_filtering_new_dataset = True,
         input_filtering_threshold = 0.33,
         input_k_fold_testing = 1,
-        input_crop_size = 256,
+        input_crop_size = 1024,
         input_separate_validating_set = False,
         input_reading_predefined_testing = True,
         input_training_needed = False,
+        input_dir_to_intermediate = 'Example_Output',
         input_targeted_map_file = 'targeted_map.csv',
         input_path_to_tif = 'input.tif',
         input_groundtruth_dir = 'Data/testing_groundtruth',
@@ -1140,6 +1156,7 @@ def loam_inference(
     global separate_validating_set
     global reading_predefined_testing
     global training_needed
+    global solution_dir
     global targeted_map_file
     global path_to_tif
     global groundtruth_dir
@@ -1155,6 +1172,7 @@ def loam_inference(
     separate_validating_set = input_separate_validating_set
     reading_predefined_testing = input_reading_predefined_testing
     training_needed = input_training_needed
+    solution_dir = input_dir_to_intermediate
     targeted_map_file = input_targeted_map_file
     path_to_tif = input_path_to_tif
     groundtruth_dir = input_groundtruth_dir

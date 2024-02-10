@@ -4,7 +4,7 @@ import os
 import math
 import shutil
 
-def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_name, this_legend_name, data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size=256, performance_evaluation=False):
+def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_name, this_legend_name, data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size=1024, performance_evaluation=False):
     source_path_0 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png") # input segmentation (input polygon candidate)
     target_path_0 = os.path.join(target_dir_img, str(this_map_name+'_'+this_legend_name+".png"))
     source_path_1 = os.path.join(data_dir1, this_map_name+'_'+this_legend_name+".tif") # groundtruth

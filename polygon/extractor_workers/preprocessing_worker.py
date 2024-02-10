@@ -135,41 +135,46 @@ def preprocessing_worker(map_id, file_name, path_to_tif, path_to_json, solutiona
         label_area = np.bincount(labeled00.flat)[1:] # 1
         arg_sort = np.argsort(label_area)
 
+        
         check_generated = False
         threshold = [0.4, 0.3, 0.2, 0.1, 0.05]
         temp_max = 0
-        for relaxing_threshold in range(0, len(threshold)):
-            for target_arg in range(arg_sort.shape[0]-1, arg_sort.shape[0]-6, -1):
-                #print(target_arg, arg_sort[target_arg])
-                selected_index = arg_sort[target_arg]+1 # 1
+        if arg_sort.shape[0] > 0:
+            for relaxing_threshold in range(0, len(threshold)):
+                for target_arg in range(arg_sort.shape[0]-1, arg_sort.shape[0]-6, -1):
+                    #print(target_arg, arg_sort[target_arg])
+                    selected_index = arg_sort[target_arg]+1 # 1
 
-                selected_map_for_examination = np.zeros((labeled00.shape[0],labeled00.shape[1],1),dtype=np.uint8)
-                selected_map_for_examination[labeled00 == selected_index] = 255
+                    selected_map_for_examination = np.zeros((labeled00.shape[0],labeled00.shape[1],1),dtype=np.uint8)
+                    selected_map_for_examination[labeled00 == selected_index] = 255
 
-                # dilate buffers back to it original size
-                #dilate_buffer = cv2.dilate(erode_buffer, kernel_erode, iterations=1)
-                selected_map_for_examination = cv2.dilate(selected_map_for_examination, kernel_erode, iterations=1)
+                    # dilate buffers back to it original size
+                    #dilate_buffer = cv2.dilate(erode_buffer, kernel_erode, iterations=1)
+                    selected_map_for_examination = cv2.dilate(selected_map_for_examination, kernel_erode, iterations=1)
 
-                selected_map_for_examination_reversed = 255 - selected_map_for_examination
+                    selected_map_for_examination_reversed = 255 - selected_map_for_examination
 
-                # remove noisy white pixel
-                kernel_morph = cv2.getStructuringElement(cv2.MORPH_RECT, (100,100))
-                opening = cv2.morphologyEx(selected_map_for_examination_reversed, cv2.MORPH_OPEN, kernel_morph, iterations=1)
-                selected_map_for_examination_reversed =cv2.threshold(opening, 0, 255, cv2.THRESH_BINARY)[1]
-                selected_map_for_examination = 255 - selected_map_for_examination_reversed
-                
-                # need to check
-                crop_rgb0 = cv2.bitwise_and(rgb0,rgb0, mask=selected_map_for_examination)
-                uniques = np.unique(crop_rgb0)
-                #print(uniques.shape[0])
-                if uniques.shape[0] > temp_max:
-                    temp_max = uniques.shape[0]
-                
-                if uniques.shape[0] > 255*threshold[relaxing_threshold] or (relaxing_threshold > 0 and uniques.shape[0] == temp_max):
-                    check_generated = True
+                    # remove noisy white pixel
+                    kernel_morph = cv2.getStructuringElement(cv2.MORPH_RECT, (100,100))
+                    opening = cv2.morphologyEx(selected_map_for_examination_reversed, cv2.MORPH_OPEN, kernel_morph, iterations=1)
+                    selected_map_for_examination_reversed =cv2.threshold(opening, 0, 255, cv2.THRESH_BINARY)[1]
+                    selected_map_for_examination = 255 - selected_map_for_examination_reversed
+                    
+                    # need to check
+                    crop_rgb0 = cv2.bitwise_and(rgb0,rgb0, mask=selected_map_for_examination)
+                    uniques = np.unique(crop_rgb0)
+                    #print(uniques.shape[0])
+                    if uniques.shape[0] > temp_max:
+                        temp_max = uniques.shape[0]
+                    
+                    if uniques.shape[0] > 255*threshold[relaxing_threshold] or (relaxing_threshold > 0 and uniques.shape[0] == temp_max):
+                        check_generated = True
+                        break
+                if check_generated:
                     break
-            if check_generated:
-                break
+        else:
+            selected_map_for_examination = np.ones((img0.shape[0],img0.shape[1],1),dtype=np.uint8)*255
+            
         
         if crop_legend == True:
             legend_mask = np.ones((img0.shape[0], img0.shape[1]), dtype='uint8') *255

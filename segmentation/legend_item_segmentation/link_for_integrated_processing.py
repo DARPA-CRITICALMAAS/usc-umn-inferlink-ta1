@@ -708,7 +708,11 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     print('------------- '+str(np.mean(floodfill_block_erosion_test) / max(1, np.max(floodfill_block_erosion_test))))
     if np.unique(floodfill_block_erosion_test).shape[0] < 2:
         # if there are 'almost' no pixels corresponding to polygon legend items...
-        adaptive_processing = True        
+        adaptive_processing = True   
+
+    #if adaptive_processing == False:
+        #print('early stop...')
+        #return     
 
 
     if adaptive_processing == True and placeholder_generated == False:
@@ -823,6 +827,59 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         #kernel = np.ones((5, 5), np.uint8) #
         #poly_candidate_sweeping = cv2.erode(poly_candidate_sweeping, kernel, iterations = 1) #
         poly_candidate_sweeping = cv2.bitwise_and(poly_candidate_sweeping, cv2.bitwise_or(roi_poly, roi_ptln))
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly1.tif')), poly_candidate_sweeping)
+
+
+
+        ### Filter out legend items based on areas...
+        poly_contours, poly_hierarchy = cv2.findContours(poly_candidate_sweeping, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        max_contour_size = 50000 # 1% of image
+        min_contour_size = 200
+        min_bounding_size = 10
+
+        poly_valid_contours = []
+        i = 0
+        # list for storing names of shapes
+        for c in poly_contours:
+            # here we are ignoring first counter because
+            # findcontour function detects whole image as shape
+            if i == 0:
+                i = 1
+                continue
+
+            # Discard shapes that are too large or small to be a valid legend
+            area = cv2.contourArea(c)
+            if area <= min_contour_size or area >= max_contour_size:
+                continue
+
+            # Discard shapes that are quads but not rectangular
+            x,y,w,h = cv2.boundingRect(c)
+            if h <= min_bounding_size or w <= min_bounding_size:
+                continue
+
+            poly_valid_contours.append(c)
+
+        poly_img_0 = np.ones((img_rgb.shape[0], img_rgb.shape[1], img_rgb.shape[2]), dtype='uint8')
+
+        # list for storing names of shapes
+        for i in range(0,len(poly_valid_contours)):
+            # using drawContours() function
+            cv2.drawContours(poly_img_0, [poly_valid_contours[i]], 0, (0, 0, 255), 1)
+        poly_img_0 = cv2.cvtColor(poly_img_0, cv2.COLOR_RGB2GRAY)
+
+        # flood fill background to find inner holes
+        floodfill_candidate = np.ones((poly_img_0.shape[0], poly_img_0.shape[1]), dtype='uint8') * 255
+        holes = np.copy(poly_img_0)
+        cv2.floodFill(holes, None, (0, 0), 255)
+
+        # invert holes mask, bitwise or with img fill in holes
+        holes = cv2.bitwise_not(holes)
+        valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
+        floodfill_block = cv2.bitwise_and(255-poly_img_0, valid_holes)
+        
+        poly_candidate_sweeping = np.copy(floodfill_block)
+        poly_candidate_sweeping[poly_candidate_sweeping > 0] = 255 # 254
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), poly_candidate_sweeping)
 
 
@@ -906,6 +963,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     print('Step ( 6/10): Reading results from mapkurator...')
     #fast_processing = True
     #if fast_processing == True and os.path.isfile(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))) == True:
+        #print('fast processing for text spotting...')
         #pass
     #else:
     if True:
