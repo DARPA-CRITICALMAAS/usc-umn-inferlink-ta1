@@ -3377,7 +3377,7 @@ path_to_bound = 'bound.geojson'
 target_map_name = 'intput'
 fast_processing = False
 
-def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread, input_fast_processing):
+def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread, input_fast_processing=False):
     global solutiona_dir
     global map_preprocessing
     global generate_boundary_extraction
