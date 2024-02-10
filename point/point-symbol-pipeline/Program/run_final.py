@@ -3,7 +3,7 @@ from similarity_match import *
 from Seperate_symbol_text import *
 from collections import defaultdict
 from pred_stitch_point_updated import *
-from geojson_to_raster import *
+#from geojson_to_raster import *
 from text_based_matching import *
 import os
 import time
@@ -91,7 +91,7 @@ raster_output_path = os.path.join(output_dir_root, 'raster_layer')
 if not os.path.exists(raster_output_path):
     os.makedirs(raster_output_path)
 
-geojson_to_raster(metadata_path, stitch_output_dir, raster_output_path)
+#geojson_to_raster(metadata_path, stitch_output_dir, raster_output_path)
 
 end_time = time.time()
 total_time = end_time - start_time
