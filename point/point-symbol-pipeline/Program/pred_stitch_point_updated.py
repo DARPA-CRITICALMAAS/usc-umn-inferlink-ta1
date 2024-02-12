@@ -62,7 +62,12 @@ def stitch_to_single_result(crop_dir_path,pred_root,stitch_root,crop_shift_size=
     map_name = os.path.basename(os.path.dirname(crop_dir_path))
     shift_size = crop_shift_size
     file_list = glob.glob(os.path.join(pred_root,map_name) + '/*.json')
-    output_geojson = os.path.join(stitch_root,map_name+'.geojson')
+    tmp_name=map_name.split('_')[:-2]
+    map_name_only=''
+    for each in tmp_name[:-1]:
+        map_name_only+=each+"_"
+    map_name_only+=tmp_name[-1]
+    output_geojson = os.path.join(stitch_root,map_name_only+'.geojson')
     file_list = sorted(file_list)
     # if len(file_list) == 0:
     #     logging.warning('No files found for %s' % map_subdir)       
