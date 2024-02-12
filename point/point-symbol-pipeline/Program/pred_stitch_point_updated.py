@@ -69,8 +69,8 @@ def stitch_to_single_result(crop_dir_path,pred_root,stitch_root,crop_shift_size=
     map_data = []
     for file_path in file_list:
         get_h_w = os.path.basename(file_path).split('.')[0].split('_')
-        patch_index_h = int(get_h_w[-2][1:])
-        patch_index_w = int(get_h_w[-1][1:])
+        patch_index_h = int(get_h_w[-2])
+        patch_index_w = int(get_h_w[-1])
         try:
             df = pd.read_json(file_path, dtype={"type":object})
         except pd.errors.EmptyDataError:
