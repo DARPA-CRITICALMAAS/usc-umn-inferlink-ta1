@@ -31,7 +31,7 @@ def predict_img_patches(crop_dir_path,model_dir_root,selected_models,predict_out
         os.mkdir(output_path)     
     print(output_path)
     for val_img in os.listdir(crop_dir_path):            
-        if val_img.endswith('.jpg'):
+        if val_img.endswith('.jpg') or val_img.endswith('.png'):
             entire_res=[] 
             img_path=os.path.join(crop_dir_path,val_img)  
             for idx,model_file in enumerate(selected_models):
