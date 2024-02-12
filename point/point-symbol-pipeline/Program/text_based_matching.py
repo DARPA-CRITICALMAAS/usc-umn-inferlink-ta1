@@ -20,7 +20,10 @@ def text_based_matching(text_desc_json_dir_path,input_map_dir_path):
     res_dict={}
     for each_map in map_patches_list:  
         for each_json in os.listdir(json_dir):
-            if each_json.startswith(each_map):
+            # metadata name convention : {map_name}_point.json
+            # updated script for the name convention of the metadata 
+            map_name = each_json.replace('_point.json','')
+            if each_map.startswith(map_name):
                 if each_map not in res_dict.keys():
                     res_dict[each_map]={}
                 f=open(os.path.join(json_dir,each_json))
