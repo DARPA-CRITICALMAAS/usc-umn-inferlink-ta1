@@ -18,7 +18,7 @@ def remove_pnts_from_legend(metadata_path,geojson_path,visual_flag=False):
             for val_img in os.listdir(geojson_path):
                 map_name=val_img.split('.')[0]
                 if map_name in each_json:
-                    print(map_name,each_json)
+                    # print(map_name,each_json)
                     file_path = os.path.join(geojson_path, val_img)
                     f = open(file_path)
                     data = json.load(f)
