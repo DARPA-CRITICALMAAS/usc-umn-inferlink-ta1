@@ -522,7 +522,7 @@ def rectangularization(path_to_intermediate, intermediate_stage, target_map_name
 
 
 
-def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator_output, placeholder_generated):
+def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator_output, placeholder_generated, only_poly):
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate2'))):
         os.makedirs(os.path.join(path_to_intermediate, str('intermediate2')))
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate3'))):
@@ -886,345 +886,348 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
 
 
 
-
-    ######
-    layout_estimated_column = False
-    if np.mean(column_summary) > 0:
-        anti_column_summary = 255 - column_summary
-        anti_column_summary = cv2.bitwise_and(roi_poly, anti_column_summary)
-        anti_column_summary = cv2.bitwise_and(anti_column_summary, adaptive_threshold)
-
-        kernel = np.ones((1, 10), np.uint8)
-        anti_column_summary = cv2.erode(anti_column_summary, kernel, iterations = 1)
-        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column.tif')), anti_column_summary)
-
-        kernel = np.ones((50, 1), np.uint8)
-        anti_column_summary = cv2.dilate(anti_column_summary, kernel, iterations = 40)
-        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column2.tif')), anti_column_summary)
-
-        kernel = np.ones((1, 5), np.uint8)
-        column_summary_buffer = cv2.dilate(column_summary, kernel, iterations = 1)
-        overlapping_column_summary = cv2.bitwise_and(column_summary_buffer, anti_column_summary)
-        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_overlapping_column.tif')), overlapping_column_summary)
-
-        anti_column_summary = cv2.bitwise_and(anti_column_summary, 255-column_summary_buffer)
-        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column3.tif')), anti_column_summary)
-
-        layout_estimated_column = True
-        if np.mean(cv2.bitwise_and(column_summary_buffer, roi_poly)) > 0:
-            overlapping_column_area = np.mean(cv2.bitwise_and(overlapping_column_summary, roi_poly)) / np.mean(cv2.bitwise_and(column_summary_buffer, roi_poly))
-            #print(overlapping_column_area)
-            if overlapping_column_area > 0.9:
-                layout_estimated_column = False
+    if  only_poly == True:
+        print('============= You opt out extracting point and line legend items at this stage. Thanks for saving our times...')
+        ptln_candidate_sweeping = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
     else:
-        anti_column_summary = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
+        ######
+        layout_estimated_column = False
+        if np.mean(column_summary) > 0:
+            anti_column_summary = 255 - column_summary
+            anti_column_summary = cv2.bitwise_and(roi_poly, anti_column_summary)
+            anti_column_summary = cv2.bitwise_and(anti_column_summary, adaptive_threshold)
 
-    if layout_estimated_column == True:
-        print('------------- Assumed columned-based layout...')
-    else:
-        print('------------- Assumed layout without enough information...')
-    
+            kernel = np.ones((1, 10), np.uint8)
+            anti_column_summary = cv2.erode(anti_column_summary, kernel, iterations = 1)
+            cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column.tif')), anti_column_summary)
 
+            kernel = np.ones((50, 1), np.uint8)
+            anti_column_summary = cv2.dilate(anti_column_summary, kernel, iterations = 40)
+            cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column2.tif')), anti_column_summary)
 
+            kernel = np.ones((1, 5), np.uint8)
+            column_summary_buffer = cv2.dilate(column_summary, kernel, iterations = 1)
+            overlapping_column_summary = cv2.bitwise_and(column_summary_buffer, anti_column_summary)
+            cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_overlapping_column.tif')), overlapping_column_summary)
 
-    if layout_estimated_column == True and candidate_width.shape[0] > 0:
-        # Trying to find the column if exists...
-        '''
-        kernel = np.ones((50, 1), np.uint8)
-        column_summary_buffer_v2 = cv2.dilate(column_summary_buffer, kernel, iterations = 40)
-        '''
+            anti_column_summary = cv2.bitwise_and(anti_column_summary, 255-column_summary_buffer)
+            cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_anti_column3.tif')), anti_column_summary)
 
-        original_column_area = np.mean(column_summary)
-        prev_column_area = original_column_area
-
-        extanded_column_area = []
-        extanded_column_area.append(original_column_area)
-        column_summary_extand = np.copy(column_summary)
-        column_summary_extand_settled = np.copy(column_summary)
-        for i in range(1, 20):
-            if (median_width * i) > img_gray.shape[1]:
-                break
-            for j in range(int(median_width) * i, int(median_width) * (i+1)):
-                column_summary_extand[:, j:] = np.maximum(column_summary[:, j:], column_summary[:, 0:-j]) # growing right
-            this_column_area = np.mean(column_summary_extand)
-            if this_column_area < prev_column_area * 0.9:
-                print('------------- columned-based ROI extanded...')
-                column_summary_extand_settled = np.copy(column_summary_extand)
-                cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_column_expanded.tif')), column_summary_extand_settled)
-            extanded_column_area.append(this_column_area)
-            prev_column_area = this_column_area
-        print('------------- ', extanded_column_area)
-        column_summary = np.copy(column_summary_extand_settled)
-
-
-
-
-
-    print('Step ( 6/10): Reading results from mapkurator...')
-    #fast_processing = True
-    #if fast_processing == True and os.path.isfile(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))) == True:
-        #print('fast processing for text spotting...')
-        #pass
-    #else:
-    if True:
-        read_results_from_mapkurator(target_map_name, path_to_intermediate, path_to_mapkurator_output)
-    
-
-
-    print('Step ( 7/10): Identifying legend items for point and line features...')
-    text_spotting_mask = cv2.imread(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif')))
-    text_spotting_mask = cv2.cvtColor(text_spotting_mask, cv2.COLOR_BGR2GRAY)
-
-    kernel = np.ones((1, 100), np.uint8)
-    text_spotting_mask = cv2.erode(text_spotting_mask, kernel, iterations = 1)
-    text_spotting_mask = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
-    cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif')), text_spotting_mask)
-
-
-
-
-
-
-
-
-    # if we do not have any reference from poly legend items
-    # remove stuff based on text-spotting results...
-    kernel = np.ones((25, 25), np.uint8)
-    ptln_anti_summary = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
-    ptln_block = cv2.bitwise_and(255-ptln_anti_summary, roi_ptln)
-    cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block.tif')), ptln_block)
-
-    if layout_estimated_column == True:
-        ptln_column_summary = cv2.bitwise_and(column_summary, roi_ptln)
-        ptln_block = cv2.bitwise_or(ptln_block, ptln_column_summary)
-    cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block1.tif')), ptln_block)
-
-    text_spotting_mask_mask = np.copy(text_spotting_mask)
-    for i in range(200):
-        text_spotting_mask_mask[:, 0:-1] = np.maximum(text_spotting_mask_mask[:, 0:-1], text_spotting_mask_mask[:, 1:]) # growing left
-    for i in range(200):
-        text_spotting_mask_mask[0:-1, :] = np.maximum(text_spotting_mask_mask[0:-1, :], text_spotting_mask_mask[1:, :]) # growing upwards
-    kernel = np.ones((20, 20), np.uint8)
-    text_spotting_mask_mask = cv2.dilate(text_spotting_mask_mask, kernel, iterations = 1)
-    text_spotting_mask_mask = cv2.bitwise_and(text_spotting_mask_mask, 255-ptln_anti_summary)
-    
-    ptln_block = cv2.bitwise_and(text_spotting_mask_mask, roi_ptln)
-    cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block2.tif')), ptln_block)
-
-    kernel = np.ones((2, 2), np.uint8)
-    adaptive_buffer = cv2.erode(adaptive_threshold, kernel, iterations = 1)
-    kernel = np.ones((5, 5), np.uint8)
-    adaptive_buffer = cv2.dilate(adaptive_buffer, kernel, iterations = 1)
-    ptln_candidate = cv2.bitwise_and(ptln_block, adaptive_buffer)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln.tif')), ptln_candidate)
-    ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
-
-    # clean the nearby areas in advance for polygons that we get from extracting poly legend items
-    kernel = np.ones((10, 15), np.uint8)
-    ptln_candidate_from_poly = cv2.bitwise_and(poly_candidate_sweeping, roi_ptln)
-    ptln_candidate_from_poly_buffer = cv2.dilate(ptln_candidate_from_poly, kernel, iterations = 1)
-    ptln_candidate_from_poly_buffer = cv2.bitwise_and(ptln_candidate_from_poly_buffer, roi_ptln)
-    ptln_candidate = cv2.bitwise_and(ptln_candidate, 255-ptln_candidate_from_poly_buffer)
-
-    kernel = np.ones((10, 10), np.uint8)
-    ptln_candidate = cv2.dilate(ptln_candidate, kernel, iterations = 1)
-    ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln1.tif')), ptln_candidate)
-
-    kernel = np.ones((25, 50), np.uint8)
-    ptln_candidate_sweeping = cv2.dilate(ptln_candidate, kernel, iterations = 1)
-    ptln_candidate_sweeping = cv2.bitwise_and(ptln_block, ptln_candidate_sweeping)
-    
-    # include polygons that we get from extracting poly legend items
-    ptln_candidate_from_poly = cv2.bitwise_and(poly_candidate_sweeping, roi_ptln)
-    ptln_candidate_sweeping = cv2.bitwise_or(ptln_candidate_sweeping, ptln_candidate_from_poly)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln2.tif')), ptln_candidate_sweeping)
-
-
-
-    # extending the width of point and line legend items
-    kernel = np.ones((25, 1), np.uint8)
-    ptln_column_summary = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 40)
-    
-
-    kernel = np.ones((1, 3), np.uint8)
-    for sweeping in range(0, 200):
-        ptln_candidate_sweeping = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 1)
-        #ptln_candidate_sweeping = cv2.bitwise_and(ptln_candidate_sweeping, column_summary_buffer_v2)
-        ptln_candidate_sweeping = cv2.bitwise_and(ptln_candidate_sweeping, ptln_column_summary)
-    
-    kernel = np.ones((3, 1), np.uint8)
-    ptln_candidate_sweeping = cv2.erode(ptln_candidate_sweeping, kernel, iterations = 1)
-    ptln_candidate_sweeping = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 1)
-
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln1.tif')), ptln_candidate_sweeping)
-
-
-
-    ### Filter out legend items based on areas...
-    ptln_contours, ptln_hierarchy = cv2.findContours(ptln_candidate_sweeping, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    max_contour_size = 50000 # 1% of image
-    min_contour_size = 500
-
-    ptln_candidate_areas = []
-    ptln_candidate_contours = []
-    i = 0
-    # list for storing names of shapes
-    for c in ptln_contours:
-        # here we are ignoring first counter because
-        # findcontour function detects whole image as shape
-        if i == 0:
-            i = 1
-            continue
-
-        # Discard shapes that are too large or small to be a valid legend
-        area = cv2.contourArea(c)
-        if area <= min_contour_size or area >= max_contour_size:
-            continue
-
-        # Discard shapes that are quads but not rectangular
-        x,y,w,h = cv2.boundingRect(c)
-
-        ptln_candidate_areas.append(area)
-        ptln_candidate_contours.append(c)
-
-    # Calculate valid area threshold
-    ptln_candidate_df = pd.DataFrame({'area' : ptln_candidate_areas, 'contour' :ptln_candidate_contours})
-    ptln_candidate_areas.sort()
-
-    if len(ptln_candidate_areas) > 0:
-        ptln_median_area = np.median(ptln_candidate_areas)
-        ptln_mmin_valid_area = ptln_median_area - ptln_median_area*0.66
-        if candidate_width.shape[0] > 0:
-            ptln_mmax_valid_area = max(ptln_median_area*10.0, median_rect_area + median_rect_area*0.66)
+            layout_estimated_column = True
+            if np.mean(cv2.bitwise_and(column_summary_buffer, roi_poly)) > 0:
+                overlapping_column_area = np.mean(cv2.bitwise_and(overlapping_column_summary, roi_poly)) / np.mean(cv2.bitwise_and(column_summary_buffer, roi_poly))
+                #print(overlapping_column_area)
+                if overlapping_column_area > 0.9:
+                    layout_estimated_column = False
         else:
-            ptln_mmax_valid_area = ptln_median_area*20.0
+            anti_column_summary = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
+
+        if layout_estimated_column == True:
+            print('------------- Assumed columned-based layout...')
+        else:
+            print('------------- Assumed layout without enough information...')
         
+
+
+
+        if layout_estimated_column == True and candidate_width.shape[0] > 0:
+            # Trying to find the column if exists...
+            '''
+            kernel = np.ones((50, 1), np.uint8)
+            column_summary_buffer_v2 = cv2.dilate(column_summary_buffer, kernel, iterations = 40)
+            '''
+
+            original_column_area = np.mean(column_summary)
+            prev_column_area = original_column_area
+
+            extanded_column_area = []
+            extanded_column_area.append(original_column_area)
+            column_summary_extand = np.copy(column_summary)
+            column_summary_extand_settled = np.copy(column_summary)
+            for i in range(1, 20):
+                if (median_width * i) > img_gray.shape[1]:
+                    break
+                for j in range(int(median_width) * i, int(median_width) * (i+1)):
+                    column_summary_extand[:, j:] = np.maximum(column_summary[:, j:], column_summary[:, 0:-j]) # growing right
+                this_column_area = np.mean(column_summary_extand)
+                if this_column_area < prev_column_area * 0.9:
+                    print('------------- columned-based ROI extanded...')
+                    column_summary_extand_settled = np.copy(column_summary_extand)
+                    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_column_expanded.tif')), column_summary_extand_settled)
+                extanded_column_area.append(this_column_area)
+                prev_column_area = this_column_area
+            print('------------- ', extanded_column_area)
+            column_summary = np.copy(column_summary_extand_settled)
+
+
+
+
+
+        print('Step ( 6/10): Reading results from mapkurator...')
+        #fast_processing = True
+        #if fast_processing == True and os.path.isfile(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))) == True:
+            #print('fast processing for text spotting...')
+            #pass
+        #else:
+        if True:
+            read_results_from_mapkurator(target_map_name, path_to_intermediate, path_to_mapkurator_output)
         
-        ptln_valid_contours = []
-        for c in ptln_candidate_contours:
-            # Discard shapes outside the valid contour areas
-            area = cv2.contourArea(c)
-            if area <= ptln_mmin_valid_area or area >= ptln_mmax_valid_area:
+
+
+        print('Step ( 7/10): Identifying legend items for point and line features...')
+        text_spotting_mask = cv2.imread(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif')))
+        text_spotting_mask = cv2.cvtColor(text_spotting_mask, cv2.COLOR_BGR2GRAY)
+
+        kernel = np.ones((1, 100), np.uint8)
+        text_spotting_mask = cv2.erode(text_spotting_mask, kernel, iterations = 1)
+        text_spotting_mask = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
+        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif')), text_spotting_mask)
+
+
+
+
+
+
+
+
+        # if we do not have any reference from poly legend items
+        # remove stuff based on text-spotting results...
+        kernel = np.ones((25, 25), np.uint8)
+        ptln_anti_summary = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
+        ptln_block = cv2.bitwise_and(255-ptln_anti_summary, roi_ptln)
+        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block.tif')), ptln_block)
+
+        if layout_estimated_column == True:
+            ptln_column_summary = cv2.bitwise_and(column_summary, roi_ptln)
+            ptln_block = cv2.bitwise_or(ptln_block, ptln_column_summary)
+        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block1.tif')), ptln_block)
+
+        text_spotting_mask_mask = np.copy(text_spotting_mask)
+        for i in range(200):
+            text_spotting_mask_mask[:, 0:-1] = np.maximum(text_spotting_mask_mask[:, 0:-1], text_spotting_mask_mask[:, 1:]) # growing left
+        for i in range(200):
+            text_spotting_mask_mask[0:-1, :] = np.maximum(text_spotting_mask_mask[0:-1, :], text_spotting_mask_mask[1:, :]) # growing upwards
+        kernel = np.ones((20, 20), np.uint8)
+        text_spotting_mask_mask = cv2.dilate(text_spotting_mask_mask, kernel, iterations = 1)
+        text_spotting_mask_mask = cv2.bitwise_and(text_spotting_mask_mask, 255-ptln_anti_summary)
+        
+        ptln_block = cv2.bitwise_and(text_spotting_mask_mask, roi_ptln)
+        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block2.tif')), ptln_block)
+
+        kernel = np.ones((2, 2), np.uint8)
+        adaptive_buffer = cv2.erode(adaptive_threshold, kernel, iterations = 1)
+        kernel = np.ones((5, 5), np.uint8)
+        adaptive_buffer = cv2.dilate(adaptive_buffer, kernel, iterations = 1)
+        ptln_candidate = cv2.bitwise_and(ptln_block, adaptive_buffer)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln.tif')), ptln_candidate)
+        ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
+
+        # clean the nearby areas in advance for polygons that we get from extracting poly legend items
+        kernel = np.ones((10, 15), np.uint8)
+        ptln_candidate_from_poly = cv2.bitwise_and(poly_candidate_sweeping, roi_ptln)
+        ptln_candidate_from_poly_buffer = cv2.dilate(ptln_candidate_from_poly, kernel, iterations = 1)
+        ptln_candidate_from_poly_buffer = cv2.bitwise_and(ptln_candidate_from_poly_buffer, roi_ptln)
+        ptln_candidate = cv2.bitwise_and(ptln_candidate, 255-ptln_candidate_from_poly_buffer)
+
+        kernel = np.ones((10, 10), np.uint8)
+        ptln_candidate = cv2.dilate(ptln_candidate, kernel, iterations = 1)
+        ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln1.tif')), ptln_candidate)
+
+        kernel = np.ones((25, 50), np.uint8)
+        ptln_candidate_sweeping = cv2.dilate(ptln_candidate, kernel, iterations = 1)
+        ptln_candidate_sweeping = cv2.bitwise_and(ptln_block, ptln_candidate_sweeping)
+        
+        # include polygons that we get from extracting poly legend items
+        ptln_candidate_from_poly = cv2.bitwise_and(poly_candidate_sweeping, roi_ptln)
+        ptln_candidate_sweeping = cv2.bitwise_or(ptln_candidate_sweeping, ptln_candidate_from_poly)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln2.tif')), ptln_candidate_sweeping)
+
+
+
+        # extending the width of point and line legend items
+        kernel = np.ones((25, 1), np.uint8)
+        ptln_column_summary = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 40)
+        
+
+        kernel = np.ones((1, 3), np.uint8)
+        for sweeping in range(0, 200):
+            ptln_candidate_sweeping = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 1)
+            #ptln_candidate_sweeping = cv2.bitwise_and(ptln_candidate_sweeping, column_summary_buffer_v2)
+            ptln_candidate_sweeping = cv2.bitwise_and(ptln_candidate_sweeping, ptln_column_summary)
+        
+        kernel = np.ones((3, 1), np.uint8)
+        ptln_candidate_sweeping = cv2.erode(ptln_candidate_sweeping, kernel, iterations = 1)
+        ptln_candidate_sweeping = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 1)
+
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln1.tif')), ptln_candidate_sweeping)
+
+
+
+        ### Filter out legend items based on areas...
+        ptln_contours, ptln_hierarchy = cv2.findContours(ptln_candidate_sweeping, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        max_contour_size = 50000 # 1% of image
+        min_contour_size = 500
+
+        ptln_candidate_areas = []
+        ptln_candidate_contours = []
+        i = 0
+        # list for storing names of shapes
+        for c in ptln_contours:
+            # here we are ignoring first counter because
+            # findcontour function detects whole image as shape
+            if i == 0:
+                i = 1
                 continue
 
-            ptln_valid_contours.append(c)
-        
+            # Discard shapes that are too large or small to be a valid legend
+            area = cv2.contourArea(c)
+            if area <= min_contour_size or area >= max_contour_size:
+                continue
 
-        ptln_img = np.ones((img_rgb.shape[0], img_rgb.shape[1], img_rgb.shape[2]), dtype='uint8')
+            # Discard shapes that are quads but not rectangular
+            x,y,w,h = cv2.boundingRect(c)
 
-        # list for storing names of shapes
-        for i in range(0,len(ptln_valid_contours)):
-            # using drawContours() function
-            cv2.drawContours(ptln_img, [ptln_valid_contours[i]], 0, (0, 0, 255), 1)
-        ptln_img = cv2.cvtColor(ptln_img, cv2.COLOR_RGB2GRAY)
+            ptln_candidate_areas.append(area)
+            ptln_candidate_contours.append(c)
 
-        # flood fill background to find inner holes
-        floodfill_candidate = np.ones((ptln_img.shape[0], ptln_img.shape[1]), dtype='uint8') * 255
-        holes = np.copy(ptln_img)
-        cv2.floodFill(holes, None, (0, 0), 255)
+        # Calculate valid area threshold
+        ptln_candidate_df = pd.DataFrame({'area' : ptln_candidate_areas, 'contour' :ptln_candidate_contours})
+        ptln_candidate_areas.sort()
 
-        # invert holes mask, bitwise or with img fill in holes
-        holes = cv2.bitwise_not(holes)
-        valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
-        floodfill_block = cv2.bitwise_and(255-ptln_img, valid_holes)
-        
-        ptln_candidate_sweeping = np.copy(floodfill_block)
-    
-    ptln_candidate_sweeping[ptln_candidate_sweeping > 0] = 255 # 254
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
-
-    '''
-    ### rectangularization
-    # tif > geojson
-    base_image = cv2.imread(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')))
-    input_raster = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.png'))
-    output_vector = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.geojson'))
-    cv2.imwrite(input_raster, base_image)
-
-    in_path = input_raster
-    out_path = output_vector
-
-    src_ds = gdal.Open(in_path)
-    srcband = src_ds.GetRasterBand(1)
-    dst_layername = 'polygon'
-    drv = ogr.GetDriverByName('geojson')
-    dst_ds = drv.CreateDataSource(out_path)
-
-    sp_ref = osr.SpatialReference()
-    sp_ref.SetFromUserInput('EPSG:3857')
-
-    dst_layer = dst_ds.CreateLayer(dst_layername, srs = sp_ref )
-    gdal.Polygonize( srcband, None, dst_layer, 0, [], callback=None )
-
-    del src_ds
-    del dst_ds
-
-    polygon_extraction = gpd.read_file(output_vector, driver='GeoJSON')
-    mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'geometry'], crs=polygon_extraction.crs)
-    for index, poi in polygon_extraction.iterrows():
-        if index == polygon_extraction.shape[0]-1:
-            break
-
-        # convert to bounding box
-        bbox_tuple = poi['geometry'].bounds
-        geom = shapely.geometry.box(*bbox_tuple)
-        #print(this_mirrored_polygon)
-        #print(bbox_tuple, ' >>> ', geom)
-        this_mirrored_polygon = geom
-
-        updated_record = gpd.GeoDataFrame([{'id': index, 'geometry':this_mirrored_polygon}])
-        mirrored_polygon = gpd.GeoDataFrame(pd.concat( [mirrored_polygon, updated_record], ignore_index=True), crs=polygon_extraction.crs)
-
-    mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-    mirrored_polygon.to_file(output_vector.replace('_candidate_ptln2.geojson', '_candidate_ptln3.geojson'), driver='GeoJSON')
-
-
-    # geojson > tif
-    source_name = output_vector.replace('_candidate_ptln2.geojson', '_candidate_ptln3.geojson')
-    basemap_name = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif'))
-
-    base_image = cv2.imread(basemap_name)
-    base_image = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-
-    gdf = gpd.read_file(source_name, driver='GeoJSON')
-    gdf['area'] = gdf.geometry.area
-    text_mask = np.zeros((base_image.shape[0], base_image.shape[1]), dtype='uint8')
-
-    for index, poi in gdf.iterrows():
-        with rasterio.open(basemap_name) as src:
-            out_image, out_transform = mask(src, [gdf.loc[index]['geometry']], crop=True)
-            out_meta = src.meta.copy() # copy the metadata of the source DEM
+        if len(ptln_candidate_areas) > 0:
+            ptln_median_area = np.median(ptln_candidate_areas)
+            ptln_mmin_valid_area = ptln_median_area - ptln_median_area*0.66
+            if candidate_width.shape[0] > 0:
+                ptln_mmax_valid_area = max(ptln_median_area*10.0, median_rect_area + median_rect_area*0.66)
+            else:
+                ptln_mmax_valid_area = ptln_median_area*20.0
             
-        out_meta.update({
-            "driver":"Gtiff",
-            "height":out_image.shape[1], # height starts with shape[1]
-            "width":out_image.shape[2], # width starts with shape[2]
-            "transform":out_transform
-        })
+            
+            ptln_valid_contours = []
+            for c in ptln_candidate_contours:
+                # Discard shapes outside the valid contour areas
+                area = cv2.contourArea(c)
+                if area <= ptln_mmin_valid_area or area >= ptln_mmax_valid_area:
+                    continue
 
-        if np.unique(out_image).shape[0] == 1:
-            continue
-        if poi['area'] > (base_image.shape[0] * base_image.shape[1]) * 0.8:
-            continue
-        this_text_mask = rasterio.features.rasterize([gdf.loc[index]['geometry']], out_shape=(base_image.shape[0], base_image.shape[1]))
-        text_mask = cv2.bitwise_or(text_mask, this_text_mask)
+                ptln_valid_contours.append(c)
+            
+
+            ptln_img = np.ones((img_rgb.shape[0], img_rgb.shape[1], img_rgb.shape[2]), dtype='uint8')
+
+            # list for storing names of shapes
+            for i in range(0,len(ptln_valid_contours)):
+                # using drawContours() function
+                cv2.drawContours(ptln_img, [ptln_valid_contours[i]], 0, (0, 0, 255), 1)
+            ptln_img = cv2.cvtColor(ptln_img, cv2.COLOR_RGB2GRAY)
+
+            # flood fill background to find inner holes
+            floodfill_candidate = np.ones((ptln_img.shape[0], ptln_img.shape[1]), dtype='uint8') * 255
+            holes = np.copy(ptln_img)
+            cv2.floodFill(holes, None, (0, 0), 255)
+
+            # invert holes mask, bitwise or with img fill in holes
+            holes = cv2.bitwise_not(holes)
+            valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
+            floodfill_block = cv2.bitwise_and(255-ptln_img, valid_holes)
+            
+            ptln_candidate_sweeping = np.copy(floodfill_block)
         
-    text_mask[text_mask > 0] = 255
+        ptln_candidate_sweeping[ptln_candidate_sweeping > 0] = 255 # 254
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
 
-    kernel = np.ones((3, 3), np.uint8)
-    ptln_candidate_rectangularized = cv2.dilate(text_mask, kernel, iterations = 1)
-    ptln_candidate_rectangularized = cv2.bitwise_and(ptln_block, ptln_candidate_rectangularized)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln3.tif')), ptln_candidate_rectangularized)
-    '''
+        '''
+        ### rectangularization
+        # tif > geojson
+        base_image = cv2.imread(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')))
+        input_raster = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.png'))
+        output_vector = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.geojson'))
+        cv2.imwrite(input_raster, base_image)
+
+        in_path = input_raster
+        out_path = output_vector
+
+        src_ds = gdal.Open(in_path)
+        srcband = src_ds.GetRasterBand(1)
+        dst_layername = 'polygon'
+        drv = ogr.GetDriverByName('geojson')
+        dst_ds = drv.CreateDataSource(out_path)
+
+        sp_ref = osr.SpatialReference()
+        sp_ref.SetFromUserInput('EPSG:3857')
+
+        dst_layer = dst_ds.CreateLayer(dst_layername, srs = sp_ref )
+        gdal.Polygonize( srcband, None, dst_layer, 0, [], callback=None )
+
+        del src_ds
+        del dst_ds
+
+        polygon_extraction = gpd.read_file(output_vector, driver='GeoJSON')
+        mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'geometry'], crs=polygon_extraction.crs)
+        for index, poi in polygon_extraction.iterrows():
+            if index == polygon_extraction.shape[0]-1:
+                break
+
+            # convert to bounding box
+            bbox_tuple = poi['geometry'].bounds
+            geom = shapely.geometry.box(*bbox_tuple)
+            #print(this_mirrored_polygon)
+            #print(bbox_tuple, ' >>> ', geom)
+            this_mirrored_polygon = geom
+
+            updated_record = gpd.GeoDataFrame([{'id': index, 'geometry':this_mirrored_polygon}])
+            mirrored_polygon = gpd.GeoDataFrame(pd.concat( [mirrored_polygon, updated_record], ignore_index=True), crs=polygon_extraction.crs)
+
+        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+        mirrored_polygon.to_file(output_vector.replace('_candidate_ptln2.geojson', '_candidate_ptln3.geojson'), driver='GeoJSON')
+
+
+        # geojson > tif
+        source_name = output_vector.replace('_candidate_ptln2.geojson', '_candidate_ptln3.geojson')
+        basemap_name = os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif'))
+
+        base_image = cv2.imread(basemap_name)
+        base_image = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
+
+        gdf = gpd.read_file(source_name, driver='GeoJSON')
+        gdf['area'] = gdf.geometry.area
+        text_mask = np.zeros((base_image.shape[0], base_image.shape[1]), dtype='uint8')
+
+        for index, poi in gdf.iterrows():
+            with rasterio.open(basemap_name) as src:
+                out_image, out_transform = mask(src, [gdf.loc[index]['geometry']], crop=True)
+                out_meta = src.meta.copy() # copy the metadata of the source DEM
+                
+            out_meta.update({
+                "driver":"Gtiff",
+                "height":out_image.shape[1], # height starts with shape[1]
+                "width":out_image.shape[2], # width starts with shape[2]
+                "transform":out_transform
+            })
+
+            if np.unique(out_image).shape[0] == 1:
+                continue
+            if poi['area'] > (base_image.shape[0] * base_image.shape[1]) * 0.8:
+                continue
+            this_text_mask = rasterio.features.rasterize([gdf.loc[index]['geometry']], out_shape=(base_image.shape[0], base_image.shape[1]))
+            text_mask = cv2.bitwise_or(text_mask, this_text_mask)
+            
+        text_mask[text_mask > 0] = 255
+
+        kernel = np.ones((3, 3), np.uint8)
+        ptln_candidate_rectangularized = cv2.dilate(text_mask, kernel, iterations = 1)
+        ptln_candidate_rectangularized = cv2.bitwise_and(ptln_block, ptln_candidate_rectangularized)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln3.tif')), ptln_candidate_rectangularized)
+        '''
 
 
 
 
     integrated_raster_legend_item = cv2.bitwise_or(poly_candidate_sweeping, ptln_candidate_sweeping)
     cv2.imwrite(os.path.join(path_to_intermediate, target_map_name.replace('.tif', '_integrated_raster.tif')), integrated_raster_legend_item)
-
 
     integrated_raster_legend_item_bounding_box = np.copy(integrated_raster_legend_item)
     integrated_raster_legend_item_bounding_box[integrated_raster_legend_item_bounding_box > 0] = 255
@@ -1257,7 +1260,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
 
 
 
-def start_linking(target_map_name, input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs, competition_custom, placeholder_handler, version):
+def start_linking(target_map_name, input_image, output_dir, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, preprocessing_for_cropping, postprocessing_for_crs, competition_custom, placeholder_handler, only_poly, version):
     flag_identify, placeholder_generated = map_area_cropping(target_map_name, input_image, path_to_intermediate, input_area_segmentation, input_legend_segmentation, preprocessing_for_cropping, placeholder_handler, competition_custom)
     
     if flag_identify == False:
@@ -1271,7 +1274,7 @@ def start_linking(target_map_name, input_image, output_dir, path_to_intermediate
         exit(1)
     elif version == '1.2':
         if flag_identify == True:
-            map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator_output, placeholder_generated)
+            map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator_output, placeholder_generated, only_poly)
         else:
             with open('missing.csv','a') as fd:
                 fd.write(str(target_map_name)+'\n')
@@ -1297,7 +1300,7 @@ def main():
 
             os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
 
-            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, False, '1.2')
             print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
             this_map_count += 1
 
@@ -1317,7 +1320,7 @@ def main():
 
             os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
 
-            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, False, '1.2')
             print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
             this_map_count += 1
 
@@ -1337,7 +1340,7 @@ def main():
 
             os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
 
-            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, False, '1.2')
             print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
             this_map_count += 1
 
