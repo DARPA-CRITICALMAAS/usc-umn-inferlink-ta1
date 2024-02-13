@@ -18,6 +18,11 @@ conda create -n loam python=3.9.16
 conda activate loam
 
 conda install pytorch torchvision==1.13.1 torchaudio==0.13.1 cudatoolkit=11.7 -c pytorch
+
+or
+
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 pip install -r requirements.txt
 ```
 
