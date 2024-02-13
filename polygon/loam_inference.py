@@ -150,7 +150,7 @@ def setup_directory():
     dir_source = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma/imgs/'))
     dir_img_0 = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs/'))
     dir_mask_0 = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks/'))
-    dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
+    dir_checkpoint = Path('checkpoints/')
     dir_img = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs_2/'))
     dir_mask = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/masks_2/'))
     dir_img_testing = Path(os.path.join(solution_dir, 'LOAM_Intermediate/data/cma_small/imgs/'))
@@ -731,7 +731,7 @@ def model_training():
 
         runningtime_start_global = datetime.now()
         #dir_checkpoint = Path('checkpoints/fold_'+str(k)+'/')
-        dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
+        dir_checkpoint = Path('checkpoints/')
 
         ''' Setup training arguments '''
         args = {
@@ -816,28 +816,6 @@ def model_training():
 
 
 def model_testing():
-    targeted_epoch_found = False
-    targeted_epoch = -1
-    dir_checkpoint = Path(os.path.join(solution_dir, 'checkpoints/'))
-
-    for epoch_id in range(20, 0, -1):
-        if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(epoch_id)+'.pth')):
-            targeted_epoch_found = True
-            targeted_epoch = epoch_id
-            break
-
-    if targeted_epoch_found == False:
-        print('No epoch for a successfully trained model is found...')
-        return(1)
-    else:
-        epoch_id_mod = epoch_id
-        if os.path.isfile(os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(epoch_id_mod)+'.pth')):
-            targeted_epoch = epoch_id_mod
-        print('Selecting epoch '+str(targeted_epoch)+' for testing...')
-
-
-
-
     runningtime_start_global = datetime.now()
 
     for k in range(0, k_fold_testing):
@@ -852,7 +830,7 @@ def model_testing():
 
 
         args = {
-            "model": os.path.join(dir_checkpoint, 'checkpoint_epoch'+str(targeted_epoch)+'.pth'),
+            "model": path_to_model,
             "input": dir_img_testing, # Filenames of input images
             "output": dir_pred_testing, # Filenames of output images
             "output_merged": dir_pred_testing1, # Filenames of output images (merged)
@@ -870,15 +848,24 @@ def model_testing():
         net = LOAM(n_channels=7, n_classes=args['classes'], bilinear=args['bilinear'])
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        logging.info(f'Loading model {args["model"]}')
-        logging.info(f'Using device {device}')
+        #logging.info(f'Loading model {args["model"]}')
+        #logging.info(f'Using device {device}')
+        print('Using device... '+str(device))
 
         net.to(device=device)
         state_dict = torch.load(args['model'], map_location=device)
         mask_values = state_dict.pop('mask_values', [0, 1])
         net.load_state_dict(state_dict)
 
-        logging.info('Model loaded!')
+        '''
+        if torch.cuda.is_available():
+            net = nn.DataParallel(net)
+            net.cuda()
+            print('CUDA is available. Running on GPU...')
+        else:
+            print('CUDA is not available. Running on CPU...')
+        '''
+        #logging.info('Model loaded!')
 
 
         ''' Check predicting information '''
@@ -895,7 +882,8 @@ def model_testing():
         predict_counter = 0
         runningtime_start = datetime.now()
 
-        with tqdm(total=testing_key_count, desc=f'Prediction - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
+        #with tqdm(total=testing_key_count, desc=f'Prediction - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
+        if True:
             for testing_input in os.listdir(args['input']):
                 testing_name = os.fsdecode(testing_input)
                 if '_sup_' in testing_name:
@@ -969,7 +957,7 @@ def model_testing():
                     predict_counter = predict_counter + 1
                     if predict_counter % 2500 == 0:
                         print('Making predictions... ('+str(predict_counter)+' / '+str(testing_key_count)+')... ', datetime.now()-runningtime_start)
-                    pbar0.update(1)
+                    #pbar0.update(1)
 
         #print(candidate_to_merge)
 
@@ -977,7 +965,8 @@ def model_testing():
         ''' Merge back to complete image '''
         print(str(len(candidate_to_merge))+' images to be merged... ')
 
-        with tqdm(total=len(candidate_to_merge), desc=f'Merge - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
+        #with tqdm(total=len(candidate_to_merge), desc=f'Merge - Fold {(k+1)}/{k_fold_testing}', unit='img') as pbar0:
+        if True:
             for map_name, label_name in candidate_to_merge:
                 source_name = map_name + '_' + label_name + '.png'
                 
@@ -1014,7 +1003,7 @@ def model_testing():
                     cv2.imwrite(os.path.join(args['output_merged'], str(source_name.split('.')[0]+"_predict.png")), empty_grid)
                     #print(this_block_source , '>>>', os.path.join(args['output_merged'], str(source_name.split('.')[0]+"_predict.png")))
                     #logging.info(f'Merging predicted image {source_name} ...')
-                    pbar0.update(1)
+                    #pbar0.update(1)
                 else:
                     continue
 
@@ -1147,7 +1136,8 @@ def loam_inference(
         input_path_to_tif = 'input.tif',
         input_groundtruth_dir = 'Data/testing_groundtruth',
         input_performance_evaluation = False,
-        input_thread = 10
+        input_thread = 10,
+        input_path_to_model = 'checkpoints/checkpoint_epoch14.pth'
 ):
     global filtering_new_dataset
     global filtering_threshold
@@ -1161,6 +1151,7 @@ def loam_inference(
     global path_to_tif
     global groundtruth_dir
     global performance_evaluation
+    global path_to_model
 
     global target_map_name
     global PROCESSES
@@ -1177,6 +1168,7 @@ def loam_inference(
     path_to_tif = input_path_to_tif
     groundtruth_dir = input_groundtruth_dir
     performance_evaluation = input_performance_evaluation
+    path_to_model = input_path_to_model
 
     path_list = path_to_tif.replace('\\','/').split('/')
     target_map_name = os.path.splitext(path_list[-1])[0]

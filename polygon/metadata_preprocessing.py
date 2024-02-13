@@ -54,6 +54,7 @@ solutiona_dir='Solution_1102/'
 
 
 import extractor_workers.preprocessing_worker as preprocessing_worker
+import extractor_workers.preprocessing_coworker as preprocessing_coworker
 import extractor_workers.cropping_worker as cropping_worker
 
 import extractor_workers.extraction_step0_color_difference_worker as extraction_step0_color_difference_worker
@@ -77,6 +78,8 @@ def multiprocessing_setting():
 
     multiprocessing.set_start_method('spawn', True)
     if PROCESSES > multiprocessing.cpu_count():
+        PROCESSES = (int)(multiprocessing.cpu_count()/2)
+    if multiprocessing.cpu_count() > PROCESSES*2:
         PROCESSES = (int)(multiprocessing.cpu_count()/2)
 
 
@@ -232,21 +235,25 @@ def worker_preprocessing():
 
 
     # import preprocessing_worker
-    if map_preprocessing == True:
-        preprocessing_worker.preprocessing_worker(0, target_map_name, path_to_tif, path_to_json, solutiona_dir, False)
-
-        binary_output_path = target_map_name+'_area_segmentation.tif'
-        json_output_path = target_map_name+'_area_segmentation.geojson'
-        map_area_segmenter.cropping_worker(path_to_tif, binary_output_path, solutiona_dir+str('intermediate7'))
-        area_json_generator.json_generator(binary_output_path, solutiona_dir+str('intermediate7/')+json_output_path, solutiona_dir+str('intermediate7'))
-
-        print('time check... area_segmentation and representation_preprocessing: ', datetime.now()-runningtime_start_global)
+    if os.path.isfile(path_to_bound) == True and '.json' in path_to_bound:
+        preprocessing_coworker.preprocessing_coworker(0, path_to_bound, target_map_name, path_to_tif, path_to_json, solutiona_dir, False)
+        print('time check... segmentation_reading and representation_preprocessing: ', datetime.now()-runningtime_start_global)
     else:
-        preprocessing_worker.preprocessing_worker(0, target_map_name, path_to_tif, path_to_json, solutiona_dir, False)
+        if map_preprocessing == True:
+            preprocessing_worker.preprocessing_worker(0, target_map_name, path_to_tif, path_to_json, solutiona_dir, False)
 
-        shutil.copyfile(path_to_bound, solutiona_dir+str('intermediate7/')+json_output_path)
-        print('time check... representation_preprocessing: ', datetime.now()-runningtime_start_global)
-        #print('Area segmentation already done...')
+            binary_output_path = target_map_name+'_area_segmentation.tif'
+            json_output_path = target_map_name+'_area_segmentation.geojson'
+            map_area_segmenter.cropping_worker(path_to_tif, binary_output_path, solutiona_dir+str('intermediate7'))
+            area_json_generator.json_generator(binary_output_path, solutiona_dir+str('intermediate7/')+json_output_path, solutiona_dir+str('intermediate7'))
+
+            print('time check... area_segmentation and representation_preprocessing: ', datetime.now()-runningtime_start_global)
+        else:
+            preprocessing_worker.preprocessing_worker(0, target_map_name, path_to_tif, path_to_json, solutiona_dir, False)
+
+            shutil.copyfile(path_to_bound, solutiona_dir+str('intermediate7/')+json_output_path)
+            print('time check... representation_preprocessing: ', datetime.now()-runningtime_start_global)
+            #print('Area segmentation already done...')
     
 
 
