@@ -22,36 +22,29 @@ def str_to_bool(value):
 
 
 def batch_extract_main():
+    '''
     runningtime_start = datetime.now()
     this_map_count = 0
-    total_map_count = len(os.listdir('Data/nickel_new/'))
-    for target_map_cand in os.listdir('Data/nickel_new/'):
+    total_map_count = len(os.listdir('Data/nickel/'))
+    for target_map_cand in os.listdir('Data/nickel/'):
         if '.tif' in target_map_cand:
             target_map = target_map_cand.split('.tif')[0]
 
             target_map_name = str(target_map)+'.tif'
-            input_image = 'Data/nickel_new/'+str(target_map)+'.tif'
-            output_dir = 'Nickel_New_Output/Vectorization_Output/'
-            path_to_intermediate = 'Nickel_New_Output/LINK_Intermediate/'+str(target_map)+'/'
+            input_image = 'Data/nickel/'+str(target_map)+'.tif'
+            output_dir = 'Nickel_Output/Vectorization_Output/'
+            path_to_intermediate = 'Nickel_Output/LINK_Intermediate/'+str(target_map)+'/'
             input_area_segmentation = None
-            input_legend_segmentation = 'Data/nickel_new_segmentation/'+str(target_map)+'_map_segmentation.json'
+            input_legend_segmentation = 'Data/nickel_segmentation/'+str(target_map)+'_map_segmentation.json'
             #path_to_mapkurator_output = 'MapKurator/ta1-feature-evaluation/'+str(target_map)+'.geojson'
             path_to_mapkurator_output = 'None.geojson'
-
-            if os.path.isfile(input_legend_segmentation) == False:
-                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
-                this_map_count += 1
-                with open('missing.csv', 'a') as filev:
-                    filev.write(str(target_map)+'\n')
-                    filev.close()
-                continue
 
             preprocessing_for_cropping = None
             postprocessing_for_crs = True
             competition_custom = False
             this_version = '1.2'
 
-            path_to_log = 'Nickel_New_Output/'+str(target_map)+'.log'
+            path_to_log = 'Nickel_Output/'+str(target_map)+'.log'
             os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
             os.makedirs(os.path.dirname(output_dir), exist_ok=True)
             os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
@@ -72,7 +65,58 @@ def batch_extract_main():
             sys.stdout = Logger()
             
             
-            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, this_version)
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, False, this_version)
+            if flagging == True:
+                link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+                print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
+            else:
+                print('Disintegrity in map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count))
+            #start_linking(target_map_name, input_image, None, path_to_intermediate, input_area_segmentation, input_legend_segmentation, path_to_mapkurator_output, None, None, True, '1.2')
+            this_map_count += 1
+    '''
+    runningtime_start = datetime.now()
+    this_map_count = 0
+    total_map_count = len(os.listdir('Data/mn/'))
+    for target_map_cand in os.listdir('Data/mn/'):
+        if '.tif' in target_map_cand:
+            target_map = target_map_cand.split('.tif')[0]
+
+            target_map_name = str(target_map)+'.tif'
+            input_image = 'Data/mn/'+str(target_map)+'.tif'
+            output_dir = 'Nickel_MN_Output/Vectorization_Output/'
+            path_to_intermediate = 'Nickel_MN_Output/LINK_Intermediate/'+str(target_map)+'/'
+            input_area_segmentation = None
+            input_legend_segmentation = 'Data/mn_segmentation/'+str(target_map)+'_map_segmentation.json'
+            #path_to_mapkurator_output = 'MapKurator/ta1-feature-evaluation/'+str(target_map)+'.geojson'
+            path_to_mapkurator_output = 'None.geojson'
+
+            preprocessing_for_cropping = None
+            postprocessing_for_crs = True
+            competition_custom = False
+            this_version = '1.2'
+
+            path_to_log = 'Nickel_MN_Output/'+str(target_map)+'.log'
+            os.makedirs(os.path.dirname(path_to_log), exist_ok=True)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            os.makedirs(os.path.dirname(path_to_intermediate), exist_ok=True)
+
+            class Logger(object):
+                def __init__(self):
+                    self.terminal = sys.stdout
+                    self.log = open(path_to_log, 'a')
+                def write(self, message):
+                    self.terminal.write(message)
+                    try:
+                        self.log.write(message)
+                    except:
+                        self.log.write('\n  Unable to write to log file due to encoding issues...')
+                        print('\n  Unable to write to log file due to encoding issues...')
+                def flush(self):
+                    pass
+            sys.stdout = Logger()
+            
+            
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, False, this_version)
             if flagging == True:
                 link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
                 print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
@@ -138,7 +182,7 @@ def batch_main():
             sys.stdout = Logger()
             
             
-            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, False, this_version)
             if flagging == True:
                 link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
                 print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
@@ -190,7 +234,7 @@ def batch_main():
             sys.stdout = Logger()
 
             
-            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, False, this_version)
             if flagging == True:
                 link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
                 print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
@@ -242,7 +286,7 @@ def batch_main():
             sys.stdout = Logger()
 
             
-            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, this_version)
+            flagging = link_for_integrated_processing.start_linking(target_map_name, input_image, None, path_to_intermediate, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, True, False, this_version)
             if flagging == True:
                 link_for_postprocessing.start_linking_postprocessing(target_map, input_image, output_dir, path_to_intermediate, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
                 print('Processed map... '+str(target_map)+'.tif'+'   ...'+str(this_map_count)+'/'+str(total_map_count)+'   ...'+str(datetime.now()-runningtime_start))
@@ -257,6 +301,7 @@ def batch_main():
 
 
 def main():
+    runningtime_start = datetime.now()
     this_batch_processing = str_to_bool(args.batch_processing)
     this_hackathon = str_to_bool(args.hackathon)
     if this_hackathon == True:
@@ -303,6 +348,7 @@ def main():
     preprocessing_for_cropping = str_to_bool(args.preprocessing_for_cropping)
     postprocessing_for_crs = str_to_bool(args.postprocessing_for_crs)
     competition_custom = str_to_bool(args.competition_custom)
+    only_poly = str_to_bool(args.only_poly)
 
     this_version = args.version
 
@@ -311,11 +357,12 @@ def main():
     os.makedirs(os.path.dirname(path_to_intermediate2), exist_ok=True)
 
 
-    flagging = link_for_integrated_processing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, this_version)
+    flagging = link_for_integrated_processing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, only_poly, this_version)
     if flagging == True:
         link_for_postprocessing.start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate2, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
     else:
         print('Disintegrity in map, please check the legend-area segmentation file. The targeted map may be missing from the json file if you have set "--competition_custom" to True...')
+    print('Overall processing time: '+str(datetime.now()-runningtime_start))
     return True
     
 
@@ -334,6 +381,8 @@ if __name__ == '__main__':
     parser.add_argument('--competition_custom', type=str, default='False')
     parser.add_argument('--batch_processing', type=str, default='False')
     parser.add_argument('--hackathon', type=str, default='False')
+
+    parser.add_argument('--only_poly', type=str, default='False')
 
     parser.add_argument('--version', type=str, default='1.2')
     parser.add_argument('--log', type=str, default='log_file.txt')
