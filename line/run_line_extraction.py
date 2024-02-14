@@ -351,7 +351,7 @@ if __name__ == '__main__':
             if args.predict_vector:
                 output_shp_path = predict_shp(args)
 #                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+#                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
 #                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
 #                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
 
@@ -363,7 +363,7 @@ if __name__ == '__main__':
             if args.predict_vector:
                 predict_shp(args)
 #                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+#                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
 #                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
 #                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
 
