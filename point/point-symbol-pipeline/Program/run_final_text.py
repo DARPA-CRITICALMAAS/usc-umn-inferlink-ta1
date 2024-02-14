@@ -91,7 +91,7 @@ for mapname, point_symbol in model_dict.items():
     stitch_to_single_result(map_input_dir_root, predict_output_dir, stitch_output_dir, crop_shift_size=1000)
 
 # Set the directory containing your GeoJSON files
-post_process_geojson(metadata_path,stitch_output_dir,visual_flag=False)
+remove_pnts_from_legend(metadata_path,stitch_output_dir,visual_flag=False)
 
 raster_output_path = os.path.join(output_dir_root, 'raster_layer')
 if not os.path.exists(raster_output_path):
