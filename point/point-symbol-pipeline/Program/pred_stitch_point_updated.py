@@ -45,14 +45,16 @@ def predict_img_patches(crop_dir_path,model_dir_root,selected_models,predict_out
                     res_per_crop={}
                     res_per_crop['img_geometry']=[]
                     res_per_crop['type']=None
-                    # res_per_crop['score']=[]
+                    res_per_crop['score']=[]
                     x1, y1, x2, y2, conf, _ = box
                     cnt_x=int((x1+x2)/2)
                     cnt_y=int((y1+y2)/2)
                     plt.scatter(cnt_x, cnt_y,s=1)
                     res_per_crop['img_geometry'].append([cnt_x,cnt_y])
                     res_per_crop['type']=pnt_name
-                    entire_res.append(res_per_crop)                   
+                    res_per_crop['score']=str(conf)
+                    entire_res.append(res_per_crop)
+                
             
             out_file_path=os.path.join(output_path,val_img.split('.')[0]+'.json')
             with open(out_file_path, "w") as out:
@@ -98,8 +100,9 @@ def stitch_to_single_result(crop_dir_path,pred_root,stitch_root,crop_shift_size=
         img_y=line_data['img_geometry'][0][1]
         point= Point([img_x,img_y])
         sym_type = line_data['type']
+        score= line_data['score']
         idx+=1
-        features.append(Feature(geometry = point, properties={'type': sym_type, "id": idx} ))
+        features.append(Feature(geometry = point, properties={'type': sym_type, "id": idx, "score": score} ))
     feature_collection = FeatureCollection(features)
     with open(output_geojson, 'w', encoding='utf8') as f:
         dump(feature_collection, f, ensure_ascii=False)
