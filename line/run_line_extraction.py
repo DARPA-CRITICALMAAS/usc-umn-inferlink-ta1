@@ -319,6 +319,16 @@ def predict_shp(args):
         print('*** save the predicted shapefile in {} ***'.format(shp_path))
     else:
         write_shp_in_imgcoord_output_schema(shp_path, nodup_lines)
+        
+    import geopandas
+    geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
+    if not os.path.exists(geojson_output_dir):
+        os.mkdir(geojson_output_dir)
+        
+    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
+    shp_file = geopandas.read_file(shp_path)
+    shp_file.to_file(geojson_path, driver='GeoJSON')
+    print('*** save the predicted geojson in {} ***'.format(geojson_path))
     return shp_path
     
 
@@ -340,10 +350,10 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 output_shp_path = predict_shp(args)
-                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
+#                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
+#                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
+#                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
 
         if 'thrust' in description.lower() or 'thrust' in sym_name.lower():            
             args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
@@ -352,8 +362,8 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 predict_shp(args)
-                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
+#                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
+#                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
+#                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
 

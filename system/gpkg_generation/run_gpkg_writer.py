@@ -7,9 +7,9 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument('--output_dir', \
                     default='/data/weiweidu/criticalmaas_data/hackathon2/update_nickel_maps_system_gpkg_outputs', type=str)
-parser.add_argument('--map_name', default='22253_25695', type=str)
+parser.add_argument('--map_name', default='2647_10991', type=str)
 parser.add_argument('--layout_output_dir', \
-                    default='/data/weiweidu/criticalmaas_data/hackathon2/updated_nickel_legend_input4line', type=str)
+                    default='/data/weiweidu/criticalmaas_data/hackathon2/MN_MT_raw_maps_legend_item_description_outputs', type=str)
 parser.add_argument('--georef_output_dir', \
                     default='/data/weiweidu/criticalmaas_data/hackathon2/update_nickel_maps_georef_outputs', type=str)
 parser.add_argument('--poly_output_dir', \
