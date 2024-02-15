@@ -9,7 +9,7 @@ Given the large dimensions of maps, this module crops a maps into patches for th
 
 ## Running Command
 ```sh
-python map2patch.py --input_dir /dir/to/maps --map_name 'AK_Dillingham' --patch_sizes 256 1000 1024 --strides 500 500 500 --output_dir /output/dir/to/cropped/patches
+python map2patch.py --input_dir /dir/to/maps --legend_dir /dir/to/legend --map_name 'AK_Dillingham' --patch_sizes 256 1000 1024 --strides 500 500 500 --output_dir /output/dir/to/cropped/patches
 ```
 Notes: 
 - The length of "patch_sizes" and "strides" must be the same. "strides" define cropping a patch when a sliding window moves x-pixel horizontally and vertically.
