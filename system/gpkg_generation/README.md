@@ -4,6 +4,7 @@ This module combines outputs from other modules in th system into a single GeoPa
 
 ## Environment
 - python 3.10
+- GDAL
 - geopandas
 - pandas
 - CriticalMAAS TA1 geopackage library (developed by the TA4 team). Please refer [Link](https://github.com/DARPA-CRITICALMAAS/ta1-geopackage/tree/47f585a0386dd5db3e7a9d96cc53d1e1b4f2ce10) for installation 
