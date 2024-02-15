@@ -39,7 +39,9 @@ outputs
 |			|____poly_feature1.geojson 
 |___point_outputs
 |	|				
-|	|____map_name1.geojson 
+|	|________map_name1
+|			|
+|			|____pt_feature1.geojson  
 |
 |___line_outputs
 |	|
