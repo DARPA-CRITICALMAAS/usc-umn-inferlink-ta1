@@ -3,7 +3,7 @@ from similarity_match import *
 from Seperate_symbol_text import *
 from collections import defaultdict
 from pred_stitch_point_updated import *
-from geojson_to_raster import *
+# from geojson_to_raster import *
 from text_based_matching import *
 from post_process_geojson import *
 import os
