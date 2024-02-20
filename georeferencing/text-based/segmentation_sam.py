@@ -11,7 +11,7 @@ import pdb
 
 MODEL_TYPE = "vit_h"
 
-checkpoint_path = "support_data/sam_vit_h_4b8939.pth"
+# checkpoint_path = "support_data/sam_vit_h_4b8939.pth"
 
 
 
@@ -72,9 +72,9 @@ def get_map_area_by_iou(sam_result):
     return map_plot_area
 
 
-def run_sam(image, resized_img, scaling_factor, device, support_path):
+def run_sam(image, resized_img, scaling_factor, device, support_data_dir):
 
-    sam = sam_model_registry[MODEL_TYPE](checkpoint=f"{support_path}/{checkpoint_path}")
+    sam = sam_model_registry[MODEL_TYPE](checkpoint=os.path.join(support_data_dir, "sam_vit_h_4b8939.pth"))
     sam.to(device)
     mask_generator = SamAutomaticMaskGenerator(sam)
     
