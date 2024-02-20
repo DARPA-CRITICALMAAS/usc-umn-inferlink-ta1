@@ -4,6 +4,8 @@ from PIL import Image
 import cv2
 from utils import get_toponym_tokens, prepare_bm25
 from segmentation_sam import resize_img, run_sam
+import urllib.request
+import rasterio
 # from criticalmaas.ta1_geopackage import GeopackageDatabase
 import json 
 import numpy as np
@@ -11,6 +13,7 @@ import torch
 import base64
 import requests
 import argparse
+import csv
 import io
 import os
 
@@ -25,19 +28,19 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 
 
-def run_segmentation(file, support_path):
+def run_segmentation(file):
     image = Image.open(file) # read image with PIL library
 
     print('image_size',image.size)
 
     resized_img, scaling_factor = resize_img(np.array(image))
-    seg_mask, bbox = run_sam(np.array(image), resized_img, scaling_factor, device, support_path)
+    seg_mask, bbox = run_sam(np.array(image), resized_img, scaling_factor, device)
 
     return seg_mask, bbox, image, image.width, image.height
 
 
 def load_data(topo_histo_meta_path, topo_current_meta_path):
-    
+
     # topo_histo_meta_path = 'support_data/historicaltopo.csv'
     df_histo = pd.read_csv(topo_histo_meta_path) 
             
@@ -45,10 +48,11 @@ def load_data(topo_histo_meta_path, topo_current_meta_path):
     df_current = pd.read_csv(topo_current_meta_path) 
 
 
-    common_columns = df_current.columns.intersection(df_histo.columns)
+    # common_columns = df_current.columns.intersection(df_histo.columns)
 
-    df_merged = pd.concat([df_histo[common_columns], df_current[common_columns]], axis=0)
-            
+    # df_merged = pd.concat([df_histo[common_columns], df_current[common_columns]], axis=0)
+    df_merged = df_histo #TODO: tempory fix to get Geotiff URL
+
     bm25 = prepare_bm25(df_merged)
 
     return bm25, df_merged
@@ -59,6 +63,7 @@ def get_topo_basemap(query_sentence, bm25, df_merged, device ):
 
     print(query_sentence)
     query_tokens, human_readable_tokens = get_toponym_tokens(query_sentence, device)
+    print(human_readable_tokens)
 
     query_sent = ' '.join(human_readable_tokens)
 
@@ -69,11 +74,11 @@ def get_topo_basemap(query_sentence, bm25, df_merged, device ):
     sorted_bm25_list = np.argsort(doc_scores)[::-1]
     
     # Top 10
-    # df_merged.iloc[sorted_bm25_list[0:10]]
+    top10 = df_merged.iloc[sorted_bm25_list[0:10]]
 
-    top1 = df_merged.iloc[sorted_bm25_list[0]]
+    # top1 = df_merged.iloc[sorted_bm25_list[0]]
 
-    return top1 
+    return top10, query_sent 
 
 
 # Function to encode the image
@@ -196,22 +201,29 @@ def to_camel(title):
 
 def run_georeferencing(args):
 
-    support_path = f"{args.support_path}/support_data"
-    temp_path  = f"{args.temp_path}/temp"
-
     # input_path = '../input_data/CO_Frisco.png' # supported file format: png, jpg, jpeg, tif
     input_path = args.input_path
 
     # load data store in bm25 & df_merged
-    bm25, df_merged = load_data(topo_histo_meta_path = f'{support_path}/historicaltopo.csv',
-        topo_current_meta_path = f'{support_path}/ustopo_current.csv')
+    bm25, df_merged = load_data(topo_histo_meta_path = 'support_data/historicaltopo.csv',
+        topo_current_meta_path = 'support_data/ustopo_current.csv')
     
-    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path, args.support_path)
+    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path)
 
-    if not os.path.isdir(temp_path):
-        os.makedirs(temp_path)
+    # Set the opacity level (0.5 for 50% opacity)
+    opacity = 0.5
+
+    seg_mask_channel3 = cv2.merge((seg_mask,seg_mask,seg_mask))
+
+    # Perform the image overlay
+    overlay = cv2.addWeighted(np.asarray(image), opacity, seg_mask_channel3, 1 - opacity, 0)
     
-    jpg_file_path = f"{temp_path}/output.jpg"
+    cv2.imwrite(os.path.basename(input_path).split('.')[0]+'.jpg', overlay)
+
+    if not os.path.isdir(args.temp_dir):
+        os.makedirs(args.temp_dir)
+    
+    jpg_file_path = os.path.join(args.temp_dir, "output.jpg")
 
     image.save(jpg_file_path, format="JPEG")
 
@@ -220,14 +232,14 @@ def run_georeferencing(args):
     base64_image = encode_image(image)
     title = to_camel(getTitle(base64_image))
 
-    os.remove(f"{temp_path}/output.jpg")
+    os.remove(jpg_file_path)
 
     query_sentence = title
 
     # get the highest score: 
-    top1 = get_topo_basemap(query_sentence, bm25, df_merged, device )
+    top10, toponyms = get_topo_basemap(query_sentence, bm25, df_merged, device )
 
-    return seg_bbox, top1, image_width, image_height
+    return seg_bbox, top10, image_width, image_height, title, toponyms 
 
 def write_to_geopackage1(seg_bbox, top1, output_path):
     db = GeopackageDatabase(
@@ -258,15 +270,110 @@ def write_to_geopackage1(seg_bbox, top1, output_path):
     }
     db.write_features("polygon_feature", [feat])
 
-def write_to_json(args, seg_bbox, top1, width, height):
+def download_geotiff(geotiff_url, temp_dir):
+    filename = os.path.basename(geotiff_url)
+    try:
+        urllib.request.urlretrieve(geotiff_url, os.path.join(temp_dir,filename))
+        return os.path.join(temp_dir,filename)
+    except URLError as e:
+        print(f'Error during download: {e}')
+        return -1
+
+def img2geo_georef(row_col_list, geotiff_file):
+    # Open the GeoTIFF file
+    topo_target_gcps = []
+    with rasterio.open(geotiff_file) as dataset:
+        # Use the dataset's transform attribute and the `xy` method
+        # to convert pixel coordinates to geographic coordinates.
+        # The `xy` method returns the coordinates of the center of the given pixel.
+        # geotransform = dataset.transform
+
+        transform = dataset.transform
+        for row, col in row_col_list:
+            # geo_coords = dataset.xy(row, col, offset='center')
+            # topo_target_gcps.append(geo_coords)
+            lon, lat = transform * (col, row)
+            topo_target_gcps.append((lat, lon))
+
+    import pdb # should match to lat, lon onthe map corner
+    pdb.set_trace()
+    print(dataset.crs.wkt)
+
+    return topo_target_gcps
+    
+def get_gcps(args, seg_bbox, top10):
+    top1 = top10.iloc[0]
+
+    left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
+
+    geotiff_url = top1['geotiff_url']
+
+    geotiff_path = download_geotiff(geotiff_url, args.temp_dir) 
+
+    if geotiff_path == -1: #failure if -1
+        return -1 
+
+    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path)
+    topo_left, topo_right, topo_top, topo_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3]
+
+    topo_src_gcps = [(topo_top, topo_left),(topo_top, topo_right),(topo_bottom, topo_right), (topo_bottom, topo_left)]
+    topo_target_gcps = img2geo_georef(topo_src_gcps, geotiff_path)
+    
+
+    return topo_src_gcps, topo_target_gcps
+
+
+def generate_geotiff(args, seg_bbox, top10):
+
+    input_tiff = args.input_path
+    temp_tiff = os.path.join(args.temp_dir,os.path.basename(args.input_path))
+
+    topo_src_gcps, topo_target_gcps = get_gcps(args, seg_bbox, top10) 
+
+    command = 'gdal_translate -of GTiff' 
+    for src_gcp, target_gcp in zip(topo_src_gcps, topo_target_gcps):
+        command +=  ' -gcp ' + str(src_gcp[0]) + ' ' + str(src_gcp[1]) + ' '
+        command += str(target_gcp[0]) + ' ' + str(target_gcp[1]) + ' '
+
+    command = command + input_tiff + ' ' + temp_tiff 
+
+    print(command)
+    
+    
+    
+
+
+
+def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
+
+    top1 = top10.iloc[0]
+    
     left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
     img_left, img_right, img_top, img_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3]
     
-    bounds =  { "geo":
-                    {"left":left, "right":right, "top":top, "bottom":bottom},
-                "img":
-                    {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
-            }
+    if args.more_info:
+        top10_dict = top10.to_dict(orient='records') 
+
+        # Use increasing numbers as keys
+        top10_dict = {i + 1: row for i, row in enumerate(top10_dict)}
+        bounds =   { 
+                     "width": width, 
+                     "height": height, 
+                     "title": title, 
+                     "toponyms": toponyms, 
+                     "seg_bbox": seg_bbox, 
+                    "geo":
+                        {"left":left, "right":right, "top":top, "bottom":bottom},
+                    "img":
+                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
+                    "top10": top10_dict,
+                }
+    else:
+        bounds =  { "geo":
+                        {"left":left, "right":right, "top":top, "bottom":bottom},
+                    "img":
+                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
+                }
 
     with open(args.output_path, 'w') as f:
         json.dump(bounds, f)
@@ -324,8 +431,8 @@ def main():
 
     parser.add_argument('--input_path', type=str, default=None)
     parser.add_argument('--output_path', type=str, default=None) 
-    parser.add_argument('--temp_path', type=str, default=None) 
-    parser.add_argument('--support_path', type=str, default=None) 
+    parser.add_argument('--temp_dir', type=str, default='temp') 
+    parser.add_argument('--more_info', action='store_true' )
     args = parser.parse_args()
     print('\n')
     print(args)
@@ -333,19 +440,15 @@ def main():
 
     assert args.input_path is not None
     assert args.output_path is not None 
-    if args.support_path is None:
-        args.support_path = "."
-    if args.temp_path is None:
-        args.temp_path = "."
+    
+    seg_bbox, top10, image_width, image_height, title, toponyms = run_georeferencing(args)
 
-    seg_bbox, top1, image_width, image_height = run_georeferencing(args)
+    # generate_geotiff(args, seg_bbox, top10)
 
     # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)
-    write_to_json(args, seg_bbox, top1, image_width, image_height)
+    write_to_json(args, seg_bbox, top10, image_width, image_height, title, toponyms)
 
     
-
-
 if __name__ == '__main__':
 
     main()
@@ -353,8 +456,10 @@ if __name__ == '__main__':
 '''
 Example command:
 to json:
-python3 run_georenference.py  --input_path='../input_data/CO_Frisco.png' --output_path='../output_georef/CO_Frisco.json'
+python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='debug.json'
+
+python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='/home/zekun/data/nickel_output/0209/169_34067.json'
 
 to geopackage:
-python3 run_georenference.py  --input_path='../input_data/CO_Frisco.png' --output_path='../output_georef/CO_Frisco.gpkg'
+python3 run_georeference_moreinfo.py  --input_path='../input_data/CO_Frisco.png' --output_path='../output_georef/CO_Frisco.gpkg'
 '''
