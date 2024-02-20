@@ -4,11 +4,12 @@ import os
 import math
 import shutil
 
-def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_name, this_legend_name, data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size=1024, performance_evaluation=False):
+def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_name, this_legend_name, data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size=1024, performance_evaluation=False, efficiency_trade_off=0):
     source_path_0 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png") # input segmentation (input polygon candidate)
     target_path_0 = os.path.join(target_dir_img, str(this_map_name+'_'+this_legend_name+".png"))
     source_path_1 = os.path.join(data_dir1, this_map_name+'_'+this_legend_name+".tif") # groundtruth
     target_path_1 = os.path.join(target_dir_mask, str(this_map_name+'_'+this_legend_name+"_mask.png"))
+
 
     source_path_2 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v4v.png") # dynamic-threshold polygon candidate
     target_path_2 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_0.png"))
@@ -22,6 +23,25 @@ def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_
     target_path_6 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_4.png"))
     source_path_7 = os.path.join(data_dir4, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_rc_v0.png") # recoloring polygon
     target_path_7 = os.path.join(target_dir_img, 'sup', str(this_map_name+'_'+this_legend_name+"_sup_5.png"))
+
+    if efficiency_trade_off == 1:
+        pass
+    elif efficiency_trade_off == 2:
+        source_path_7 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v2.png")
+    elif efficiency_trade_off == 3:
+        source_path_2 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png")
+        source_path_7 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v2.png")
+    elif efficiency_trade_off == 4:
+        source_path_2 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png")
+        source_path_3 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v3.png")
+        source_path_4 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v3.png")
+        source_path_7 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v2.png")
+    elif efficiency_trade_off >= 5:
+        source_path_2 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png")
+        source_path_3 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png")
+        source_path_4 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v7.png")
+        source_path_7 = os.path.join(data_dir0, this_map_name+'/'+this_map_name+'_'+this_legend_name+"_v2.png")
+
 
     #source_path_8 = os.path.join(data_dir3, 'Groundtruth', str(this_map_name+'_boundary_identified.png')) # identified boundary
     #target_path_8 = os.path.join(target_dir_mask, 'sup', str(this_map_name+'_'+this_legend_name+"_mask_sup.png"))

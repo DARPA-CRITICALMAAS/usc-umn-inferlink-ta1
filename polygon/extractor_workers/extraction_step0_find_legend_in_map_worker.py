@@ -37,8 +37,9 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     mask_box_legend = cv2.medianBlur(mask_box_legend,3)
 
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend_box(0).tif'
-        cv2.imwrite(out_file_path0, mask_box_legend)
+        #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend_box_0.tif'
+        #cv2.imwrite(out_file_path0, mask_box_legend)
+        pass
 
     text_pattern_probability = True
     if text_pattern_probability == True:
@@ -200,8 +201,9 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     
 
     if print_intermediate_image == True:
-        out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend_box.tif'
-        cv2.imwrite(out_file_path0, mask_box_legend)
+        #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_legend_box.tif'
+        #cv2.imwrite(out_file_path0, mask_box_legend)
+        pass
 
 
     box_diff_y = max(1, abs(bottom_right[0] - top_left[0]))
@@ -278,25 +280,25 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
                 update_image_space[int(diff_x/2):int(diff_x/2)+this_image_space.shape[0], int(diff_y/2):int(diff_y/2)+this_image_space.shape[1]] = this_image_space
 
             if np.sum(update_image_space) / sum_img_bound > 0.4:
-                this_image_space = np.zeros((this_current_image.shape[0], this_current_image.shape[1]), dtype='uint8')
-                out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t1.png'
-                cv2.imwrite(out_file_path0, this_image_space)
+                #this_image_space = np.zeros((this_current_image.shape[0], this_current_image.shape[1]), dtype='uint8')
+                #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t1.png'
+                #cv2.imwrite(out_file_path0, this_image_space)
 
                 update_image_space = np.zeros((this_current_image.shape[0], this_current_image.shape[1]), dtype='uint8')
                 overlapping = cv2.bitwise_and(img_crop_black, update_image_space)
-                out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t01.png'
-                cv2.imwrite(out_file_path0, overlapping)
+                #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t01.png'
+                #cv2.imwrite(out_file_path0, overlapping)
 
                 return legend, overlapping
 
             #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t00.png'
             #cv2.imwrite(out_file_path0, res)
 
-            out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t0.png'
-            cv2.imwrite(out_file_path0, update_image_space)
+            #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t0.png'
+            #cv2.imwrite(out_file_path0, update_image_space)
 
             overlapping = cv2.bitwise_and(img_crop_black, update_image_space)
-            out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t01.png'
-            cv2.imwrite(out_file_path0, overlapping)
+            #out_file_path0=solutiona_dir+'intermediate5/Extraction/'+map_name+'/'+map_name+'_'+names+'_poly_t01.png'
+            #cv2.imwrite(out_file_path0, overlapping)
     
     return legend, overlapping

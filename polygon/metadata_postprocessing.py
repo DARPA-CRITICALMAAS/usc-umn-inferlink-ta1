@@ -138,7 +138,7 @@ def file_summary():
 
 
 
-def worker_postprocessing(crop_size):
+def worker_postprocessing(crop_size, efficiency_trade_off):
     data_dir0 = os.path.join(solution_dir, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate7_2/')
     data_dir1 = dir_to_groundtruth
 
@@ -179,7 +179,7 @@ def worker_postprocessing(crop_size):
         
         
         with multiprocessing.Pool(PROCESSES) as pool:
-            callback = pool.starmap_async(postprocessing_for_bitmap_worker.postprocessing_for_bitmap_worker_multiple_image, [(map_id, this_legend_id, candidate_map_name_for_polygon[map_id], candidate_legend_name_for_polygon[map_id][this_legend_id], data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size, performance_evaluation, ) for this_legend_id in legend_for_multiprocessing])
+            callback = pool.starmap_async(postprocessing_for_bitmap_worker.postprocessing_for_bitmap_worker_multiple_image, [(map_id, this_legend_id, candidate_map_name_for_polygon[map_id], candidate_legend_name_for_polygon[map_id][this_legend_id], data_dir0, data_dir1, data_dir2, data_dir3, data_dir4, target_dir_img, target_dir_mask, target_dir_img_small, target_dir_mask_small, crop_size, performance_evaluation, efficiency_trade_off, ) for this_legend_id in legend_for_multiprocessing])
             multiprocessing_results = callback.get()
 
             for return_map_id, return_legend_id, number_of_grids in multiprocessing_results:
@@ -208,14 +208,14 @@ def worker_postprocessing(crop_size):
 
 
 
-def run(crop_size):
+def run(crop_size, efficiency_trade_off):
     multiprocessing_setting()
     dir_setting()
     file_summary()
-    worker_postprocessing(crop_size)
+    worker_postprocessing(crop_size, efficiency_trade_off)
 
 
-def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_performance_evaluation=False, crop_size=1024):
+def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_efficiency_trade_off, input_performance_evaluation=False, crop_size=1024):
     global solution_dir
     global path_to_tif
     global path_to_json
@@ -236,6 +236,8 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
     dir_to_groundtruth = input_dir_to_groundtruth
     performance_evaluation = input_performance_evaluation
 
+    efficiency_trade_off = input_efficiency_trade_off
+
     PROCESSES = input_thread
 
     print('========================================== Setting of Metadata Postprocessing for Polygon Extraction ==========================================')
@@ -246,7 +248,7 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
     print('*Postprocessing output directory => "' + os.path.join(solution_dir, 'LOAM_Intermediate/data/') + '"')
 
     print('===============================================================================================================================================')
-    run(crop_size)
+    run(crop_size, efficiency_trade_off)
 
 
 

@@ -15,13 +15,47 @@ import geopandas as gpd
 from osgeo import ogr, gdal, osr
 import pandas as pd
 
+import multiprocessing
+
 import warnings
 warnings.filterwarnings("ignore")
 
 
+import postprocessing_workers.polygon_schema_worker as polygon_schema_worker
+PROCESSES = 10
 
 
 def polygon_output_handler():
+    chronology_age_b_int = [0.0042, 0.0082, 0.0117, 0.129, 0.774, 1.80, 2.58, 
+                    3.60, 5.333, 7.246, 11.63, 13.82, 15.97, 20.44, 23.03, 
+                    27.82, 33.9, 37.71, 41.2, 47.8, 56.0, 59.2, 61.6, 66.0, 
+                    72.1, 83.6, 86.3, 89.8, 93.9, 100.5, 113.0, 121.4, 125.77, 132.6, 139.8, 145.0, 
+                    149.2, 154.8, 161.5, 165.3, 168.2, 170.9, 174.7, 184.2, 192.9, 199.5, 201.4, 
+                    208.5, 227.0, 237.0, 242.0, 247.2, 251.2, 251.9, 
+                    254.14, 259.51, 264.28, 266.9, 273.01, 283.5, 290.1, 293.52, 298.9, 
+                    303.7, 307.0, 315.2, 323.2, 330.9, 346.7, 358.9, 
+                    371.1, 382.7, 387.7, 393.3, 407.6, 410.8, 419.2, 
+                    423.0, 425.6, 427.4, 430.5, 433.4, 438.5, 440.8, 443.8, 
+                    445.2, 453.0, 458.4, 467.3, 470.0, 477.7, 485.4, 
+                    489.5, 494.0, 497.0, 500.5, 504.5, 509.0, 514.0, 521.0, 529.0, 538.8, 
+                    635.0, 720.0, 1000.0, 1200.0, 1400.0, 1600.0, 1800.0, 2050.0, 2300.0, 2500.0, 
+                    2800.0, 3200.0, 3600.0, 4031.0, 4567.3
+                    ]
+    chronology_age_t_int = [0, 0.0042, 0.0082, 0.0117, 0.129, 0.774, 1.80, 
+                    2.58, 3.60, 5.333, 7.246, 11.63, 13.82, 15.97, 20.44, 
+                    23.03, 27.82, 33.9, 37.71, 41.2, 47.8, 56.0, 59.2, 61.6, 
+                    66.0, 72.1, 83.6, 86.3, 89.8, 93.9, 100.5, 113.0, 121.4, 125.77, 132.6, 139.8, 
+                    145.0,149.2, 154.8, 161.5, 165.3, 168.2, 170.9, 174.7, 184.2, 192.9, 199.5, 
+                    201.4, 208.5, 227.0, 237.0, 242.0, 247.2, 251.2, 
+                    251.9, 254.14, 259.51, 264.28, 266.9, 273.01, 283.5, 290.1, 293.52, 
+                    298.9, 303.7, 307.0, 315.2, 323.2, 330.9, 346.7, 
+                    358.9, 372.2,382.7, 387.7, 393.3, 407.6, 410.8, 
+                    419.2, 423.0, 425.6, 427.4, 430.5, 433.4, 438.5, 440.8, 
+                    443.8, 445.2, 453.0, 458.4, 467.3, 470.0, 477.7, 
+                    485.4, 489.5, 494.0, 497.0, 500.5, 504.5, 509.0, 514.0, 521.0, 529.0, 
+                    538.8, 635.0, 720.0, 1000.0, 1200.0, 1400.0, 1600.0, 1800.0, 2050.0, 2300.0, 
+                    2500.0, 2800.0, 3200.0, 3600.0, 4031.0
+                    ]
     chronology_age = ['Meghalayan', 'Northgrippian', 'Greenlandian', 'Late Pleistocene', 'Chibanian', 'Calabrian', 'Gelasian', 
                     'Piacenzian', 'Zanclean', 'Messinian', 'Tortonian', 'Serravallian', 'Langhian', 'Burdigalian', 'Aquitanian', 
                     'Chattian', 'Rupelian', 'Priabonian', 'Bartonian', 'Lutetian', 'Ypresian', 'Thanetian', 'Selandian', 'Danian', 
@@ -154,6 +188,7 @@ def polygon_output_handler():
 
 
     polygon_feature_counter = 0
+    info_set = []
     for fname in os.listdir(dir_to_raster_polygon):    # change directory as needed
         if os.path.isfile(os.path.join(dir_to_raster_polygon, fname)):
             #print(os.path.join(dir_to_raster_polygon, fname), map_name.replace('.tif', '_'))
@@ -164,144 +199,22 @@ def polygon_output_handler():
                 #print(info_for_this_poly)
                 #print(info_for_this_poly.shape[0])
 
-                get_referenced_text = False
+                this_info = [this_abbr, info_for_this_poly, fname]
+                #this_info = np.array(this_info)
+                info_set.append(this_info)
 
-                b_epoch = chronology_period.shape[0]
-                t_epoch = -1
-                b_interval = ''
-                t_interval = ''
-                b_age = ''
-                t_age = ''
-
-                if info_for_this_poly.shape[0] > 0:
-                    if int(this_abbr) < linking_ids.shape[0] and linking_ids[int(this_abbr)] != -1:
-                        get_referenced_text = True
-                        testing_string = candidate_info[linking_ids[int(this_abbr)]][0]
-                    else:
-                        if info_for_this_poly['name'].values.shape[0] > 0 and info_for_this_poly['description'].values.shape[0] > 0:
-                            testing_string = str(info_for_this_poly['name'].values[0]) + ': ' + str(info_for_this_poly['description'].values[0])
-                        elif info_for_this_poly['name'].values.shape[0] > 0:
-                            testing_string = str(info_for_this_poly['name'].values[0])
-                        else:
-                            testing_string = ''
-                    
-                    epoch_check = np.flatnonzero(np.core.defchararray.find(testing_string, chronology_period)!=-1)
-                    if epoch_check.shape[0] > 0:
-                        b_epoch = max(epoch_check)
-                        t_epoch = min(epoch_check)
-                    
-                    epoch_check = np.flatnonzero(np.core.defchararray.find(testing_string, chronology_epoch)!=-1)
-                    if epoch_check.shape[0] > 0:
-                        b_epoch = min(b_epoch ,max(epoch_check))
-                        t_epoch = max(t_epoch, min(epoch_check))
-
-                    epoch_check = np.flatnonzero(np.core.defchararray.find(testing_string, chronology_age)!=-1)
-                    if epoch_check.shape[0] > 0:
-                        b_epoch = min(b_epoch ,max(epoch_check))
-                        t_epoch = max(t_epoch, min(epoch_check))
-
-                    #print(testing_string,b_epoch, t_epoch, b_interval, t_interval, b_age, t_age)
-                    if b_epoch != chronology_period.shape[0] and t_epoch != -1:
-                        b_interval = chronology_epoch[b_epoch]
-                        t_interval = chronology_epoch[t_epoch]
-                        b_age = chronology_age[b_epoch]
-                        t_age = chronology_age[t_epoch]
-                
-                in_path = os.path.join(dir_to_raster_polygon, fname)
-                base_image = cv2.imread(in_path)
-                base_image = cv2.cvtColor(base_image, cv2.COLOR_BGR2GRAY)
-
-                out_path = os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '.geojson'))
-
-                src_ds = gdal.Open(in_path)
-                srcband = src_ds.GetRasterBand(1)
-                dst_layername = 'polygon'
-                drv = ogr.GetDriverByName('geojson')
-                dst_ds = drv.CreateDataSource(out_path)
-
-                sp_ref = osr.SpatialReference()
-                sp_ref.SetFromUserInput('EPSG:3857')
-
-                dst_layer = dst_ds.CreateLayer(dst_layername, srs = sp_ref )
-                gdal.Polygonize( srcband, None, dst_layer, 0, [], callback=None )
-
-                del src_ds
-                del dst_ds
+    #info_set = np.array(info_set)
 
 
-                
-                mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'name', 'geometry', 
-                                                                'PolygonType', #: {'id', 'name', 'color', 'pattern', 'abbreviation', 'description', 'category'},  
-                                                                'GeologicUnit'#: {'name', 'description', 'comments', 'age_text', 't_interval', 'b_interval', 't_age', 'b_age', 'lithology'}
-                                                                ], crs=polygon_type_db.crs)
-                polygon_extraction = gpd.read_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '.geojson')), driver='GeoJSON')
-                
+    with multiprocessing.Pool(int(PROCESSES)) as pool:
+        callback = pool.starmap_async(polygon_schema_worker.polygon_schema_worker, [(info_set[this_poly][0], info_set[this_poly][1], linking_ids, candidate_info, map_name, info_set[this_poly][2], dir_to_raster_polygon, dir_to_integrated_output, polygon_type_db.crs, ) for this_poly in range(0, len(info_set))])
+        multiprocessing_results = callback.get()
 
-                mirrored_polygon = polygon_extraction.copy()
-                mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
-                mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
-                mirrored_polygon['name'] = 'PolygonFeature'
-                if info_for_this_poly.shape[0] != 1:
-                    mirrored_polygon['PolygonType'] = [{'id':None, 'name':None, 'color':None, 'pattern':None, 'abbreviation':None, 'description':None, 'category':None} for _ in range(mirrored_polygon.shape[0])]
-                    mirrored_polygon['GeologicUnit'] = [{'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(mirrored_polygon.shape[0])]
-                else:
-                    if b_epoch != chronology_period.shape[0]:
-                        if get_referenced_text == True:
-                            mirrored_polygon['PolygonType'] = [{'id':int(info_for_this_poly['id'].values[0]), 'name':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'description':str(candidate_info[linking_ids[int(this_abbr)]][0]), 'category':str(info_for_this_poly['category'].values[0])} for _ in range(mirrored_polygon.shape[0])]
-                            mirrored_polygon['GeologicUnit'] = [{'name':None, 'description':None, 'comments':None, 'age_text':str(b_age)+' - '+str(t_age), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':str(t_age), 'b_age':str(b_age), 'lithology':None} for _ in range(mirrored_polygon.shape[0])]
-                        else:
-                            mirrored_polygon['PolygonType'] = [{'id':int(info_for_this_poly['id'].values[0]), 'name':str(info_for_this_poly['name'].values[0]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(info_for_this_poly['abbreviation'].values[0]), 'description':str(info_for_this_poly['description'].values[0]), 'category':str(info_for_this_poly['category'].values[0])} for _ in range(mirrored_polygon.shape[0])]
-                            mirrored_polygon['GeologicUnit'] = [{'name':None, 'description':None, 'comments':None, 'age_text':str(b_age)+' - '+str(t_age), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':str(t_age), 'b_age':str(b_age), 'lithology':None} for _ in range(mirrored_polygon.shape[0])]
-                    else:
-                        if get_referenced_text == True:
-                            mirrored_polygon['PolygonType'] = [{'id':int(info_for_this_poly['id'].values[0]), 'name':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'description':str(candidate_info[linking_ids[int(this_abbr)]][0]), 'category':str(info_for_this_poly['category'].values[0])} for _ in range(mirrored_polygon.shape[0])]
-                            mirrored_polygon['GeologicUnit'] = [{'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(mirrored_polygon.shape[0])]
-                        else:
-                            mirrored_polygon['PolygonType'] = [{'id':int(info_for_this_poly['id'].values[0]), 'name':str(info_for_this_poly['name'].values[0]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(info_for_this_poly['abbreviation'].values[0]), 'description':str(info_for_this_poly['description'].values[0]), 'category':str(info_for_this_poly['category'].values[0])} for _ in range(mirrored_polygon.shape[0])]
-                            mirrored_polygon['GeologicUnit'] = [{'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(mirrored_polygon.shape[0])]
-
-                '''
-                for index, poi in polygon_extraction.iterrows():
-                    if index == polygon_extraction.shape[0]-1:
-                        break
-                    #this_mirrored_polygon = shapely.wkt.loads(str(poi['geometry']).replace(', ', 'p').replace(' ', ' -').replace('p', ', ').replace('POLYGON -', 'POLYGON '))
-                    #this_mirrored_polygon = shapely.wkt.loads(str(poi['geometry']))
-
-                    if info_for_this_poly.shape[0] != 1:
-                        updated_record = gpd.GeoDataFrame([{'id':polygon_feature_counter, 'name':'PolygonFeature', 'geometry':poi['geometry'], 
-                                                                'PolygonType': {'id':None, 'name':None, 'color':None, 'pattern':None, 'abbreviation':None, 'description':None, 'category':None},  
-                                                                'GeologicUnit': {'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None}}])
-                    else:
-                        if b_epoch != chronology_period.shape[0]:
-                            if get_referenced_text == True:
-                                updated_record = gpd.GeoDataFrame([{'id':polygon_feature_counter, 'name':'PolygonFeature', 'geometry':poi['geometry'], 
-                                                                    'PolygonType': {'id':int(info_for_this_poly['id'].values[0]), 'name':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'description':str(candidate_info[linking_ids[int(this_abbr)]][0]), 'category':str(info_for_this_poly['category'].values[0])}, 
-                                                                    'GeologicUnit': {'name':None, 'description':None, 'comments':None, 'age_text':str(b_age)+' - '+str(t_age), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':str(t_age), 'b_age':str(b_age), 'lithology':None}}])
-                            else:
-                                updated_record = gpd.GeoDataFrame([{'id':polygon_feature_counter, 'name':'PolygonFeature', 'geometry':poi['geometry'], 
-                                                                    'PolygonType': {'id':int(info_for_this_poly['id'].values[0]), 'name':str(info_for_this_poly['name'].values[0]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(info_for_this_poly['abbreviation'].values[0]), 'description':str(info_for_this_poly['description'].values[0]), 'category':str(info_for_this_poly['category'].values[0])}, 
-                                                                    'GeologicUnit': {'name':None, 'description':None, 'comments':None, 'age_text':str(b_age)+' - '+str(t_age), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':str(t_age), 'b_age':str(b_age), 'lithology':None}}])
-                        else:
-                            if get_referenced_text == True:
-                                updated_record = gpd.GeoDataFrame([{'id':polygon_feature_counter, 'name':'PolygonFeature', 'geometry':poi['geometry'], 
-                                                                    'PolygonType': {'id':int(info_for_this_poly['id'].values[0]), 'name':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(candidate_info[linking_ids[int(this_abbr)]][1]), 'description':str(candidate_info[linking_ids[int(this_abbr)]][0]), 'category':str(info_for_this_poly['category'].values[0])}, 
-                                                                    'GeologicUnit': {'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None}}])
-                            else:
-                                updated_record = gpd.GeoDataFrame([{'id':polygon_feature_counter, 'name':'PolygonFeature', 'geometry':poi['geometry'], 
-                                                                    'PolygonType': {'id':int(info_for_this_poly['id'].values[0]), 'name':str(info_for_this_poly['name'].values[0]), 'color':str(info_for_this_poly['color'].values[0]), 'pattern':str(info_for_this_poly['pattern'].values[0]), 'abbreviation':str(info_for_this_poly['abbreviation'].values[0]), 'description':str(info_for_this_poly['description'].values[0]), 'category':str(info_for_this_poly['category'].values[0])}, 
-                                                                    'GeologicUnit': {'name':None, 'description':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None}}])
-
-                    mirrored_polygon = gpd.GeoDataFrame(pd.concat( [mirrored_polygon, updated_record], ignore_index=True), crs=polygon_type_db.crs)
-
-                    polygon_feature_counter += 1
-                '''
-                #print(mirrored_polygon)
-                
-
-                mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-                mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
-                #mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, map_name, 'poly_feature_'+str(int(this_abbr))+'.geojson'), driver='GeoJSON')
-
+        for rec in multiprocessing_results:
+            if rec == True:
+                polygon_feature_counter = polygon_feature_counter + 1
+                if polygon_feature_counter % 10 == 0:
+                    print('Finalizing vectorization of polygon features...... ('+str(polygon_feature_counter)+'/'+str(len(info_set))+')')
 
 
 

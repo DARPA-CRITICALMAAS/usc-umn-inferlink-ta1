@@ -66,10 +66,11 @@ def extraction_step0_color_difference_worker(legend, map_name, legend_name, solu
         hsv_dif_single[:,:] = hsv_dif[:,:,dimension_dif]
 
         if print_intermediate_image == True:
-            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_'+str(dimension_dif)+'.png'
-            cv2.imwrite(out_file_path0, rgb_dif_single)
-            out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_'+str(dimension_dif)+'.png'
-            cv2.imwrite(out_file_path0, hsv_dif_single)
+            pass
+            #out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c0_'+str(dimension_dif)+'.png'
+            #cv2.imwrite(out_file_path0, rgb_dif_single)
+            #out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_c1_'+str(dimension_dif)+'.png'
+            #cv2.imwrite(out_file_path0, hsv_dif_single)
     
     #rgb_dif_min = np.zeros((rgb_rb_temp.shape[0], rgb_rb_temp.shape[1]), dtype='uint8')
     #rgb_dif_min[:,:] = min(rgb_dif[:,:,0], rgb_dif[:,:,1], rgb_dif[:,:,2])

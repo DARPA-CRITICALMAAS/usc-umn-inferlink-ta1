@@ -955,7 +955,7 @@ def model_testing():
                         plot_img_and_mask(img, mask)
                     
                     predict_counter = predict_counter + 1
-                    if predict_counter % 2500 == 0:
+                    if predict_counter % 500 == 0:
                         print('Making predictions... ('+str(predict_counter)+' / '+str(testing_key_count)+')... ', datetime.now()-runningtime_start)
                     #pbar0.update(1)
 

@@ -10,8 +10,22 @@ import sys
 import json
 
 from datetime import datetime
+import threading
+import time
 
-cwd_flag = False
+
+#def impulse(global_runningtime_start):
+    #threading.Timer(60.0, impulse, [global_runningtime_start]).start()
+    #print('......... I have been still running after you started the polygon-extraction module for ... '+str(datetime.now()-global_runningtime_start))
+def impulse(global_runningtime_start):
+    while True:
+        print('......... I have been still running after you started the polygon-extraction module for ... '+str(datetime.now()-global_runningtime_start))
+        time.sleep(30.0)
+#def impulse(global_runningtime_start):
+    #while True:
+        #print('......... I have been still running after you started the polygon-extraction module for ... '+str(datetime.now()-global_runningtime_start))
+        #time.sleep(60)  # wait for 60 seconds
+
 
 def str_to_bool(value):
     if value.lower() in {'false', 'f', '0', 'no', 'n'}:
@@ -19,7 +33,6 @@ def str_to_bool(value):
     elif value.lower() in {'true', 't', '1', 'yes', 'y'}:
         return True
     raise ValueError(f'{value} is not a valid boolean value')
-
 
 
 def poly_size_check(path_to_json):
@@ -606,6 +619,14 @@ def sub_file_checker(this_section, dir_to_intermediate_preprocessing, dir_to_int
 
 def main():
     global_runningtime_start = datetime.now()
+    #impulse(global_runningtime_start)
+    timer = threading.Timer(0.0, impulse, [global_runningtime_start])
+    #timer.start()
+    #timer = threading.Thread(target=impulse(global_runningtime_start))
+    timer.daemon = True  # Set as a daemon so it will be killed once the main program exits
+    timer.start()
+
+
     hackathon_batch = str_to_bool(args.hackathon)
     if hackathon_batch == True:
         batch_main()
@@ -651,12 +672,28 @@ def main():
     path_to_legend_description = args.path_to_legend_description
     dir_to_integrated_output = args.dir_to_integrated_output
     input_path_to_model = args.path_to_model
+
+    efficiency_trade_off = 3
+    if (args.trade_off).isdigit() == True:
+        efficiency_trade_off = int(args.trade_off)
+    if efficiency_trade_off > 6:
+        efficiency_trade_off = 6
     
     try:
         input_threads = int(args.threads)
     except:
         print('Please input a valid number for number of threads in multi-processing...')
         sys.exit(1)
+    
+    print('')
+    print('')
+    print('======================================================================================================')
+    print('You are currently running polygon-extraction module with an efficiency trade-off of '+str(efficiency_trade_off)+' ...')
+    print('...(0: lowest efficiency,  6: lowest accuracy)...')
+    print('You are currently enabling multi-processing with a number of threads for '+str(input_threads)+' ...')
+    print('======================================================================================================')
+    print('')
+    print('')
     
 
     os.makedirs(os.path.dirname(dir_to_integrated_output), exist_ok=True)
@@ -698,7 +735,8 @@ def main():
             input_path_to_bound = input_bound,
             input_dir_to_intermediate = dir_to_intermediate_preprocessing,
             input_map_preprocessing = map_preprocessing,
-            input_thread = input_threads
+            input_thread = input_threads,
+            input_efficiency_trade_off = efficiency_trade_off
         )
 
         metadata_postprocessing.metadata_postprocessing(
@@ -708,7 +746,8 @@ def main():
             input_dir_to_groundtruth = dir_to_groundtruth,
             input_performance_evaluation = performance_evaluation,
             crop_size=1024,
-            input_thread = input_threads
+            input_thread = input_threads,
+            input_efficiency_trade_off = efficiency_trade_off
         )
         
         loam_inference.loam_inference(
@@ -800,6 +839,7 @@ def main():
 
     
     print('Overall processing time: '+str(datetime.now()-global_runningtime_start))
+    #timer.cancel()
     sys.exit(0)
     
 
@@ -838,6 +878,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--testing', type=str, default='False')
     parser.add_argument('--testing_section', type=str, default='0')
+
+    parser.add_argument('--trade_off', type=str, default='3')
 
 
     # python loam_handler.py --path_to_tif Input_Data/RI_Uxbridge.tif --path_to_json Input_Data/RI_Uxbridge.json --map_area_segmentation True --performance_evaluation False
