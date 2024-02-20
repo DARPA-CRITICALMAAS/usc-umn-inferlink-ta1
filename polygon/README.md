@@ -66,5 +66,9 @@ Descriptions of the inputs are as follows.
 --performance_evaluation: (bool, optional) whether performance evaluation is needed. Please provide 'dir_to_groundtruth' if set to True. (Default to 'False')
 --version: (str, optional) a value indicating the version. (Default to '0')
 --log: (str, optional) path to the logging txt. (Default to 'log_file.txt')
+
+--testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). (Default to 'False')
+--testing_section: (int, optional) set a series of integers based on the sub-module(s) you want to test. e.g., 3, 23, or 123. (0 for metadata_preprocessing, 1 for metadata_postprocessing, 2 for loam_inference, and 3 for polygon_output_handler)
+-- trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
 ```
 
