@@ -1,15 +1,26 @@
 import time
 import os
+import sys
 import cv2
-import glob
 import json
 import numpy as np
+import logging
 
-def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir):
-    map_content_y, map_content_x, map_content_w, map_content_h = map_area_bbox
+logger = logging.getLogger('map_crop_logger')
+handler = logging.FileHandler('map_crop_logger.log', mode='a')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
+
+def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir, only_crop_map_area=True):
     
     h, w = map_image.shape[:2]
-    if map_area_bbox is not None:
+    
+    if map_area_bbox is not None and only_crop_map_area:
+        map_content_y, map_content_x, map_content_w, map_content_h = map_area_bbox
         map_content_mask = np.zeros((h, w))
         cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
                       (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 1, -1)
@@ -21,7 +32,11 @@ def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir)
     num_h = h // stride
     num_w = w // stride
     
-    output_folder = os.path.join(output_dir, f'{map_name}_g{patch_size}_s{stride}')
+    if only_crop_map_area:
+        output_folder = os.path.join(output_dir, f'{map_name}_g{patch_size}_s{stride}_wo_legend')
+    else:
+        output_folder = os.path.join(output_dir, f'{map_name}_g{patch_size}_s{stride}_w_legend')
+        
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
@@ -35,54 +50,90 @@ def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir)
         if np.sum(patch_mask) < 200:
             continue
         patch = map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :]
-        
+
         output_path = os.path.join(output_folder, f'{map_name}_{start[0]}_{start[1]}.png')
+            
         cv2.imwrite(output_path, patch)
     
     return output_folder
+
+def read_map_content_area_from_json(legend_json_path):# Use glob.glob() to find files matching the pattern
+    map_area_bbox = None
+    
+    try:   
+        with open(legend_json_path, 'r', encoding='utf-8') as file:
+            legend_dict = json.load(file)
+    except:
+        return FileNotFoundError(f'{json_path} does not exist')
+
+    for item in legend_dict['segments']:
+        if 'map' == item['class_label']:
+            map_area_bbox = item['bbox'] 
+    return map_area_bbox
 
 def crop_map_main(args):    
     input_path = os.path.join(args.input_dir, args.map_name+'.tif')
     map_image = cv2.imread(input_path)
     
-    pattern = os.path.join(args.legend_dir, args.map_name+'_*.json')
+    legend_json_path = os.path.join(args.legend_dir, args.map_name+'_map_segmentation.json')
 
-    # Use glob.glob() to find files matching the pattern
-    legend_json_path = glob.glob(pattern)[0]
-    
-    with open(legend_json_path, 'r', encoding='utf-8') as file:
-        legend_dict = json.load(file)
-    
+    try:
+        map_area_bbox = read_map_content_area_from_json(legend_json_path)
+        if map_area_bbox:
+            logger.info(f'Get the map content bounding box: {map_area_bbox}')
+        else:
+            logger.warning(f'Legend segmentation json does not extract the map content area')
+    except:
+        map_area_bbox = None
+        logger.warning(f'Legend segmentation json does not exist in {legend_json_path}')
+        
     for i, patch_size in enumerate(args.patch_sizes):
-        print(f'*** generating {patch_size} for {args.map_name} ***')
+        logger.info(f'generating patch_size={patch_size} for {args.map_name}')
         s_time = time.time()
         
-        map_area_bbox = None
-        if 'map_content_box' in legend_dict.keys():
-            map_area_bbox = legend_dict['map_content_box']
-                
-        output_path = crop_map(map_image, args.map_name, map_area_bbox, patch_size, args.strides[i], args.output_dir)
+        output_path = crop_map(map_image, args.map_name, map_area_bbox, \
+                               patch_size, args.strides[i], args.output_dir, args.only_crop_map_area[i])
         
         e_time = time.time()
-        print(f'processing time {e_time-s_time}s')
-        print(f'*** saved the cropped images for {args.map_name} in {output_path}')
-        
+        logger.info(f'Processing time {e_time-s_time}s')
+        logger.info(f'Saved the cropped images for {args.map_name} in {output_path}')
+    return
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument('--input_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps', help='a folder has testing maps')
-    parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/map_legend_extraction/more_nickle_maps_legend_outputs', help='a folder has map content bbox')
+    parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs_', help='a output folder from the legend segment module')
     parser.add_argument('--map_name', default='10705_61989', help='testing map name')
-    parser.add_argument('--patch_sizes', metavar='N', type=int, nargs='+', help='a list of patch size')
-    parser.add_argument('--strides', metavar='N', type=int, nargs='+', \
+    parser.add_argument('--patch_sizes', type=int, nargs='+', help='a list of patch size')
+    parser.add_argument('--strides', type=int, nargs='+', \
                         help='a list of stride, the length is the same as path_sizes')
+    parser.add_argument('--only_crop_map_area', type=str2bool, nargs='+', \
+                        help='a list of T/F, the length is the same as path_sizes')
     parser.add_argument('--output_dir', default='/data/weiweidu', help='a folder to save cropped images')
     
     args = parser.parse_args()
     
+    #sanity check
+    if not (len(args.patch_sizes) == len(args.strides) == len(args.only_crop_map_area)):
+        raise ValueError("patch_sizes, strides, only_crop_map_area arguments must have the same length")
+    
+    if not os.path.exists(os.path.join(args.input_dir, args.map_name+'.tif')):
+        raise FileNotFoundError(f'The tif map does not exist')
+    
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-        
+  
     crop_map_main(args)
-        
+    sys.exit(0)
         
