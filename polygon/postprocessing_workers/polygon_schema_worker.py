@@ -148,8 +148,19 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
 
     out_path = os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '.geojson'))
 
+    # Open the binary raster file
     src_ds = gdal.Open(in_path)
-    srcband = src_ds.GetRasterBand(1)
+    src_band = src_ds.GetRasterBand(1)
+
+    # Create an in-memory binary mask where pixel value = 255
+    mask_ds = gdal.GetDriverByName('MEM').Create('', src_ds.RasterXSize, src_ds.RasterYSize, 1)
+    mask_band = mask_ds.GetRasterBand(1)
+    raster_data = src_band.ReadAsArray()
+    mask_data = np.where(raster_data == 255, 1, 0).astype(np.uint8)
+    mask_band.WriteArray(mask_data)
+    mask_band.FlushCache()
+
+    # Prepare output vector (GeoJSON)
     dst_layername = 'polygon'
     drv = ogr.GetDriverByName('geojson')
     dst_ds = drv.CreateDataSource(out_path)
@@ -158,7 +169,7 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
     sp_ref.SetFromUserInput('EPSG:3857')
 
     dst_layer = dst_ds.CreateLayer(dst_layername, srs = sp_ref )
-    gdal.Polygonize( srcband, None, dst_layer, 0, [], callback=None )
+    gdal.Polygonize(src_band, mask_band, dst_layer, 0, [], callback=None )
 
     del src_ds
     del dst_ds
