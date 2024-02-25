@@ -185,7 +185,7 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
 
     mirrored_polygon = polygon_extraction.copy()
     mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
-    mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
+    #mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
     mirrored_polygon['name'] = 'PolygonFeature'
     if info_for_this_poly.shape[0] != 1:
         mirrored_polygon['PolygonType'] = [{'id':None, 'name':None, 'color':None, 'pattern':None, 'abbreviation':None, 'description':None, 'category':None} for _ in range(mirrored_polygon.shape[0])]
