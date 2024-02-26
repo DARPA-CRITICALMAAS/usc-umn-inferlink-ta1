@@ -60,22 +60,23 @@ In this case, the outputs will be stored in 'Vectorization_Output/' folder.
 Descriptions of the inputs are as follows.
 
 ```
---path_to_tif: (str) path to the source map tif.
---path_to_json: (str) path to the source map json. This conforms with the competition json format.
---path_to_legend_solution: (str, optional) path to the legend-item segmentation output geojson. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/' to run and get the output geojson. If no valid file for this argument is provided, one will only get raster outputs tif in 'LOAM_Intermediate/Metadata_Preprocessing/intermediate7(2)/Output'.
---path_to_legend_description: (str, optional) path to the legend-description extraction output json.
---path_to_bound: (str, optional) path to the map-area segmentation output geojson. Please refer to 'usc-umn-inferlink-ta1/segmentation/' to run and get the output geojson.
+--path_to_tif: (str, mandatory) path to the source map tif.
+--path_to_json: (str, mandatory) (Legend-item segmentation output) path to the source map json. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/' to run and get the output json ([xxx]_PolygonType_internal.json). This conforms with the competition json format.
+--path_to_legend_solution: (str, mandatory) (Legend-item segmentation output) path to the legend-item segmentation output geojson. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/' to run and get the output geojson ([xxx]_PolygonType.geojson). If no valid file for this argument is provided, one will only get raster outputs tif in 'LOAM_Intermediate/Metadata_Preprocessing/intermediate7(2)/Output'.
+--path_to_legend_description: (str, optional but recommended) (Legend-description segmentation output) path to the legend-description extraction output json. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_description_segment/' to run and get the output json ([xxx]_Polygon.json).
+--path_to_bound: (str, optional) path to the map-area segmentation output geojson. This can adapt to several different json formats. (e.g., [xxx]_map_segmentation.json or ch2_validation_evaluation_labels_coco.json)
 --dir_to_integrated_output: (str, optional) directory to the vectorization outputs geojson. (Default to 'Vectorization_Output/')
 --dir_to_intermediate: (str, optional) directory to the intermediate output files. (Default to 'Example_Output/')
---dir_to_groundtruth: (str, optional) directory to the groundtruth data tif.
---set_json: (bool, optional) whether to use the json file that conforms with the competition schema to identify the legend items. (Default to 'True')
---map_area_segmentation: (bool, optional) whether map-area segmentation is needed. (Default to 'False')
---performance_evaluation: (bool, optional) whether performance evaluation is needed. Please provide 'dir_to_groundtruth' if set to True. (Default to 'False')
---version: (str, optional) a value indicating the version. (Default to '0')
 --log: (str, optional) path to the logging txt. (Default to 'log_file.txt')
 
---testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). (Default to 'False')
+--dir_to_groundtruth: (str, optional) directory to the groundtruth data tif.
+--set_json: (bool, optional) whether to use the json file that conforms with the competition schema to identify the legend items. (Default to 'True', will automatically adjust depending on the other input arguments)
+--map_area_segmentation: (bool, optional) whether map-area segmentation is needed to proceed with. (Default to 'False')
+--performance_evaluation: (bool, optional) whether performance evaluation is needed to proceed with. Please provide 'dir_to_groundtruth' if set to True. (Default to 'False')
+--version: (str, optional) a value indicating the version.
+
+--testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). Please see the following input argument regarding the tested sub-module(s) (Default to 'False')
 --testing_section: (int, optional) set a series of integers based on the sub-module(s) you want to test. e.g., 3, 23, or 123. (0 for metadata_preprocessing, 1 for metadata_postprocessing, 2 for loam_inference, and 3 for polygon_output_handler)
---trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
+--trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (Default to '3') (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
 ```
 
