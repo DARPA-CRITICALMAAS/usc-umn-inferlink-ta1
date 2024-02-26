@@ -17,6 +17,9 @@ conda activate loam
 ```
 
 ### Create from Separate Steps
+
+This module has been tested with the latest version of pytorch-related libraries.
+
 ```
 conda create -n loam python=3.9.16
 conda activate loam
@@ -51,7 +54,7 @@ Or one can use it in its simplest way:
 python loam_handler.py --path_to_tif xxx.tif --path_to_json xxx.json --path_to_legend_solution xxx.geojson
 ```
 
-The outputs will be stored in 'Vectorization_Output/' folder.
+In this case, the outputs will be stored in 'Vectorization_Output/' folder.
 
 
 Descriptions of the inputs are as follows.
