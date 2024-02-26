@@ -6,7 +6,6 @@ from utils import get_toponym_tokens, prepare_bm25
 from segmentation_sam import resize_img, run_sam
 import urllib.request
 import rasterio
-# from criticalmaas.ta1_geopackage import GeopackageDatabase
 import json 
 import numpy as np
 import torch
@@ -23,9 +22,7 @@ Image.MAX_IMAGE_PIXELS = None
 # torch.cuda.empty_cache()
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-
 api_key = os.getenv("OPENAI_API_KEY")
-
 
 
 def run_segmentation(file, support_data_dir):
@@ -47,7 +44,6 @@ def load_data(topo_histo_meta_path, topo_current_meta_path):
     # topo_current_meta_path = 'support_data/ustopo_current.csv'
     df_current = pd.read_csv(topo_current_meta_path) 
 
-
     # common_columns = df_current.columns.intersection(df_histo.columns)
 
     # df_merged = pd.concat([df_histo[common_columns], df_current[common_columns]], axis=0)
@@ -56,7 +52,6 @@ def load_data(topo_histo_meta_path, topo_current_meta_path):
     bm25 = prepare_bm25(df_merged)
 
     return bm25, df_merged
-
 
 
 def get_topo_basemap(query_sentence, bm25, df_merged, device ):
@@ -138,9 +133,6 @@ def downscale(image, max_size=10, max_dimension=9500):
     image.save(buffer, format="JPEG")  
 
     img_size = buffer.tell() / (1024 * 1024)
-
-
-
 
     if img_size > max_size or max(image.width, image.height) > max_dimension:
 
@@ -275,6 +267,7 @@ def write_to_geopackage1(seg_bbox, top1, output_path):
 def download_geotiff(geotiff_url, temp_dir):
     filename = os.path.basename(geotiff_url)
     try:
+        print(f'Downloading {filename}')
         urllib.request.urlretrieve(geotiff_url, os.path.join(temp_dir,filename))
         return os.path.join(temp_dir,filename)
     except URLError as e:
@@ -290,23 +283,31 @@ def img2geo_georef(row_col_list, geotiff_file):
         # The `xy` method returns the coordinates of the center of the given pixel.
         # geotransform = dataset.transform
 
-        transform = dataset.transform
         for row, col in row_col_list:
-            # geo_coords = dataset.xy(row, col, offset='center')
-            # topo_target_gcps.append(geo_coords)
-            lon, lat = transform * (col, row)
-            topo_target_gcps.append((lat, lon))
+            geo_coords = dataset.xy(col, row, offset='center')
+            topo_target_gcps.append(geo_coords)
+
+
+        # transform = dataset.transform
+        # for row, col in row_col_list:
+        #     lon, lat = transform * (col, row)
+        #     topo_target_gcps.append((lat, lon))
 
     import pdb # should match to lat, lon onthe map corner
     pdb.set_trace()
     print(dataset.crs.wkt)
 
-    return topo_target_gcps
+    return topo_target_gcps, dataset.crs.wkt 
     
-def get_gcps(args, seg_bbox, top10):
+def get_gcps(args, geologic_seg_bbox, top10):
     top1 = top10.iloc[0]
 
-    left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
+    # left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
+    left, right, top, bottom = geologic_seg_bbox[0], geologic_seg_bbox[0]+geologic_seg_bbox[2], geologic_seg_bbox[1], geologic_seg_bbox[1]+geologic_seg_bbox[3]
+
+    geologic_src_gcps = [(top, left),(top, right),(bottom, right), (bottom, left)]
+    import pdb 
+    pdb.set_trace()
 
     geotiff_url = top1['geotiff_url']
 
@@ -315,22 +316,21 @@ def get_gcps(args, seg_bbox, top10):
     if geotiff_path == -1: #failure if -1
         return -1 
 
-    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path)
-    topo_left, topo_right, topo_top, topo_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3]
+    seg_mask, topo_seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path, args.support_data_dir)
+    topo_left, topo_right, topo_top, topo_bottom = topo_seg_bbox[0], topo_seg_bbox[0]+topo_seg_bbox[2], topo_seg_bbox[1], topo_seg_bbox[1]+topo_seg_bbox[3]
 
     topo_src_gcps = [(topo_top, topo_left),(topo_top, topo_right),(topo_bottom, topo_right), (topo_bottom, topo_left)]
-    topo_target_gcps = img2geo_georef(topo_src_gcps, geotiff_path)
+    topo_target_gcps, dataset_crs = img2geo_georef(topo_src_gcps, geotiff_path)
     
+    return geologic_src_gcps, topo_target_gcps, dataset_crs
 
-    return topo_src_gcps, topo_target_gcps
 
-
-def generate_geotiff(args, seg_bbox, top10):
+def generate_geotiff(args, geologic_seg_bbox, top10, width, height,):
 
     input_tiff = args.input_path
     temp_tiff = os.path.join(args.temp_dir,os.path.basename(args.input_path))
 
-    topo_src_gcps, topo_target_gcps = get_gcps(args, seg_bbox, top10) 
+    topo_src_gcps, topo_target_gcps, dataset_crs = get_gcps(args, geologic_seg_bbox, top10) 
 
     command = 'gdal_translate -of GTiff' 
     for src_gcp, target_gcp in zip(topo_src_gcps, topo_target_gcps):
@@ -340,11 +340,19 @@ def generate_geotiff(args, seg_bbox, top10):
     command = command + input_tiff + ' ' + temp_tiff 
 
     print(command)
+    if os.path.exists(temp_tiff):
+        os.remove(temp_tiff)
+    os.system(command)
     
-    
-    
+    output_tiff = os.path.join(args.temp_dir, os.path.basename(args.input_path).split('.')[0] + '_geo' + '.tif') 
+    command1 = "gdalwarp -r near -t_srs '" + dataset_crs + "' -of GTiff " + temp_tiff + " " + output_tiff # extra single quote before and after dataset crs
 
+    print(command1)
+    if os.path.exists(output_tiff):
+        os.remove(output_tiff)
+    os.system(command1)
 
+    
 
 def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
 
@@ -446,7 +454,7 @@ def main():
     
     seg_bbox, top10, image_width, image_height, title, toponyms = run_georeferencing(args)
 
-    # generate_geotiff(args, seg_bbox, top10)
+    generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
     # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)
     write_to_json(args, seg_bbox, top10, image_width, image_height, title, toponyms)
