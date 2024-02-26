@@ -5,6 +5,10 @@ LOAM: Polygon Extraction from Raster Map
 
 ## Environment
 
+This module was tested on a machine equipped with a GeForce RTX 3090, AMD Ryzen 9 5900X 12-core processor at 3.7 GHz, 128 GB DDR4 RAM (32 GB x 4) at 3200 MHz, with 4 TB SSD. This module does not require an additional database; however, it heavily relies on multi-processing to achieve better efficiency. This module will adjust its own multi-processing setting based on the tested machine. To ensure a good user experience, please make sure the tested machine has at least 128 GB RAM and a processor with more than 12 cores available.
+
+If there are still concerns regarding the efficiency, please set the input argument '--trade_off' to 6 to achieve the best efficiency with the lowest accuracy of this module.
+
 ### Create from Conda Config
 
 ```
@@ -69,6 +73,6 @@ Descriptions of the inputs are as follows.
 
 --testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). (Default to 'False')
 --testing_section: (int, optional) set a series of integers based on the sub-module(s) you want to test. e.g., 3, 23, or 123. (0 for metadata_preprocessing, 1 for metadata_postprocessing, 2 for loam_inference, and 3 for polygon_output_handler)
--- trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
+--trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
 ```
 
