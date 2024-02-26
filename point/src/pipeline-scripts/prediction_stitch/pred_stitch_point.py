@@ -93,7 +93,7 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
             score = line_data['score']
             if len(line_data['bbox'][0]) == 4:
                 x1,x2,y1,y2 = line_data['bbox'][0]
-                bbox=[x1+patch_index_w, x2 + patch_index_w, y1+ patch_index_h, y2+patch_index_h]
+                bbox=[x1+patch_index_w, y1+ patch_index_h, x2 + patch_index_w, y2+patch_index_h]
             else:
                 bbox=[0,0,0,0]
                 print(map_name)
