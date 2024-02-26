@@ -79,6 +79,8 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
                 # print(line_data["img_geometry"][0])
                 line_data["img_geometry"][0][0] = line_data["img_geometry"][0][0] + patch_index_w
                 line_data["img_geometry"][0][1] = line_data["img_geometry"][0][1] + patch_index_h
+                new_bbox = [line_data['bbox'][0][0]+patch_index_w, line_data['bbox'][0][1]+ patch_index_h, line_data['bbox'][0][2] + patch_index_w, line_data['bbox'][0][3]+patch_index_h]
+                line_data['bbox'][0] = new_bbox
                 # print('after',line_data["img_geometry"][0])
             map_data.append(df)     
         map_df = pd.concat(map_data)
@@ -92,8 +94,8 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
             sym_type = sym_type.split('.')[0]
             score = line_data['score']
             if len(line_data['bbox'][0]) == 4:
-                x1,x2,y1,y2 = line_data['bbox'][0]
-                bbox=[x1+patch_index_w, y1+ patch_index_h, x2 + patch_index_w, y2+patch_index_h]
+                x1,y1,x2,y2 = line_data['bbox'][0]
+                bbox=[x1,y1,x2,y2]
             else:
                 bbox=[0,0,0,0]
                 print(map_name)
