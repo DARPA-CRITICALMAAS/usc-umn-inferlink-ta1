@@ -101,7 +101,7 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
                 print(map_name)
             if sym_type not in features_per_symbol.keys():
                 features_per_symbol[sym_type] = []
-            features_per_symbol[sym_type].append(Feature(geometry = point, properties={'type': sym_type, "id": len(features_per_symbol[sym_type]), "score": score, "bbox": bbox}))
+            features_per_symbol[sym_type].append(Feature(geometry = point, properties={'type': sym_type, "id": len(features_per_symbol[sym_type]), "score": score, "bbox": bbox ,"dip" : 0 ,"dip_direction" : 0.0, "provenance": "modelled" }))
         
         for each_pnt in features_per_symbol.keys():
             each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
