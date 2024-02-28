@@ -110,7 +110,7 @@ def find_category(description, categories):
         return None
     
     
-def text_based_matching(metadata_path, 
+def text_based_matching(input_map_name, metadata_path, 
                         symbol_info_json_file="symbol_info.json", 
                         use_shape=True, 
                         use_keywords=True, 
@@ -129,51 +129,53 @@ def text_based_matching(metadata_path,
     for metadata_file in glob.glob(os.path.join(metadata_path, "*.json")):                                       
         map_name = os.path.basename(metadata_file)
         map_name = map_name.replace('_point.json','')
-        if map_selected_models.get(map_name) is None:
-            map_selected_models[map_name] = []
-            
-        with open(metadata_file, 'r') as f:
-            metadata = json.load(f)
-
-        remain_descriptions, selected_models = preprocess_metadata(metadata)        
-        for description in remain_descriptions:
-
-            tar_shape_des, tar_sym_des = description.split('-')
-            if tar_sym_des.isspace(): tar_sym_des = tar_shape_des
-            
-            tar_cat = find_category(description, symbol_categories)
-            if tar_cat is None: continue; # cannot find category
-            if len(symbol_cat_dict[tar_cat]) == 0: continue; # no candidate symbols
-                
-            scores = dict()
-            for sym in symbol_cat_dict[tar_cat]:
-                shape2 = symbol_desc_dict[sym]['shape']
-                keyword2 = symbol_desc_dict[sym]['keywords']
-                des2 = symbol_desc_dict[sym]['description']    
-                
-                sim_shape, sim_kws, sim_des = 0., 0., 0.
-                if use_shape:
-                    vectors = vectorizer.fit_transform([tar_shape_des, shape2])
-                    sim_shape = cosine_similarity(vectors)[0, 1]
-                if use_keywords:
-                    vectors = vectorizer.fit_transform([tar_sym_des, keyword2])
-                    sim_kws = cosine_similarity(vectors)[0, 1]
-                if use_long_description:    
-                    vectors = vectorizer.fit_transform([tar_sym_des, des2])
-                    sim_des = cosine_similarity(vectors)[0, 1]
-
-                scores[sym] = sim_shape + sim_kws + sim_des
-                
-            #     print(tar_cat, "--", tar_shape_des, "|", tar_sym_des, "|", keyword2, "|", des2)
-            # print(scores)
-            selected_model, score = [(k, v) for k, v in sorted(scores.items(), key=lambda item: -item[1])][0]
-            # print("===>", selected_model, score, '\n')
-            if selected_model in selected_models:
-                continue
-            else:
-                selected_models.append(selected_model)
         
-        map_selected_models[map_name] += selected_models
+        if input_map_name in map_name:
+            if map_selected_models.get(map_name) is None:
+                map_selected_models[map_name] = []
+                
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+
+            remain_descriptions, selected_models = preprocess_metadata(metadata)        
+            for description in remain_descriptions:
+
+                tar_shape_des, tar_sym_des = description.split('-')
+                if tar_sym_des.isspace(): tar_sym_des = tar_shape_des
+                
+                tar_cat = find_category(description, symbol_categories)
+                if tar_cat is None: continue; # cannot find category
+                if len(symbol_cat_dict[tar_cat]) == 0: continue; # no candidate symbols
+                    
+                scores = dict()
+                for sym in symbol_cat_dict[tar_cat]:
+                    shape2 = symbol_desc_dict[sym]['shape']
+                    keyword2 = symbol_desc_dict[sym]['keywords']
+                    des2 = symbol_desc_dict[sym]['description']    
+                    
+                    sim_shape, sim_kws, sim_des = 0., 0., 0.
+                    if use_shape:
+                        vectors = vectorizer.fit_transform([tar_shape_des, shape2])
+                        sim_shape = cosine_similarity(vectors)[0, 1]
+                    if use_keywords:
+                        vectors = vectorizer.fit_transform([tar_sym_des, keyword2])
+                        sim_kws = cosine_similarity(vectors)[0, 1]
+                    if use_long_description:    
+                        vectors = vectorizer.fit_transform([tar_sym_des, des2])
+                        sim_des = cosine_similarity(vectors)[0, 1]
+
+                    scores[sym] = sim_shape + sim_kws + sim_des
+                    
+                #     print(tar_cat, "--", tar_shape_des, "|", tar_sym_des, "|", keyword2, "|", des2)
+                # print(scores)
+                selected_model, score = [(k, v) for k, v in sorted(scores.items(), key=lambda item: -item[1])][0]
+                # print("===>", selected_model, score, '\n')
+                if selected_model in selected_models:
+                    continue
+                else:
+                    selected_models.append(selected_model)
+            
+            map_selected_models[map_name] += selected_models
 
         
     new_map_selected_models = dict()
@@ -181,8 +183,8 @@ def text_based_matching(metadata_path,
         new_selected_models = list(set(selected_models))
         new_selected_models = [m + '.pt' for m in new_selected_models]
         new_map_selected_models[map_name] = new_selected_models
-        
-    return new_map_selected_models
+
+    return new_map_selected_models[input_map_name]
 
 
 if __name__ == "__main__":
