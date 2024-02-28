@@ -1,0 +1,44 @@
+{
+"$schema": "Schema_for_Legend_item_segmentation_output_geojson"
+"type": "FeatureCollection",
+"crs": {
+    "type": "name",
+    "properties": {
+        "name": "urn:ogc:def:crs:EPSG::3857"
+    }
+},
+"features": [{
+        "type": "Feature",
+        "properties": {
+            "name": String,
+            "abbreviation": String,
+            "id": String,
+            "map_unit": null,
+            "color": Hex_color_code,
+            "pattern": String,
+            "description": "",
+            "category": ""
+        },
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": Image_coordinates
+        }
+    }, {
+        "type": "Feature",
+        "properties": {
+            "name": String,
+            "abbreviation": String,
+            "id": String,
+            "map_unit": null,
+            "color": Hex_color_code,
+            "pattern": String,
+            "description": "",
+            "category": ""
+        },
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": Image_coordinates
+        }
+    }
+]
+}
