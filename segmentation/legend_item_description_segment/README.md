@@ -11,7 +11,5 @@ Before proceeding, please ensure that you have properly configured the GPT-4 API
 
 ## Running Command
 ```sh
-python gpt4_main.py --map_dir /dir/of/maps --legend_json_path /dir/of/Uncharted/legend/segment/results --symbol_json_dir /dir/of/USC/legend/segment/results --map_name 'AK_Dillingham' --gpt4_input_dir /dir/of/images --gpt4_output_dir /dir/to/save/json/output
+python gpt4_main.py --map_dir /dir/of/maps --legend_json_dir /dir/of/Uncharted/legend/segment/results --symbol_json_dir /dir/of/USC/legend/segment/results --map_name 'AK_Dillingham' --temp_dir /dir/of/images --output_dir /dir/to/save/json/output
 ```
-
-Notes: The 'gpt4_input_dir' directory stores cropped images. Given GPT-4's preference for smaller images, this module initially crops the legend areas into smaller areas before feeding them into GPT-4.
