@@ -1,59 +1,55 @@
-def img2geo_pt(x, y, img_bbox, geo_bbox):
+import numpy as np
+import rasterio
+import pyproj
+import geopandas as gpd
+from shapely.geometry import MultiPolygon, Point, MultiPoint, MultiLineString, Polygon, LineString
+
+def reverse_geom_coords(geom):
     """
-    Convert a point from image coordinates to geographic coordinates.
-
-    :param x: x-coordinate in the image
-    :param y: y-coordinate in the image
-    :param img_bbox: Bounding box of the image [left, right, top, bottom] in image coordinates
-    :param geo_bbox: Bounding box of the geographic area [left, right, top, bottom] in geographic coordinates
-    :return: (longitude, latitude)
-     (-123.2, 49.3, -122.5, 48.9)  
+    Reverses the coordinates (x, y) to (y, x) for the input geometry.
+    Supports Points, LineStrings, Polygons, and their Multi* counterparts.
     """
-#     print(img_bbox)
-    img_bbox = (img_bbox[0], img_bbox[2], img_bbox[1], img_bbox[3])
-    img_x_min, img_y_min, img_x_max, img_y_max = img_bbox
+    if geom.is_empty:
+        return geom
+    if isinstance(geom, (Polygon, MultiPolygon)):
+        return Polygon([(y, x) for x, y in geom.exterior.coords])
+    elif isinstance(geom, (Point, MultiPoint)):
+        return Point(geom.y, geom.x)
+    elif isinstance(geom, (LineString, MultiLineString)):
+        return LineString([(y, x) for x, y in geom.coords])
+    else:
+        # Extend to other geometry types if necessary
+        raise ValueError(f"Geometry type '{type(geom)}' not supported")
+
+def img2geo_geojson(geotiff_file, input_geojson):
+    # convert the image to a binary raster .tif
+    raster = rasterio.open(geotiff_file)
+    transform = raster.transform
+    array     = raster.read(1)
+    crs       = raster.crs
+    width     = raster.width
+    height    = raster.height
+    raster.close()
+#     this_epsg_code = pyproj.crs.CRS.from_proj4(crs.to_proj4()).to_epsg()
+    trans_np = np.array(transform) 
+    print(trans_np)
+#     trans_matrix = [trans_np[0], trans_np[1], trans_np[3], trans_np[4], trans_np[2], trans_np[5]]
+    trans_matrix = [trans_np[0], trans_np[1], trans_np[3], trans_np[4], trans_np[2], trans_np[5]]
+
+    original_file = gpd.read_file((input_geojson), driver='GeoJSON')
+    for index, poi in original_file.iterrows():
+        if isinstance(poi['geometry'], (LineString, MultiLineString)):
+            geo_series = gpd.GeoSeries(poi['geometry']).apply(reverse_geom_coords)
+        else:
+            geo_series = gpd.GeoSeries(poi['geometry'])
+        original_file.loc[index, 'geometry'] = geo_series.affine_transform(trans_matrix).values[0]
+#     original_file = original_file.set_crs('epsg:'+str(this_epsg_code), allow_override=True)
     
-#     print(geo_bbox)
-    geo_bbox = (geo_bbox[0], geo_bbox[2], geo_bbox[1], geo_bbox[3])
-    geo_lon_min, geo_lat_max, geo_lon_max, geo_lat_min = geo_bbox
-#     print('--------------------')
-#     print(img_bbox)
-#     print(geo_bbox)
-#     print((img_x_min, img_y_min), (geo_lon_min, geo_lat_min))
-#     print((img_x_max, img_y_min), (geo_lon_max, geo_lat_min))
-#     print((img_x_max, img_y_max), (geo_lon_max, geo_lat_max))
-#     print((img_x_min, img_y_max), (geo_lon_min, geo_lat_max))
-#     print('===========================')
+    f_name = input_geojson.split('/')[-1].split('.')[0]
+    output_geojson_path = f"./temp/{f_name}_georef.geojson"
+    original_file.to_file((output_geojson_path), driver='GeoJSON')
+    return output_geojson_path
 
-    # Normalize the image coordinates to a [0, 1] scale
-    x_normalized = (x - img_x_min) / (img_x_max - img_x_min)
-    y_normalized = (y - img_y_min) / (img_y_max - img_y_min)
-
-    # Interpolate to geographic coordinates
-    lon = geo_lon_min + x_normalized * (geo_lon_max - geo_lon_min)
-    lat = geo_lat_max - y_normalized * (geo_lat_max - geo_lat_min)
-
-    return [lon, lat]
-
-
-def img2geo_geometry(geometry, img_bbox, geo_bbox, geom_type):
-    """
-    Convert polygon/line/point from from image coordinates to geographic coordinates
-    by calling img2geo_pt func, the input point is (col, row)
-    :param geom_type: ['polyon', 'line', 'point']
-    """
-    if geom_type == 'polygon':
-        geo_poly = [img2geo_pt(pt[0], pt[1], img_bbox, geo_bbox) for pt in geometry[0]]
-        return [[geo_poly]]
-    
-    if geom_type == 'line':
-        geo_line = [img2geo_pt(pt[1], pt[0], img_bbox, geo_bbox) for pt in geometry]
-        return [geo_line]
-    
-    if geom_type == 'point':
-        geo_point = img2geo_pt(geometry[0], geometry[1], img_bbox, geo_bbox)
-        return geo_point
-    
 def img2qgis_geometry(geometry, geom_type):
     """
     Convert a point from (row, col) to (col, -row) for qgis visualization. 
