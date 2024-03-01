@@ -8,7 +8,8 @@ import numpy as np
 def retrieve_map_region_bb(metadata_path, map_name):
     map_content_box = None
     for metadata_file in os.listdir(metadata_path):
-        if map_name in metadata_file:
+        if (map_name in metadata_file) and ('_gpt_point' in metadata_file) :
+            print(metadata_file)
             with open(os.path.join(metadata_path, metadata_file), 'r') as f:
                 meta = json.load(f)
                 if map_content_box is None:  
