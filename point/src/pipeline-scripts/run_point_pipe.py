@@ -101,7 +101,7 @@ try:
     stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
     postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
 except Exception as Argument:
-    logger.warning("Problems in postprocessing module :{0}".format(each_map))  
+    logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
