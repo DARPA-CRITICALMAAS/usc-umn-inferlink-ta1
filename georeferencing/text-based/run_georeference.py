@@ -212,7 +212,7 @@ def run_georeferencing(args):
     # Perform the image overlay
     overlay = cv2.addWeighted(np.asarray(image), opacity, seg_mask_channel3, 1 - opacity, 0)
     
-    cv2.imwrite(os.path.basename(input_path).split('.')[0]+'.jpg', overlay)
+    cv2.imwrite(os.path.join(args.temp_dir, os.path.basename(input_path).split('.')[0]+'.jpg'), overlay)
 
     if not os.path.isdir(args.temp_dir):
         os.makedirs(args.temp_dir)
@@ -293,9 +293,9 @@ def img2geo_georef(row_col_list, geotiff_file):
         #     lon, lat = transform * (col, row)
         #     topo_target_gcps.append((lat, lon))
 
-    import pdb # should match to lat, lon onthe map corner
-    pdb.set_trace()
-    print(dataset.crs.wkt)
+    # import pdb # should match to lat, lon onthe map corner
+    # pdb.set_trace()
+    # print(dataset.crs.wkt)
 
     return topo_target_gcps, dataset.crs.wkt 
     
@@ -306,8 +306,6 @@ def get_gcps(args, geologic_seg_bbox, top10):
     left, right, top, bottom = geologic_seg_bbox[0], geologic_seg_bbox[0]+geologic_seg_bbox[2], geologic_seg_bbox[1], geologic_seg_bbox[1]+geologic_seg_bbox[3]
 
     geologic_src_gcps = [(top, left),(top, right),(bottom, right), (bottom, left)]
-    import pdb 
-    pdb.set_trace()
 
     geotiff_url = top1['geotiff_url']
 
@@ -467,7 +465,7 @@ if __name__ == '__main__':
 '''
 Example command:
 to json:
-python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='debug.json'
+python3 run_georeference.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='debug.json' --support_data_dir='/home/zekun/ta1_georeferencing/geological-map-georeferencing/support_data'
 
 python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='/home/zekun/data/nickel_output/0209/169_34067.json'
 
