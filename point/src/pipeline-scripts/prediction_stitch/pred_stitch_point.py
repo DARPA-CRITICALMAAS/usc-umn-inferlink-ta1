@@ -26,32 +26,32 @@ def predict_img_patches(map_name,crop_dir_path,model_dir_root,selected_models,pr
         os.mkdir(output_path)     
     print(output_path)
     for val_img in os.listdir(crop_dir_path):            
-        if val_img.endswith('.jpg') or val_img.endswith('.png'):
-            entire_res=[] 
-            img_path=os.path.join(crop_dir_path,val_img)  
-            for idx,model_file in enumerate(selected_models):
-                weight_path=os.path.join(model_dir_root,model_file)
-                print(weight_path)
-                # print(torch.load(weight_path))
-                model = YOLO(weight_path)
-                pnt_name=model_file.split('.')[0]                 
-                results = model(img_path,conf=0.25)  # results list
-                res_boxes = results[0].boxes.data.cpu().numpy()             
-                for i, box in enumerate(res_boxes):
-                    res_per_crop={}
-                    res_per_crop['img_geometry']=[]
-                    res_per_crop['type']=None
-                    res_per_crop['score']=[]
-                    res_per_crop['bbox']=[]
-                    x1, y1, x2, y2, conf, _ = box
-                    cnt_x=int((x1+x2)/2)
-                    cnt_y=int((y1+y2)/2)
-                    res_per_crop['img_geometry'].append([cnt_x,cnt_y])
-                    res_per_crop['type']=pnt_name
-                    res_per_crop['score']=str(conf)
-                    res_per_crop['bbox'].append([int(x1), int(y1), int(x2), int(y2)])
+        # if val_img.endswith('.jpg') or val_img.endswith('.png'):
+        entire_res=[] 
+        img_path=os.path.join(crop_dir_path,val_img)  
+        for idx,model_file in enumerate(selected_models):
+            weight_path=os.path.join(model_dir_root,model_file)
+            print(weight_path)
+            # print(torch.load(weight_path))
+            model = YOLO(weight_path)
+            pnt_name=model_file.split('.')[0]                 
+            results = model(img_path,conf=0.25)  # results list
+            res_boxes = results[0].boxes.data.cpu().numpy()             
+            for i, box in enumerate(res_boxes):
+                res_per_crop={}
+                res_per_crop['img_geometry']=[]
+                res_per_crop['type']=None
+                res_per_crop['score']=[]
+                res_per_crop['bbox']=[]
+                x1, y1, x2, y2, conf, _ = box
+                cnt_x=int((x1+x2)/2)
+                cnt_y=int((y1+y2)/2)
+                res_per_crop['img_geometry'].append([cnt_x,cnt_y])
+                res_per_crop['type']=pnt_name
+                res_per_crop['score']=str(conf)
+                res_per_crop['bbox'].append([int(x1), int(y1), int(x2), int(y2)])
 
-                    entire_res.append(res_per_crop)                   
+                entire_res.append(res_per_crop)                   
             
             out_file_path=os.path.join(output_path,val_img.split('.')[0]+'.json')
             with open(out_file_path, "w") as out:
