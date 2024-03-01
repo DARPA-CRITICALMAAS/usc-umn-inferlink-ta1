@@ -35,9 +35,13 @@ parser.add_argument('--temp_dir',
 parser.add_argument('--output_dir',
                    type=str,
                    default='/data/weiweidu/temp')
+parser.add_argument('--log_path',
+                  type=str,
+                  default='./item_description_logger.log')
 
+args = parser.parse_args()
 logger = logging.getLogger('item_description_logger')
-handler = logging.FileHandler('item_description_logger.log', mode='a')
+handler = logging.FileHandler(f'{args.log_path}', mode='a')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
