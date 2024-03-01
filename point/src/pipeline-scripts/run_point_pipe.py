@@ -67,7 +67,7 @@ final_output_dir = os.path.join(output_dir_root, 'output-per-symbol')
 if not os.path.isdir(final_output_dir):
     os.mkdir(final_output_dir)
 
-input_map_name = os.path.basename(os.path.dirname(input_dir_root))
+input_map_name = os.path.basename(os.path.dirname(input_dir_root+'/'))
 input_map_name =input_map_name.replace('_g1000_s1000','')
 print(input_map_name)
 
