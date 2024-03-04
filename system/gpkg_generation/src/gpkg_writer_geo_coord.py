@@ -1,7 +1,8 @@
-import os
+import os, sys
 import time
 import json
-from gpkg_helper import img2geo_geojson #img2geo_geometry
+from gpkg_helper import img2geo_geojson_gcp as img2geo_geojson #img2geo_geometry
+from gpkg_helper import gcps2transform_matrix
 from criticalmaas.ta1_geopackage import GeopackageDatabase
 import concurrent.futures
 import pandas as pd
@@ -9,6 +10,10 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon, Point, MultiLineString, Polygon, LineString
 from pytest import mark
 import rasterio
+import logging
+import sqlalchemy 
+
+logger = logging.getLogger(__name__)
 
 poly_feat_id, poly_type_id, geo_unit_id, ln_type_id, ln_feat_id, pt_feat_id, pt_type_id = 0, 0, 0, 0, 0, 0, 0
 
@@ -43,10 +48,11 @@ def write_georef_into_gpkg(db, georef_json, map_name):
     
     geo_gcps = []
     gcp_feat_list  = []
+    gcp_pairs = []
     
     for item in georef_json['gcps']:
         geo_gcps.append(item['map_geom'])
-        print(item['px_geom'])
+        gcp_pairs.append(item['px_geom'] + item['map_geom'])
 
         gcp_feat = {"geometry": {
                             "type": "Point",
@@ -79,10 +85,11 @@ def write_georef_into_gpkg(db, georef_json, map_name):
     db.write_features("georeference_meta", [georef_meta_feat])
     
     db.write_features("ground_control_point", gcp_feat_list)
+    
+    return gcp_pairs
 
 @mark.parametrize("engine", ["fiona", "pyogrio"])
 def write_poly_into_gpkg(db, feat_list, map_name, crs):     
-    from sqlalchemy import create_engine
     engine = 'pyogrio' 
     global poly_feat_id, poly_type_id, geo_unit_id
     geo_unit_list = []
@@ -234,8 +241,8 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs):
     )
     return
     
-def write_gpkg(output_dir, map_name, geotiff_file, \
-               layout_output_path, georef_output_path, poly_output_path, ln_output_path, pt_output_path):    
+def write_gpkg(output_dir, map_name, layout_output_path, \
+               georef_output_path, poly_output_path, ln_output_path, pt_output_path, logger):    
     
     with open(layout_output_path, 'r') as json_file:
         legend_item_descr_json = json.load(json_file)
@@ -246,45 +253,54 @@ def write_gpkg(output_dir, map_name, geotiff_file, \
     georef_json = read_georef_output(georef_output_path) 
     crs = georef_json.get('projection', 'EPSG:4326')
     
-    db_instance = create_gpkg(out_gpkg_path, legend_item_descr_json, map_name,  crs)
+    try:
+        db_instance = create_gpkg(out_gpkg_path, legend_item_descr_json, map_name,  crs)
+        logger.info(f'Created a gpkg')
+    except sqlalchemy.exc.IntegrityError as error:
+        logger.error(f'{out_gpkg_path} exists. Please delete it.')
+        sys.exit(1)
     
-    write_georef_into_gpkg(db_instance, georef_json, map_name)
-    
-     # write polygon features    
+    gcps = write_georef_into_gpkg(db_instance, georef_json, map_name)
+    trans_matrix = gcps2transform_matrix(gcps)
+
+    # write polygon features    
     if os.path.exists(poly_output_path):
         poly_files = os.listdir(poly_output_path)
-        print('polygon file found')
         for i, poly_geojson in enumerate(poly_files):
             if '.geojson' not in poly_geojson:
-                continue            
+                continue                        
             img_poly_geojson_path = os.path.join(poly_output_path, poly_geojson)
-            geo_poly_geojson_path = img2geo_geojson(geotiff_file, img_poly_geojson_path)
+            geo_poly_geojson_path = img2geo_geojson(trans_matrix, img_poly_geojson_path)
             features = get_feature_from_geojson(geo_poly_geojson_path)    
+            logger.info(f'Writing {i+1}/{len(poly_files)} polygon GeoJson into the GPKG')
             write_poly_into_gpkg(db_instance, features[:], map_name, crs)
-
-#     # write point features
-#     if os.path.exists(pt_output_path):
-#         pt_files = os.listdir(pt_output_path)
-#         for pt_geojson in pt_files:
-#             if '.geojson' not in pt_geojson:
-#                 continue  
-#             img_pt_geojson_path = os.path.join(pt_output_path, pt_geojson)
-#             geo_pt_geojson_path = img2geo_geojson(geotiff_file, img_pt_geojson_path)
-#             features = get_feature_from_geojson(geo_pt_geojson_path)    
-#             write_pt_into_gpkg(db_instance, features[:], map_name, crs)
+    logger.info(f'All polygon GeoJson is written into the GPKG')
     
-#     # write line features
-#     if os.path.exists(ln_output_path):
-#         print('line file found')
-#         ln_files = os.listdir(ln_output_path)
-#         for ln_geojson in ln_files:
-#             if '.geojson' not in ln_geojson:
-#                 continue
-#             img_ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
-#             geo_ln_geojson_path = img2geo_geojson(geotiff_file, img_ln_geojson_path)
-#             features = get_feature_from_geojson(geo_ln_geojson_path)
-#             write_ln_into_gpkg(db_instance, features[:], map_name, crs)
-
-if __name__ == '__main__':
-    write_gpkg('', '', '', '', '','', '')
+    # write point features
+    if os.path.exists(pt_output_path):
+        pt_files = os.listdir(pt_output_path)
+        for i, pt_geojson in enumerate(pt_files):
+            if '.geojson' not in pt_geojson:
+                continue  
+            img_pt_geojson_path = os.path.join(pt_output_path, pt_geojson)
+            geo_pt_geojson_path = img2geo_geojson(trans_matrix, img_pt_geojson_path)
+            features = get_feature_from_geojson(geo_pt_geojson_path)    
+            logger.info(f'Writing {i+1}/{len(pt_files)} point GeoJson into the GPKG')
+            write_pt_into_gpkg(db_instance, features[:], map_name, crs)
+    logger.info(f'All point GeoJson is written into the GPKG')
+    # write line features
+    if os.path.exists(ln_output_path):
+        ln_files = os.listdir(ln_output_path)
+        for i, ln_geojson in enumerate(ln_files):
+            if '.geojson' not in ln_geojson:
+                continue
+            img_ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
+            geo_ln_geojson_path = img2geo_geojson(trans_matrix, img_ln_geojson_path)
+            features = get_feature_from_geojson(geo_ln_geojson_path)
+            logger.info(f'Writing {i+1}/{len(ln_files)} line GeoJson into the GPKG')
+            write_ln_into_gpkg(db_instance, features[:], map_name, crs)
+    logger.info(f'All line GeoJson is written into the GPKG')
+# if __name__ == '__main__':
+#     write_gpkg(output_dir, map_name, layout_output_path, \
+#                georef_output_path, poly_output_path, ln_output_path, pt_output_path)
         

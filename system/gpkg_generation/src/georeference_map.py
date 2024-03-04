@@ -36,17 +36,16 @@ def run_gdal_translate(gcp, input_tif_path, output_temp_tif_path):
     command += f" \'{input_tif_path}\' \'{output_temp_tif_path}\'"
     
     res = subprocess.run(command, capture_output=True, text=True, shell=True)
-    print(res)
+#     print(res)
     return res
 
 def run_gdalwrap(input_temp_tif_path, output_tif_path):
     command = f"gdalwarp -r near -t_srs EPSG:4326 -of GTiff \'{input_temp_tif_path}\' \'{output_tif_path}\'"
     res = subprocess.run(command, capture_output=True, text=True, shell=True)
-    print(res)
+#     print(res)
     return res
 
 def run_georeference_map(map_name, input_map_dir, gcp_path, geo_tif_output_dir, temp_dir='./temp'):
-    print(f'*** processing {map_name} ***')
 
     if not os.path.exists(temp_dir):
         os.mkdir(temp_dir)
