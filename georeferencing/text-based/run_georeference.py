@@ -12,6 +12,8 @@ import torch
 import base64
 import requests
 import argparse
+import logging 
+import time 
 import csv
 import io
 import os
@@ -83,7 +85,7 @@ def encode_image(image):
     encoded_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
     return encoded_image
 
-def getTitle(base64_image):
+def getTitle(base64_image, max_trial = 10):
 
     if base64_image is None:
         return "No file selected"
@@ -116,9 +118,22 @@ def getTitle(base64_image):
     "max_tokens": 300
     }
 
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-    
-    return response.json()['choices'][0]['message']['content']
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload).json()
+    cnt_trial = 1
+
+    try: 
+        while ('choices' not in response and cnt_trial < max_trial):
+            time.sleep(5) # sleep for 5 seconds before sending the next request
+            print('Title extraction failed, retrying...')
+            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload).json() 
+            cnt_trial += 1 
+    except Exception as e:
+        print(e)
+
+    if 'choices' in response:
+        return response['choices'][0]['message']['content']
+    else:
+        return -1
 
 
 
@@ -224,7 +239,13 @@ def run_georeferencing(args):
     image =downscale(image)
     # Getting the base64 string
     base64_image = encode_image(image)
-    title = to_camel(getTitle(base64_image))
+    title = getTitle(base64_image)
+
+    if title == -1: # exception when extracting the title 
+        logging.Error('Failed to extract title, exit with code -1')
+        return -1 
+
+    title = to_camel(title)
 
     os.remove(jpg_file_path)
 
@@ -457,6 +478,8 @@ def main():
     # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)
     write_to_json(args, seg_bbox, top10, image_width, image_height, title, toponyms)
 
+    return 0 
+
     
 if __name__ == '__main__':
 
@@ -465,7 +488,7 @@ if __name__ == '__main__':
 '''
 Example command:
 to json:
-python3 run_georeference.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='debug.json' --support_data_dir='/home/zekun/ta1_georeferencing/geological-map-georeferencing/support_data'
+python3 run_georeference.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='temp/debug.json' --support_data_dir='/home/zekun/ta1_georeferencing/geological-map-georeferencing/support_data'
 
 python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='/home/zekun/data/nickel_output/0209/169_34067.json'
 
