@@ -1,5 +1,6 @@
 import os, sys
 import gpkg_writer_geo_coord 
+import gpkg_writer_img_coord
 from georeference_map import run_georeference_map
 from argparse import ArgumentParser
 import logging
@@ -43,16 +44,27 @@ def main(output_dir, map_name, layout_output_path, georef_output_path, nongeoref
     if not os.path.exists(nongeoref_map_path):
         logger.error(f'{nongeoref_map_path} does not exist')
         sys.exit(1)
-
+    
+    geo_gpkg_output_dir = os.path.join(output_dir, 'geo_gpkg_output')
+    if not os.path.exists(geo_gpkg_output_dir):
+        os.mkdir(geo_gpkg_output_dir)
+    
+    img_gpkg_output_dir = os.path.join(output_dir, 'img_gpkg_output')
+    if not os.path.exists(img_gpkg_output_dir):
+        os.mkdir(img_gpkg_output_dir)
+    
     if os.path.exists(georef_output_path):
         geotif_path = run_georeference_map(map_name, nongeoref_map_dir, georef_output_path, georef_map_output_dir)
         logger.info(f'Georeferenced tif map is saved in {geotif_path}')
-        gpkg_writer_geo_coord.write_gpkg(output_dir, map_name, layout_output_path, georef_output_path, \
+        gpkg_writer_geo_coord.write_gpkg(geo_gpkg_output_dir, map_name, layout_output_path, georef_output_path, \
                        poly_output_dir, ln_output_dir, pt_output_dir, logger)
-        logger.info(f'GPKG is saved in {output_dir}/{map_name}.gpkg')
+        logger.info(f'Georeferenced GPKG is saved in {geo_gpkg_output_dir}/{map_name}_geo.gpkg')
     else:
         logger.warning(f'No ground control points output from the georeferencing module.')
-
+    
+    gpkg_writer_img_coord.write_gpkg(img_gpkg_output_dir, map_name, layout_output_path, \
+                       poly_output_dir, ln_output_dir, pt_output_dir, logger)
+    logger.info(f'GPKG in the image coordinate is saved in {img_gpkg_output_dir}/{map_name}_img.gpkg')
 if __name__ == '__main__':    
     
     output_dir = args.output_dir
