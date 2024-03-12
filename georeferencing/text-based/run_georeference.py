@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import cv2
-from utils import get_toponym_tokens, prepare_bm25
+from utils import get_toponym_tokens, prepare_bm25, fuzzy_find_top_k_matching
 from segmentation_sam import resize_img, run_sam
 import urllib.request
 import rasterio
@@ -64,8 +64,11 @@ def get_topo_basemap(query_sentence, bm25, df_merged, device ):
 
     query_sent = ' '.join(human_readable_tokens)
 
-    tokenized_query = query_sent.split(" ")
+    topk = fuzzy_find_top_k_matching(query_sent, df_merged, k=10)
+    fuzzy_top10 = df_merged.iloc[[a[0] for a in topk]]
 
+    tokenized_query = query_sent.split(" ")
+    
     doc_scores = bm25.get_scores(tokenized_query)
 
     sorted_bm25_list = np.argsort(doc_scores)[::-1]
@@ -75,7 +78,8 @@ def get_topo_basemap(query_sentence, bm25, df_merged, device ):
 
     # top1 = df_merged.iloc[sorted_bm25_list[0]]
 
-    return top10, query_sent 
+    # return top10, query_sent 
+    return fuzzy_top10, query_sent
 
 
 # Function to encode the image
@@ -256,120 +260,90 @@ def run_georeferencing(args):
 
     return seg_bbox, top10, image_width, image_height, title, toponyms 
 
-def write_to_geopackage1(seg_bbox, top1, output_path):
-    db = GeopackageDatabase(
-    "my_map.gpkg",
-    crs="EPSG:4326" # Geographic coordinates (default)
-    # crs="CRITICALMAAS:pixel" # Pixel coordinates
-    )
 
-    # Insert types (required for foreign key constraints)
-    db.write_models([
-    db.model.map(id="test", name="test", description="test"),
-    db.model.polygon_type(id="test", name="test", description="test"),
-    ])
+# def download_geotiff(geotiff_url, temp_dir):
+#     filename = os.path.basename(geotiff_url)
+#     try:
+#         print(f'Downloading {filename}')
+#         urllib.request.urlretrieve(geotiff_url, os.path.join(temp_dir,filename))
+#         return os.path.join(temp_dir,filename)
+#     except URLError as e:
+#         print(f'Error during download: {e}')
+#         return -1
 
-    # Write features
-    feat = {
-        "properties": {
-            "id": "test",
-            "map_id": "test",
-            "type": "test",
-            "confidence": None,
-            "provenance": None,
-        },
-        "geometry": {
-            "type": "MultiPolygon",
-            "coordinates": [[[(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]]],
-        },
-    }
-    db.write_features("polygon_feature", [feat])
+# def img2geo_georef(row_col_list, geotiff_file):
+#     # Open the GeoTIFF file
+#     topo_target_gcps = []
+#     with rasterio.open(geotiff_file) as dataset:
+#         # Use the dataset's transform attribute and the `xy` method
+#         # to convert pixel coordinates to geographic coordinates.
+#         # The `xy` method returns the coordinates of the center of the given pixel.
+#         # geotransform = dataset.transform
 
-def download_geotiff(geotiff_url, temp_dir):
-    filename = os.path.basename(geotiff_url)
-    try:
-        print(f'Downloading {filename}')
-        urllib.request.urlretrieve(geotiff_url, os.path.join(temp_dir,filename))
-        return os.path.join(temp_dir,filename)
-    except URLError as e:
-        print(f'Error during download: {e}')
-        return -1
-
-def img2geo_georef(row_col_list, geotiff_file):
-    # Open the GeoTIFF file
-    topo_target_gcps = []
-    with rasterio.open(geotiff_file) as dataset:
-        # Use the dataset's transform attribute and the `xy` method
-        # to convert pixel coordinates to geographic coordinates.
-        # The `xy` method returns the coordinates of the center of the given pixel.
-        # geotransform = dataset.transform
-
-        for row, col in row_col_list:
-            geo_coords = dataset.xy(col, row, offset='center')
-            topo_target_gcps.append(geo_coords)
+#         for row, col in row_col_list:
+#             geo_coords = dataset.xy(col, row, offset='center')
+#             topo_target_gcps.append(geo_coords)
 
 
-        # transform = dataset.transform
-        # for row, col in row_col_list:
-        #     lon, lat = transform * (col, row)
-        #     topo_target_gcps.append((lat, lon))
+#         # transform = dataset.transform
+#         # for row, col in row_col_list:
+#         #     lon, lat = transform * (col, row)
+#         #     topo_target_gcps.append((lat, lon))
 
-    # import pdb # should match to lat, lon onthe map corner
-    # pdb.set_trace()
-    # print(dataset.crs.wkt)
+#     # print(dataset.crs.wkt)
 
-    return topo_target_gcps, dataset.crs.wkt 
+#     return topo_target_gcps, dataset.crs.wkt 
     
-def get_gcps(args, geologic_seg_bbox, top10):
-    top1 = top10.iloc[0]
+# def get_gcps(args, geologic_seg_bbox, top10):
+#     top1 = top10.iloc[0]
 
-    # left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
-    left, right, top, bottom = geologic_seg_bbox[0], geologic_seg_bbox[0]+geologic_seg_bbox[2], geologic_seg_bbox[1], geologic_seg_bbox[1]+geologic_seg_bbox[3]
+#     # left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
+#     left, right, top, bottom = geologic_seg_bbox[0], geologic_seg_bbox[0]+geologic_seg_bbox[2], geologic_seg_bbox[1], geologic_seg_bbox[1]+geologic_seg_bbox[3]
 
-    geologic_src_gcps = [(top, left),(top, right),(bottom, right), (bottom, left)]
+#     geologic_src_gcps = [(top, left),(top, right),(bottom, right), (bottom, left)]
 
-    geotiff_url = top1['geotiff_url']
+#     geotiff_url = top1['geotiff_url']
 
-    geotiff_path = download_geotiff(geotiff_url, args.temp_dir) 
+#     geotiff_path = download_geotiff(geotiff_url, args.temp_dir) 
 
-    if geotiff_path == -1: #failure if -1
-        return -1 
+#     if geotiff_path == -1: #failure if -1
+#         return -1 
 
-    seg_mask, topo_seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path, args.support_data_dir)
-    topo_left, topo_right, topo_top, topo_bottom = topo_seg_bbox[0], topo_seg_bbox[0]+topo_seg_bbox[2], topo_seg_bbox[1], topo_seg_bbox[1]+topo_seg_bbox[3]
+#     seg_mask, topo_seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path, args.support_data_dir)
+#     topo_left, topo_right, topo_top, topo_bottom = topo_seg_bbox[0], topo_seg_bbox[0]+topo_seg_bbox[2], topo_seg_bbox[1], topo_seg_bbox[1]+topo_seg_bbox[3]
 
-    topo_src_gcps = [(topo_top, topo_left),(topo_top, topo_right),(topo_bottom, topo_right), (topo_bottom, topo_left)]
-    topo_target_gcps, dataset_crs = img2geo_georef(topo_src_gcps, geotiff_path)
+#     topo_src_gcps = [(topo_top, topo_left),(topo_top, topo_right),(topo_bottom, topo_right), (topo_bottom, topo_left)]
+#     topo_target_gcps, dataset_crs = img2geo_georef(topo_src_gcps, geotiff_path)
     
-    return geologic_src_gcps, topo_target_gcps, dataset_crs
+#     return geologic_src_gcps, topo_target_gcps, dataset_crs
 
 
-def generate_geotiff(args, geologic_seg_bbox, top10, width, height,):
+# def generate_geotiff(args, geologic_seg_bbox, top10, width, height,):
 
-    input_tiff = args.input_path
-    temp_tiff = os.path.join(args.temp_dir,os.path.basename(args.input_path))
+#     input_tiff = args.input_path
+#     temp_tiff = os.path.join(args.temp_dir,os.path.basename(args.input_path))
 
-    topo_src_gcps, topo_target_gcps, dataset_crs = get_gcps(args, geologic_seg_bbox, top10) 
+#     topo_src_gcps, topo_target_gcps, dataset_crs = get_gcps(args, geologic_seg_bbox, top10) 
 
-    command = 'gdal_translate -of GTiff' 
-    for src_gcp, target_gcp in zip(topo_src_gcps, topo_target_gcps):
-        command +=  ' -gcp ' + str(src_gcp[0]) + ' ' + str(src_gcp[1]) + ' '
-        command += str(target_gcp[0]) + ' ' + str(target_gcp[1]) + ' '
+#     command = 'gdal_translate -of GTiff' 
+#     for src_gcp, target_gcp in zip(topo_src_gcps, topo_target_gcps):
+#         command +=  ' -gcp ' + str(src_gcp[0]) + ' ' + str(src_gcp[1]) + ' '
+#         command += str(target_gcp[0]) + ' ' + str(target_gcp[1]) + ' '
 
-    command = command + input_tiff + ' ' + temp_tiff 
+#     command = command + input_tiff + ' ' + temp_tiff 
 
-    print(command)
-    if os.path.exists(temp_tiff):
-        os.remove(temp_tiff)
-    os.system(command)
+#     print(command)
+#     if os.path.exists(temp_tiff):
+#         os.remove(temp_tiff)
+#     os.system(command)
     
-    output_tiff = os.path.join(args.temp_dir, os.path.basename(args.input_path).split('.')[0] + '_geo' + '.tif') 
-    command1 = "gdalwarp -r near -t_srs '" + dataset_crs + "' -of GTiff " + temp_tiff + " " + output_tiff # extra single quote before and after dataset crs
+#     output_tiff = os.path.join(args.temp_dir, os.path.basename(args.input_path).split('.')[0] + '_geo' + '.tif') 
+#     command1 = "gdalwarp -r near -t_srs '" + dataset_crs + "' -of GTiff " + temp_tiff + " " + output_tiff # extra single quote before and after dataset crs
 
-    print(command1)
-    if os.path.exists(output_tiff):
-        os.remove(output_tiff)
-    os.system(command1)
+#     print(command1)
+#     if os.path.exists(output_tiff):
+#         os.remove(output_tiff)
+#     os.system(command1)
 
     
 
@@ -404,54 +378,26 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
                         {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
                 }
 
+        # gcp_list = []
+        
+        # for i in range(4):
+        #     cur_gcp_dict = {"id": i} 
+        #     cur_gcp_dict["map_geom"] = []
+        #     cur_gcp_dict["px_geom"] = []
+        #     cur_gcp_dict["confidence"] = "None"
+
+
+        # bounds = {
+        #     "map":{
+        #         "name":
+        #         "projection_info": {"projection": "EPSG:4326", "provenance": "umn_georef",
+        #         "gcps": gcp_list
+        #     }
+        # }
+
     with open(args.output_path, 'w') as f:
         json.dump(bounds, f)
 
-
-def write_to_geopackage(args, seg_bbox, top1, width, height):
-    input_path = args.input_path
-    output_path = args.output_path
-
-    map_name = os.path.basename(output_path).split('.')[0]
-        
-    db = GeopackageDatabase(
-        output_path,
-        crs="EPSG:4326" # Geographic coordinates (default)
-        # crs="CRITICALMAAS:pixel" # Pixel coordinates
-    )
-
-    # Insert types (required for foreign key constraints)
-    # TODO: source_url should be the link in NGMDB?
-    db.write_models([
-        db.model.map(id=map_name, name=map_name, source_url=input_path, image_url=input_path, image_width = width, image_height=height ),
-    ])
-
-
-    # "bounds": { "geo":
-    #                 {"left":left, "right":right, "top":top, "bottom":bottom},
-    #             "img":
-    #                 {"left":seg_bbox[0], "right":seg_bbox[0]+seg_bbox[2], "top":seg_bbox[1], "bottom":seg_bbox[1]+seg_bbox[3]}
-    #         }
-
-    left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
-    img_left, img_right, img_top, img_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3]
-    
-    feat = {
-         "properties": {
-            "id": "0",
-            "provenance": "Unknown",
-            "map_id": map_name,
-            "projection": "Unknown",
-            # "bounds": [(img_top, img_left), (img_top, img_right), (img_bottom, img_right), (img_bottom, img_left), (img_top, img_left)]
-        },
-        "geometry":{
-            "type": "Polygon",
-            "coordinates": [[(top, left), (top, right), (bottom, right), (bottom, left), (top, left)]],
-        }
-    }
-    # db.write_features("polygon_feature", [feat])
-    db.write_features("georeference_meta",[feat])
-    print('georeference_meta:',feat)
 
 
 
@@ -473,7 +419,7 @@ def main():
     
     seg_bbox, top10, image_width, image_height, title, toponyms = run_georeferencing(args)
 
-    generate_geotiff(args, seg_bbox, top10, image_width, image_height)
+    # generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
     # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)
     write_to_json(args, seg_bbox, top10, image_width, image_height, title, toponyms)
