@@ -6,7 +6,17 @@ from shapely.ops import linemerge
 from shapely.geometry import LineString
 from shapely.wkt import loads
 import math
-from line_ornament import extract_attributes_along_line
+
+def reverse_geom_coords(geom):
+    if isinstance(geom, LineString):
+        return LineString([(x, -y) for x, y in geom.coords])
+    elif isinstance(geom, (MultiLineString)):
+        multilines = []
+        for i, ln in enumerate(geom.geoms):
+            multilines.append(LineString([(x, -y) for x, y in ln.coords]))
+        return MultiLineString(multilines)
+    else:
+        raise ValueError(f"Geometry type '{type(geom)}' not supported")
 
 def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, feature_name=None, image_coords=False):
     import logging
@@ -50,49 +60,27 @@ def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, featu
     
     cnt = 0
     
-    for line_wkt, attr in all_lines.items():
-        cnt += 1
-        line = loads(line_wkt)
-        lineString = ogr.Geometry(ogr.wkbLineString)
-        if isinstance(line, list):
-            for v in line:
-                if not image_coords:
-                    geo_x = transform[0] + v[1] * transform[1] + v[0] * transform[2]
-                    geo_y = transform[3] + v[1] * transform[4] + v[0] * transform[5]
-                    lineString.AddPoint(geo_x, geo_y)
-                else:
-#                     print('--- write in image coordinate ---')
-                    lineString.AddPoint(v[1], -v[0])
-        else:
-            for p in list(line.coords):
-                if not image_coords:
-                    geo_x = transform[0] + p[1] * transform[1] + p[0] * transform[2]
-                    geo_y = transform[3] + p[1] * transform[4] + p[0] * transform[5]
-                    lineString.AddPoint(geo_x, geo_y)
-                else:
-#                     print('--- write in image coordinate ---')
-                    lineString.AddPoint(p[1], -p[0])
+    for line_cat, lines in all_lines.items():
+        for line in lines:
+#             line = reverse_geom_coords(line)
+            cnt += 1
+            lineString = ogr.CreateGeometryFromWkb(line.wkb)
+            featureDefn = layer.GetLayerDefn()
+            feature = ogr.Feature(featureDefn)
+            feature.SetGeometry(lineString)
 
-        featureDefn = layer.GetLayerDefn()
-        feature = ogr.Feature(featureDefn)
-        feature.SetGeometry(lineString)
+            feature.SetField('ID', cnt)
+            feature.SetField('geometr', 'line')
+            feature.SetField('name', 'fault line')
+            feature.SetField('direction', None)
+            feature.SetField('type', None)
+            feature.SetField('descript', legend_text)
+            feature.SetField('dash', line_cat)
 
-        feature.SetField('ID', cnt)
-        feature.SetField('geometr', 'line')
-        feature.SetField('name', 'fault line')
-        feature.SetField('direction', None)
-        feature.SetField('type', None)
-        feature.SetField('descript', legend_text)
-        feature.SetField('dash', attr[0])
-        if len(attr) == 2:
-            feature.SetField('symbol', 'ball-and-bar symbol')
-            feature.SetField('direction', attr[1])
-        else:
-            feature.SetField('symbol', None)
 
-        layer.CreateFeature(feature)
-        lineString.Destroy()
-        feature.Destroy()
+            layer.CreateFeature(feature)
+            lineString.Destroy()
+            feature.Destroy()
     ds.Destroy()
     print ("Shapefile created")    
     
@@ -109,7 +97,7 @@ if __name__ == '__main__':
     input_patch_dir = '/data/weiweidu/LDTR_criticalmaas/data/darpa/fault_lines/NV_HiddenHills_g256_s100/raw'
     #'/data/weiweidu/line_github_workspace/gpt4_outputs'
 
-    line_dict = extract_attributes_along_line(map_name, in_shapefile_path, input_patch_dir)
-    write_shp_in_imgcoord_with_attr(out_shapefile_path, line_dict, image_coords=True)
+#     line_dict = extract_attributes_along_line(map_name, in_shapefile_path, input_patch_dir)
+#     write_shp_in_imgcoord_with_attr(out_shapefile_path, line_dict, image_coords=True)
 
     
