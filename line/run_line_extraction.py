@@ -352,10 +352,11 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 output_shp_path = predict_shp(args)
-#                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-#                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-#                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-#                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
+                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
+                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+                output_shp_attr_path = output_shp_path[:-8] + '.shp'
+                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description,\
+                                                feature_name='fault', image_coords=True)
 
         if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
             is_extracted = True
@@ -365,10 +366,11 @@ if __name__ == '__main__':
                 predict_png(args)
             if args.predict_vector:
                 predict_shp(args)
-#                 line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-#                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-#                 output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-#                 write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description, image_coords=True)
+                line_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
+                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+                output_shp_attr_path = output_shp_path[:-8] + '.shp'
+                write_shp_in_imgcoord_with_attr(output_shp_attr_path, line_dict, legend_text=description,\
+                                                feature_name='fault', image_coords=True)
     if not is_extracted:
         json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
         f = open(json_path)
