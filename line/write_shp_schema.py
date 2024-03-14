@@ -84,11 +84,6 @@ def write_shp_in_imgcoord_with_attr(shp_name, all_lines, legend_text=None, featu
     ds.Destroy()
     print ("Shapefile created")    
     
-    import geopandas
-    geojson_path = f'{shp_name[:-4]}.geojson'
-    shp_file = geopandas.read_file(shp_name)
-    shp_file.to_file(geojson_path, driver='GeoJSON')
-    print('*** save the predicted geojson in {} ***'.format(geojson_path))
         
 if __name__ == '__main__':
     map_name = 'NV_HiddenHills'

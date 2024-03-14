@@ -152,7 +152,7 @@ def construct_graph(args, map_content_mask):
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(map(str, args.cuda_visible_device))
     
     config.DATA.TEST_DATA_PATH = args.cropped_image_dir
-    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}'
     if 'thrust_fault_line_model.pt' in args.checkpoint:
         config.MODEL.DECODER.OBJ_TOKEN = 100
     elif 'fault_line_model.pt' in args.checkpoint:
@@ -284,7 +284,7 @@ def predict_png(args):
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
 
-def predict_shp(args):
+def predict_shp(args, description=None):
     """
     generate shp prediction
     """
@@ -292,7 +292,7 @@ def predict_shp(args):
         config = yaml.load(f, Loader=yaml.FullLoader)
     config = dict2obj(config)
                                         
-    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}_pred'
+    config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}'
     
     map_name = args.map_name
     
@@ -320,8 +320,21 @@ def predict_shp(args):
         print('*** save the predicted shapefile in {} ***'.format(shp_path))
     else:
         write_shp_in_imgcoord_output_schema(shp_path, nodup_lines)
-        
-    return shp_path
+    
+    dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
+                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
+    output_shp_attr_path = shp_path[:-4] + '_attr.shp'
+    write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
+                                    legend_text=description, image_coords=True)
+    geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
+    if not os.path.exists(geojson_output_dir):
+        os.mkdir(geojson_output_dir)
+
+    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
+    shp_file = geopandas.read_file(output_shp_attr_path)
+    shp_file.to_file(geojson_path, driver='GeoJSON')
+    print('*** save the predicted geojson in {} ***'.format(geojson_path))
+    return geojson_path
     
 
 if __name__ == '__main__':
@@ -343,20 +356,8 @@ if __name__ == '__main__':
             if args.predict_raster:
                 predict_png(args)
             if args.predict_vector:
-                output_shp_path = predict_shp(args)
-                dash_pattern_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
-                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                                legend_text=description, image_coords=True)
-                geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
-                if not os.path.exists(geojson_output_dir):
-                    os.mkdir(geojson_output_dir)
-
-                geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-                shp_file = geopandas.read_file(output_shp_attr_path)
-                shp_file.to_file(geojson_path, driver='GeoJSON')
-                print('*** save the predicted geojson in {} ***'.format(geojson_path))
+                output_geo_path = predict_shp(args, description)
+                
 
         if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
             is_extracted = True
@@ -365,21 +366,7 @@ if __name__ == '__main__':
             if args.predict_raster:
                 predict_png(args)
             if args.predict_vector:
-                output_shp_path = predict_shp(args)
-                dash_pattern_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
-                output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                                legend_text=description, image_coords=True)
-              
-                geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
-                if not os.path.exists(geojson_output_dir):
-                    os.mkdir(geojson_output_dir)
-
-                geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-                shp_file = geopandas.read_file(output_shp_attr_path)
-                shp_file.to_file(geojson_path, driver='GeoJSON')
-                print('*** save the predicted geojson in {} ***'.format(geojson_path))
+                output_geo_path = predict_shp(args)
                                                                   
     if not is_extracted:
         json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
@@ -397,21 +384,8 @@ if __name__ == '__main__':
                 if args.predict_raster:
                     predict_png(args)
                 if args.predict_vector:
-                    output_shp_path = predict_shp(args)
-                    dash_pattern_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
-                    output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                    write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                                    legend_text=description, image_coords=True)
-                    geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
-                    if not os.path.exists(geojson_output_dir):
-                        os.mkdir(geojson_output_dir)
-
-                    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-                    shp_file = geopandas.read_file(output_shp_attr_path)
-                    shp_file.to_file(geojson_path, driver='GeoJSON')
-                    print('*** save the predicted geojson in {} ***'.format(geojson_path))
-
+                    output_geo_path = predict_shp(args)
+                    
             if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
                 is_extracted = True
                 args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
@@ -419,18 +393,5 @@ if __name__ == '__main__':
                 if args.predict_raster:
                     predict_png(args)
                 if args.predict_vector:
-                    output_shp_path = predict_shp(args)
-                    dash_pattern_dict = extract_attributes_along_line(args.map_name, output_shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
-                    output_shp_attr_path = output_shp_path[:-4] + '_attr.shp'
-                    write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                                    legend_text=description, image_coords=True)
-                    geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
-                    if not os.path.exists(geojson_output_dir):
-                        os.mkdir(geojson_output_dir)
-
-                    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-                    shp_file = geopandas.read_file(output_shp_attr_path)
-                    shp_file.to_file(geojson_path, driver='GeoJSON')
-                    print('*** save the predicted geojson in {} ***'.format(geojson_path))
-
+                    output_geo_path = predict_shp(args)
+                    

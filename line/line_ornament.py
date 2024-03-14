@@ -99,8 +99,6 @@ def extract_attributes_along_line(map_name,\
     print('number of lines in the original shapefile: ', len(polylines))
   
     all_patches = os.listdir(patch_path)
-    
-    pos_images, pos_image_names = read_images_from_folder(legend_dir)
 
     line_dict = {}
     pattern_dict = {'solid': [], 'dotted': [], 'dashed': [], 'unknown': []}
