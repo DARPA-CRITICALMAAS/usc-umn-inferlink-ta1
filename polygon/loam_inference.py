@@ -747,8 +747,11 @@ def model_training():
         }
 
         logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        #logging.info(f'Using device {device}')
+        device = torch.device('cuda:0' if (torch.cuda.is_available()) else 'cpu')
         logging.info(f'Using device {device}')
+        num_of_gpus = torch.cuda.device_count()
 
         # Change here to adapt to your data
         # n_channels=3 for RGB images
@@ -770,6 +773,10 @@ def model_training():
             logging.info(f'Model loaded from {str(args["load"])}')
 
         model.to(device=device)
+        if device.type == 'cuda':
+            if num_of_gpus > 1:
+                model = nn.DataParallel(model, list(range(num_of_gpus)))
+
         try:
             train_model(
                 model=model,
