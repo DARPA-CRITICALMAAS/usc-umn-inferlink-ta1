@@ -264,54 +264,117 @@ def main():
         print('There is zero poly legend items in this map...')
         sys.exit(0)
 
+    this_testing = str_to_bool(args.testing)
+    this_testing_section = args.testing_section
+    if this_testing == False:
+        metadata_preprocessing.metadata_preprocessing(
+            input_path_to_tif = input_tif,
+            input_path_to_json = input_json,
+            input_path_to_bound = input_bound,
+            input_dir_to_intermediate = dir_to_intermediate_preprocessing,
+            input_map_preprocessing = map_preprocessing,
+            input_thread = input_threads,
+            input_efficiency_trade_off = efficiency_trade_off
+        )
 
-    metadata_preprocessing.metadata_preprocessing(
-        input_path_to_tif = input_tif,
-        input_path_to_json = input_json,
-        input_path_to_bound = input_bound,
-        input_dir_to_intermediate = dir_to_intermediate_preprocessing,
-        input_map_preprocessing = map_preprocessing,
-        input_thread = input_threads,
-        input_efficiency_trade_off = efficiency_trade_off
-    )
+        metadata_postprocessing.metadata_postprocessing(
+            input_path_to_tif = input_tif,
+            input_path_to_json = input_json,
+            input_dir_to_intermediate = dir_to_intermediate,
+            input_dir_to_groundtruth = dir_to_groundtruth,
+            input_performance_evaluation = performance_evaluation,
+            crop_size=1024,
+            input_thread = input_threads,
+            input_efficiency_trade_off = efficiency_trade_off
+        )
+        
+        loam_inference.loam_inference(
+            input_filtering_new_dataset = True,
+            input_filtering_threshold = 0.33,
+            input_k_fold_testing = 1,
+            input_crop_size = 1024,
+            input_separate_validating_set = False,
+            input_reading_predefined_testing = True,
+            input_training_needed = False,
+            input_dir_to_intermediate = dir_to_intermediate,
+            input_targeted_map_file = 'targeted_map.csv',
+            input_path_to_tif = input_tif,
+            input_groundtruth_dir = dir_to_groundtruth,
+            input_performance_evaluation = performance_evaluation,
+            input_thread = input_threads,
+            input_path_to_model = input_path_to_model
+        )
 
-    metadata_postprocessing.metadata_postprocessing(
-        input_path_to_tif = input_tif,
-        input_path_to_json = input_json,
-        input_dir_to_intermediate = dir_to_intermediate,
-        input_dir_to_groundtruth = dir_to_groundtruth,
-        input_performance_evaluation = performance_evaluation,
-        crop_size=1024,
-        input_thread = input_threads,
-        input_efficiency_trade_off = efficiency_trade_off
-    )
-    
-    loam_inference.loam_inference(
-        input_filtering_new_dataset = True,
-        input_filtering_threshold = 0.33,
-        input_k_fold_testing = 1,
-        input_crop_size = 1024,
-        input_separate_validating_set = False,
-        input_reading_predefined_testing = True,
-        input_training_needed = False,
-        input_dir_to_intermediate = dir_to_intermediate,
-        input_targeted_map_file = 'targeted_map.csv',
-        input_path_to_tif = input_tif,
-        input_groundtruth_dir = dir_to_groundtruth,
-        input_performance_evaluation = performance_evaluation,
-        input_thread = input_threads,
-        input_path_to_model = input_path_to_model
-    )
+        polygon_output_handler.output_handler(
+            input_path_to_tif = input_tif,
+            input_path_to_legend_solution = path_to_legend_solution,
+            input_path_to_legend_description = path_to_legend_description,
+            input_path_to_json = input_json,
+            input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
+            input_dir_to_integrated_output = dir_to_integrated_output,
+            input_vectorization = True
+        )
+    else:
+        print('You are going to run only some components of the module with section(s): ' + str(this_testing_section))
+        print('In the process of making sure you have files for latter parts ready...')
 
-    polygon_output_handler.output_handler(
-        input_path_to_tif = input_tif,
-        input_path_to_legend_solution = path_to_legend_solution,
-        input_path_to_legend_description = path_to_legend_description,
-        input_path_to_json = input_json,
-        input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
-        input_dir_to_integrated_output = dir_to_integrated_output,
-        input_vectorization = True
-    )
+        if '0' not in this_testing_section and '1' in this_testing_section:
+            sub_file_checker(0, dir_to_intermediate_preprocessing, None)
+        if '1' not in this_testing_section and '2' in this_testing_section:
+            sub_file_checker(1, None, dir_to_intermediate)
+        if '2' not in this_testing_section and '3' in this_testing_section:
+            sub_file_checker(2, None, dir_to_intermediate)
+
+
+        if '0' in this_testing_section:
+            metadata_preprocessing.metadata_preprocessing(
+                input_path_to_tif = input_tif,
+                input_path_to_json = input_json,
+                input_path_to_bound = input_bound,
+                input_dir_to_intermediate = dir_to_intermediate_preprocessing,
+                input_map_preprocessing = map_preprocessing,
+                input_thread = input_threads
+            )
+
+        if '1' in this_testing_section:
+            metadata_postprocessing.metadata_postprocessing(
+                input_path_to_tif = input_tif,
+                input_path_to_json = input_json,
+                input_dir_to_intermediate = dir_to_intermediate,
+                input_dir_to_groundtruth = dir_to_groundtruth,
+                input_performance_evaluation = performance_evaluation,
+                crop_size=1024,
+                input_thread = input_threads
+            )
+
+        if '2' in this_testing_section:
+            loam_inference.loam_inference(
+                input_filtering_new_dataset = True,
+                input_filtering_threshold = 0.33,
+                input_k_fold_testing = 1,
+                input_crop_size = 1024,
+                input_separate_validating_set = False,
+                input_reading_predefined_testing = True,
+                input_training_needed = False,
+                input_dir_to_intermediate = dir_to_intermediate,
+                input_targeted_map_file = 'targeted_map.csv',
+                input_path_to_tif = input_tif,
+                input_groundtruth_dir = dir_to_groundtruth,
+                input_performance_evaluation = performance_evaluation,
+                input_thread = input_threads,
+                input_path_to_model = input_path_to_model
+            )
+
+        if '3' in this_testing_section:
+            polygon_output_handler.output_handler(
+                input_path_to_tif = input_tif,
+                input_path_to_legend_solution = path_to_legend_solution,
+                input_path_to_legend_description = path_to_legend_description,
+                input_path_to_json = input_json,
+                input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
+                input_dir_to_integrated_output = dir_to_integrated_output,
+                input_vectorization = True
+            )
 
     
     print('Overall processing time: '+str(datetime.now()-global_runningtime_start))
@@ -348,6 +411,9 @@ if __name__ == '__main__':
     parser.add_argument('--log', type=str, default='Example_Output/log.log')
 
     parser.add_argument('--path_to_model', type=str, default='checkpoints/checkpoint_epoch14.pth')
+
+    parser.add_argument('--testing', type=str, default='False')
+    parser.add_argument('--testing_section', type=str, default='0')
 
     parser.add_argument('--allow_cpu', type=str, default='False')
     parser.add_argument('--trade_off', type=str, default='3')
