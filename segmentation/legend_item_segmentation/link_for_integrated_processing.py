@@ -35,7 +35,7 @@ import pyproj
 
 import json
 
-
+from datetime import datetime
 
 
 
@@ -888,10 +888,12 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
 
     if  only_poly == True:
         print('============= You opt out extracting point and line legend items at this stage. Thanks for saving our times...')
+        print('============= You can not bypass extraction for point and line legend items at this stage...')
+    if True:
         ptln_candidate_sweeping = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
-    else:
-        ######
+    
+
         layout_estimated_column = False
         if np.mean(column_summary) > 0:
             anti_column_summary = 255 - column_summary
@@ -930,7 +932,6 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         
 
 
-
         if layout_estimated_column == True and candidate_width.shape[0] > 0:
             # Trying to find the column if exists...
             '''
@@ -945,7 +946,14 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
             extanded_column_area.append(original_column_area)
             column_summary_extand = np.copy(column_summary)
             column_summary_extand_settled = np.copy(column_summary)
-            for i in range(1, 20):
+            extanded_i = -1
+            jumping_i = 0
+            for i in range(2, 20):
+                if jumping_i > 0:
+                    jumping_i -= 1
+                    continue
+                
+                print('------------- I am testing a step that jumps '+str(int(median_width) * i)+' pixels...')
                 if (median_width * i) > img_gray.shape[1]:
                     break
                 for j in range(int(median_width) * i, int(median_width) * (i+1)):
@@ -955,15 +963,31 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
                     print('------------- columned-based ROI extanded...')
                     column_summary_extand_settled = np.copy(column_summary_extand)
                     cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_column_expanded.tif')), column_summary_extand_settled)
+                    if extanded_i == -1:
+                        extanded_i = i
+                    if extanded_i > 0:
+                        extanded_column_area.append(this_column_area)
+
+                        rows, cols = np.where(column_summary_extand > 0)
+                        if len(cols) > 0:
+                            max_col_index = np.max(cols)
+                        else:
+                            max_col_index = 0
+                        #print(max_col_index)
+
+                        if (max_col_index + median_width * (extanded_i)) > img_gray.shape[1]:
+                            break
+                        else:
+                            jumping_i = extanded_i-2
+                            prev_column_area = this_column_area
+                            continue
                 extanded_column_area.append(this_column_area)
                 prev_column_area = this_column_area
             print('------------- ', extanded_column_area)
             column_summary = np.copy(column_summary_extand_settled)
 
 
-
-
-
+        '''
         print('Step ( 6/10): Reading results from mapkurator...')
         #fast_processing = True
         #if fast_processing == True and os.path.isfile(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif'))) == True:
@@ -983,45 +1007,45 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         text_spotting_mask = cv2.erode(text_spotting_mask, kernel, iterations = 1)
         text_spotting_mask = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
         cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif')), text_spotting_mask)
-
-
-
-
-
-
-
-
-        # if we do not have any reference from poly legend items
-        # remove stuff based on text-spotting results...
-        kernel = np.ones((25, 25), np.uint8)
-        ptln_anti_summary = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
-        ptln_block = cv2.bitwise_and(255-ptln_anti_summary, roi_ptln)
-        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block.tif')), ptln_block)
-
-        if layout_estimated_column == True:
-            ptln_column_summary = cv2.bitwise_and(column_summary, roi_ptln)
-            ptln_block = cv2.bitwise_or(ptln_block, ptln_column_summary)
-        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block1.tif')), ptln_block)
-
-        text_spotting_mask_mask = np.copy(text_spotting_mask)
-        for i in range(200):
-            text_spotting_mask_mask[:, 0:-1] = np.maximum(text_spotting_mask_mask[:, 0:-1], text_spotting_mask_mask[:, 1:]) # growing left
-        for i in range(200):
-            text_spotting_mask_mask[0:-1, :] = np.maximum(text_spotting_mask_mask[0:-1, :], text_spotting_mask_mask[1:, :]) # growing upwards
-        kernel = np.ones((20, 20), np.uint8)
-        text_spotting_mask_mask = cv2.dilate(text_spotting_mask_mask, kernel, iterations = 1)
-        text_spotting_mask_mask = cv2.bitwise_and(text_spotting_mask_mask, 255-ptln_anti_summary)
+        '''
         
-        ptln_block = cv2.bitwise_and(text_spotting_mask_mask, roi_ptln)
-        cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate2', target_map_name.replace('.tif', '_ptln_block2.tif')), ptln_block)
 
+        if np.mean(column_summary) == 0:
+            print('------------- There is no column summary identified...')
+            print('------------- An additional input from text-spotting is highly recommended...')
+            print('------------- ......')
+
+            print('Step (?6/10): Reading results from mapkurator...')
+            read_results_from_mapkurator(target_map_name, path_to_intermediate, path_to_mapkurator_output)
+
+            text_spotting_mask = cv2.imread(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v1.tif')))
+            text_spotting_mask = cv2.cvtColor(text_spotting_mask, cv2.COLOR_BGR2GRAY)
+
+            kernel = np.ones((1, 100), np.uint8)
+            text_spotting_mask = cv2.erode(text_spotting_mask, kernel, iterations = 1)
+            text_spotting_mask = cv2.dilate(text_spotting_mask, kernel, iterations = 1)
+            cv2.imwrite(os.path.join(path_to_intermediate, 'intermediate3', target_map_name.replace('.tif', '_mapkurator_mask_buffer_v2.tif')), text_spotting_mask)
+
+            column_summary = 255-text_spotting_mask
+        
+
+
+
+        print('Step ( 7/10): Identifying legend items for point and line features...')
         kernel = np.ones((2, 2), np.uint8)
         adaptive_buffer = cv2.erode(adaptive_threshold, kernel, iterations = 1)
+        kernel = np.ones((1, 10), np.uint8)
+        column_summary = cv2.erode(column_summary, kernel, iterations = 1)
+        adaptive_buffer = cv2.bitwise_and(column_summary, adaptive_buffer)
+            
         kernel = np.ones((5, 5), np.uint8)
         adaptive_buffer = cv2.dilate(adaptive_buffer, kernel, iterations = 1)
-        ptln_candidate = cv2.bitwise_and(ptln_block, adaptive_buffer)
+        ptln_candidate = cv2.bitwise_and(roi_ptln, adaptive_buffer)
+        
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln.tif')), ptln_candidate)
         ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
+
+
 
         # clean the nearby areas in advance for polygons that we get from extracting poly legend items
         kernel = np.ones((10, 15), np.uint8)
@@ -1035,9 +1059,10 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         ptln_candidate = cv2.erode(ptln_candidate, kernel, iterations = 1)
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_preliminary_ptln1.tif')), ptln_candidate)
 
+
         kernel = np.ones((25, 50), np.uint8)
         ptln_candidate_sweeping = cv2.dilate(ptln_candidate, kernel, iterations = 1)
-        ptln_candidate_sweeping = cv2.bitwise_and(ptln_block, ptln_candidate_sweeping)
+        ptln_candidate_sweeping = cv2.bitwise_and(column_summary, ptln_candidate_sweeping)
         
         # include polygons that we get from extracting poly legend items
         ptln_candidate_from_poly = cv2.bitwise_and(poly_candidate_sweeping, roi_ptln)
@@ -1060,6 +1085,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         kernel = np.ones((3, 1), np.uint8)
         ptln_candidate_sweeping = cv2.erode(ptln_candidate_sweeping, kernel, iterations = 1)
         ptln_candidate_sweeping = cv2.dilate(ptln_candidate_sweeping, kernel, iterations = 1)
+        ptln_candidate_sweeping[ptln_candidate_sweeping > 0] = 255
 
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln1.tif')), ptln_candidate_sweeping)
 
@@ -1069,7 +1095,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         ptln_contours, ptln_hierarchy = cv2.findContours(ptln_candidate_sweeping, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         max_contour_size = 50000 # 1% of image
-        min_contour_size = 500
+        min_contour_size = 8000
 
         ptln_candidate_areas = []
         ptln_candidate_contours = []
