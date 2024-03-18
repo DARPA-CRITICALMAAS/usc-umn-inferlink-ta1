@@ -8,19 +8,19 @@ import logging
 parser = ArgumentParser()
 parser.add_argument('--output_dir', \
                     default='/data/weiweidu/temp', type=str)
-parser.add_argument('--map_name', default='2188_1086', type=str)
+parser.add_argument('--map_name', default='22253_25695', type=str)
 parser.add_argument('--layout_output_dir', \
-                    default='/data/weiweidu/criticalmaas_data/hackathon2/MN_MT_raw_maps_legend_item_description_outputs', type=str)
+                    default='/data/weiweidu/criticalmaas_data/hackathon2/nickel_maps_legend_item_description_outputs', type=str)
 parser.add_argument('--georef_output_dir', \
                     default='/data/weiweidu/criticalmaas_data/georeference_output_sample', type=str)
 parser.add_argument('--poly_output_dir', \
                     default='/data/weiweidu/criticalmaas_data/hackathon2/nickel_polygon_extraction_demo', type=str)
 parser.add_argument('--ln_output_dir', \
-                    default='/data/weiweidu/criticalmaas_data/hackathon2/nickel_line_extraction_demo', type=str)
+                    default='/data/weiweidu/temp', type=str)
 parser.add_argument('--pt_output_dir', \
                     default='/data/weiweidu/criticalmaas_data/hackathon2/nickel_point_extraction_demo', type=str)
 parser.add_argument('--nongeoref_map_dir', \
-                    default='/data/weiweidu/criticalmaas_data/hackathon2/MN_MT_raw_maps', type=str)
+                    default='/data/weiweidu/criticalmaas_data/hackathon2/magmatic_nickel_02092024/raw_maps/', type=str)
 parser.add_argument('--georef_map_output', \
                     default='/data/weiweidu/criticalmaas_data/hackathon2/update_nickel_maps_georef_maps', type=str)
 parser.add_argument('--log_path', type=str, \

@@ -18,13 +18,18 @@ def reverse_geom_coords(geom):
         return Polygon([(x, y) for x, y in geom.exterior.coords])
     elif isinstance(geom, (MultiPolygon)):
         multipoly = []
-        for i, poly in enumerate(geom):
+        for i, poly in enumerate(geom.geoms):
             multipoly.append(Polygon([(x, y) for x, y in geom.exterior.coords]))
         return MultiPolygon(multipoly)
     elif isinstance(geom, (Point, MultiPoint)):
         return Point(geom.x, geom.y)
-    elif isinstance(geom, (LineString, MultiLineString)):
+    elif isinstance(geom, (LineString)):
         return LineString([(y, x) for x, y in geom.coords])
+    elif isinstance(geom, (MultiLineString)):
+        multiline = []
+        for i, line in enumerate(geom.geoms):
+            multiline.append(LineString([(x, y) for x, y in line.coords]))
+        return MultiLineString(multiline)
     else:
         # Extend to other geometry types if necessary
         raise ValueError(f"Geometry type '{type(geom)}' not supported")

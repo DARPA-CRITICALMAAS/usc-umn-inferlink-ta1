@@ -141,8 +141,10 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     ln_type_list, ln_feat_list = [], []
     
     for ind, feat in enumerate(feat_list):
-#         print(feat['geometry']['coordinates'])
-        ln_geom = MultiLineString([reverse_geom_coords(LineString(feat['geometry']['coordinates']))])
+        if feat['geometry']['type'] == 'MultiLineString':
+            ln_geom = reverse_geom_coords(MultiLineString(feat['geometry']['coordinates']))
+        else:
+            ln_geom = MultiLineString([reverse_geom_coords(LineString(feat['geometry']['coordinates']))])
         if len(feat['geometry']['coordinates']) == 0: # skip the empty geom
             continue
         
@@ -200,29 +202,29 @@ def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_out
         logger.error(f'{out_gpkg_path} exists. Please delete it.')
         sys.exit(1)
     
-    # write polygon features    
-    if os.path.exists(poly_output_path):
-        poly_files = os.listdir(poly_output_path)
-        for i, poly_geojson in enumerate(poly_files):
-            if '.geojson' not in poly_geojson:
-                continue
-            geojson_path = os.path.join(poly_output_path, poly_geojson)
-            features = get_feature_from_geojson(geojson_path)    
-            logger.info(f'Writing {i+1}/{len(poly_files)} polygon GeoJson into the img GPKG')
-            write_poly_into_gpkg(db_instance, features[:], map_name)
-    logger.info(f'All polygon GeoJson is written into the img GPKG')                
+#     # write polygon features    
+#     if os.path.exists(poly_output_path):
+#         poly_files = os.listdir(poly_output_path)
+#         for i, poly_geojson in enumerate(poly_files):
+#             if '.geojson' not in poly_geojson:
+#                 continue
+#             geojson_path = os.path.join(poly_output_path, poly_geojson)
+#             features = get_feature_from_geojson(geojson_path)    
+#             logger.info(f'Writing {i+1}/{len(poly_files)} polygon GeoJson into the img GPKG')
+#             write_poly_into_gpkg(db_instance, features[:], map_name)
+#     logger.info(f'All polygon GeoJson is written into the img GPKG')                
     
-    # write point features
-    if os.path.exists(pt_output_path):
-        pt_files = os.listdir(pt_output_path)
-        for i, pt_geojson in enumerate(pt_files):
-            if '.geojson' not in pt_geojson:
-                continue  
-            geojson_path = os.path.join(pt_output_path, pt_geojson)
-            features = get_feature_from_geojson(geojson_path)    
-            logger.info(f'Writing {i+1}/{len(pt_files)} point GeoJson into the img GPKG')
-            write_pt_into_gpkg(db_instance, features[:], map_name)
-    logger.info(f'All point GeoJson is written into the img GPKG')
+#     # write point features
+#     if os.path.exists(pt_output_path):
+#         pt_files = os.listdir(pt_output_path)
+#         for i, pt_geojson in enumerate(pt_files):
+#             if '.geojson' not in pt_geojson:
+#                 continue  
+#             geojson_path = os.path.join(pt_output_path, pt_geojson)
+#             features = get_feature_from_geojson(geojson_path)    
+#             logger.info(f'Writing {i+1}/{len(pt_files)} point GeoJson into the img GPKG')
+#             write_pt_into_gpkg(db_instance, features[:], map_name)
+#     logger.info(f'All point GeoJson is written into the img GPKG')
     # write line features
     if os.path.exists(ln_output_path):
         ln_files = os.listdir(ln_output_path)
