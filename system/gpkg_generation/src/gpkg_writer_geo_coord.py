@@ -153,7 +153,16 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs):
         
         if len(feat['geometry']['coordinates']) == 0:
             continue # skip the empty geom
-            
+        
+        pt_name = ' '.join(feat['properties']['type'].split('_'))
+        pt_type = {'id':str(pt_type_id), 'name':pt_name, 'description':feat['properties']['type']}
+        
+        if pt_type not in pt_type_list:
+            pt_type_list.append(pt_type)
+            cur_pt_type_id = len(pt_type_list) - 1
+        else:
+            cur_pt_type_id = pt_type_list.index(pt_type)
+        
         pt_feat = {"id":str(pt_feat_id),
                     "map_id": map_name,
                     "type": str(pt_type_id),
@@ -170,9 +179,10 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs):
     if len(pt_feat_list) == 0:
         return 
     
-    pt_type = {'id':str(pt_type_id), 'name':"other", 'description':feat['properties']['type']}
-    pt_type_list.append(pt_type)
-    pt_type_id += 1
+    for i in range(len(pt_type_list)):
+        pt_type_list[i]['id'] = str(pt_type_id + i)
+    
+    pt_type_id += len(pt_type_list)
     
     df_pt_type = pd.DataFrame(pt_type_list)
     df_pt_type.to_sql('point_type', db.engine , if_exists='append', index=False)
@@ -201,30 +211,37 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs):
         if len(feat['geometry']['coordinates']) == 0: # skip the empty geom
             continue
         
+        ln_type = {'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
+                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
+        
+        if ln_type not in ln_type_list:
+            ln_type_list.append(ln_type)
+            cur_ln_type_id = len(ln_type_list) - 1
+        else:
+            cur_ln_type_id = ln_type_list.index(ln_type)
+        
         ln_feat = {
                     "id":str(ln_feat_id),
                     "map_id": map_name,
                     "name": feat['properties']['name'],
-                    "type": str(ln_type_id),
+                    "type": str(cur_ln_type_id),
                     "polarity": 0, 
                     "confidence": None,
                     "provenance": 'modelled',
                     "geometry": ln_geom
                     }
         ln_feat_list.append(ln_feat)  
-        
-        
-        
+
         ln_feat_id += 1
         
     
     if len(ln_feat_list) == 0:
         return
     
-    ln_type = {'id':str(ln_type_id), 'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
-                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
-    ln_type_list.append(ln_type)
-    ln_type_id += 1
+    for i in range(len(ln_type_list)):
+        ln_type_list[i]['id'] = str(ln_type_id + i)
+    
+    ln_type_id += len(ln_type_list)
     
     df_ln_type = pd.DataFrame(ln_type_list)
     df_ln_type.to_sql('line_type', db.engine , if_exists='append', index=False)

@@ -30,6 +30,7 @@ def create_gpkg(output_path, legend_json, map_name):
     db.write_models([
       db.model.map(id=map_name, name=map_name, image_url="test", source_url='test', image_width =img_width, image_height=img_height),
     ])
+#     print(db.enum_values('point_type'))
     return db
 
 
@@ -97,15 +98,23 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
         
         if len(feat['geometry']['coordinates']) == 0:
             continue # skip the empty geom
-            
+        pt_name = ' '.join(feat['properties']['type'].split('_'))
+        pt_type = {'id':str(pt_type_id), 'name':pt_name, 'description':feat['properties']['type']}
+        
+        if pt_type not in pt_type_list:
+            pt_type_list.append(pt_type)
+            cur_pt_type_id = len(pt_type_list) - 1
+        else:
+            cur_pt_type_id = pt_type_list.index(pt_type)
+        
         pt_feat = {"id":str(pt_feat_id),
                     "map_id": map_name,
-                    "type": str(pt_type_id),
+                    "type": str(cur_pt_type_id),
                     "dip_direction": 0,
                     "dip": 0,  
                     "confidence": None,
                     "provenance": 'modelled',
-                    "geometry": geo_pt#Point(geo_pt)
+                    "geometry": geo_pt
                     }
         pt_feat_list.append(pt_feat)
         pt_feat_id += 1
@@ -114,9 +123,11 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     if len(pt_feat_list) == 0:
         return 
     
-    pt_type = {'id':str(pt_type_id), 'name':"other", 'description':feat['properties']['type']}
-    pt_type_list.append(pt_type)
-    pt_type_id += 1
+    
+    for i in range(len(pt_type_list)):
+        pt_type_list[i]['id'] = str(pt_type_id + i)
+    
+    pt_type_id += len(pt_type_list)
     
     df_pt_type = pd.DataFrame(pt_type_list)
     df_pt_type.to_sql('point_type', db.engine , if_exists='append', index=False)
@@ -139,7 +150,7 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     global ln_type_id, ln_feat_id
     engine = 'pyogrio'
     ln_type_list, ln_feat_list = [], []
-    
+      
     for ind, feat in enumerate(feat_list):
         if feat['geometry']['type'] == 'MultiLineString':
             ln_geom = reverse_geom_coords(MultiLineString(feat['geometry']['coordinates']))
@@ -148,36 +159,43 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
         if len(feat['geometry']['coordinates']) == 0: # skip the empty geom
             continue
         
+        ln_type = {'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
+                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
+        
+        if ln_type not in ln_type_list:
+            ln_type_list.append(ln_type)
+            cur_ln_type_id = len(ln_type_list) - 1
+        else:
+            cur_ln_type_id = ln_type_list.index(ln_type)
+        
         ln_feat = {
                     "id":str(ln_feat_id),
                     "map_id": map_name,
                     "name": feat['properties']['name'],
-                    "type": str(ln_type_id),
+                    "type": str(cur_ln_type_id),
                     "polarity": 0, 
                     "confidence": None,
                     "provenance": 'modelled',
                     "geometry": ln_geom
                     }
         ln_feat_list.append(ln_feat)  
-        
-        
-        
+              
         ln_feat_id += 1
         
     
     if len(ln_feat_list) == 0:
         return
     
-    ln_type = {'id':str(ln_type_id), 'name':feat['properties']['name'][:-5], 'description':feat['properties']['descript'], \
-                   'dash_pattern':feat['properties']['dash'], 'symbol':feat['properties']['symbol']}
-    ln_type_list.append(ln_type)
-    ln_type_id += 1
+    for i in range(len(ln_type_list)):
+        ln_type_list[i]['id'] = str(ln_type_id + i)
+    
+    ln_type_id += len(ln_type_list)
     
     df_ln_type = pd.DataFrame(ln_type_list)
     df_ln_type.to_sql('line_type', db.engine , if_exists='append', index=False)
     
     df_ln_geom = pd.DataFrame(ln_feat_list)
-    gdf = gpd.GeoDataFrame(df_ln_geom) #, crs=crs
+    gdf = gpd.GeoDataFrame(df_ln_geom)
     gdf.to_file(
         db.file,
         layer="line_feature",
@@ -202,30 +220,31 @@ def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_out
         logger.error(f'{out_gpkg_path} exists. Please delete it.')
         sys.exit(1)
     
-#     # write polygon features    
-#     if os.path.exists(poly_output_path):
-#         poly_files = os.listdir(poly_output_path)
-#         for i, poly_geojson in enumerate(poly_files):
-#             if '.geojson' not in poly_geojson:
-#                 continue
-#             geojson_path = os.path.join(poly_output_path, poly_geojson)
-#             features = get_feature_from_geojson(geojson_path)    
-#             logger.info(f'Writing {i+1}/{len(poly_files)} polygon GeoJson into the img GPKG')
-#             write_poly_into_gpkg(db_instance, features[:], map_name)
-#     logger.info(f'All polygon GeoJson is written into the img GPKG')                
+    # write polygon features    
+    if os.path.exists(poly_output_path):
+        poly_files = os.listdir(poly_output_path)
+        for i, poly_geojson in enumerate(poly_files):
+            if '.geojson' not in poly_geojson:
+                continue
+            geojson_path = os.path.join(poly_output_path, poly_geojson)
+            features = get_feature_from_geojson(geojson_path)    
+            logger.info(f'Writing {i+1}/{len(poly_files)} polygon GeoJson into the img GPKG')
+            write_poly_into_gpkg(db_instance, features[:], map_name)
+    logger.info(f'All polygon GeoJson is written into the img GPKG')                
     
-#     # write point features
-#     if os.path.exists(pt_output_path):
-#         pt_files = os.listdir(pt_output_path)
-#         for i, pt_geojson in enumerate(pt_files):
-#             if '.geojson' not in pt_geojson:
-#                 continue  
-#             geojson_path = os.path.join(pt_output_path, pt_geojson)
-#             features = get_feature_from_geojson(geojson_path)    
-#             logger.info(f'Writing {i+1}/{len(pt_files)} point GeoJson into the img GPKG')
-#             write_pt_into_gpkg(db_instance, features[:], map_name)
-#     logger.info(f'All point GeoJson is written into the img GPKG')
-    # write line features
+    # write point features
+    if os.path.exists(pt_output_path):
+        pt_files = os.listdir(pt_output_path)
+        for i, pt_geojson in enumerate(pt_files):
+            if '.geojson' not in pt_geojson:
+                continue  
+            geojson_path = os.path.join(pt_output_path, pt_geojson)
+            features = get_feature_from_geojson(geojson_path)    
+            logger.info(f'Writing {i+1}/{len(pt_files)} point GeoJson into the img GPKG')
+            write_pt_into_gpkg(db_instance, features[:], map_name)
+    logger.info(f'All point GeoJson is written into the img GPKG')
+    
+#     write line features
     if os.path.exists(ln_output_path):
         ln_files = os.listdir(ln_output_path)
         for i, ln_geojson in enumerate(ln_files):
