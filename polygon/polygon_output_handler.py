@@ -16,6 +16,7 @@ from osgeo import ogr, gdal, osr
 import pandas as pd
 
 import multiprocessing
+import shutil
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -218,6 +219,17 @@ def polygon_output_handler():
 
 
 
+def copy_raster_output(dir_to_integrated_output):
+    map_name = target_map_name
+    polygon_feature_counter = 0
+    info_set = []
+    for fname in os.listdir(dir_to_raster_polygon):    # change directory as needed
+        if os.path.isfile(os.path.join(dir_to_raster_polygon, fname)):
+            #print(os.path.join(dir_to_raster_polygon, fname), map_name.replace('.tif', '_'))
+            if '_predict.png' in fname and map_name.replace('.tif', '_') in fname:
+                shutil.copyfile(os.path.join(dir_to_raster_polygon, fname), os.path.join(dir_to_integrated_output, fname))
+                
+
 
 
 path_to_source = 'Data/OR_Camas.tif' # raster tif
@@ -231,7 +243,7 @@ dir_to_integrated_output = 'Vectorization_Output'
 target_map_name = 'OR_Camas'
 
 
-def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_to_legend_description, input_path_to_json, input_dir_to_raster_polygon, input_dir_to_integrated_output):
+def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_to_legend_description, input_path_to_json, input_dir_to_raster_polygon, input_dir_to_integrated_output, input_vectorization):
     global path_to_source
     global path_to_legend_solution
     global path_to_legend_description
@@ -250,8 +262,11 @@ def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_
     path_list = path_to_source.replace('\\','/').split('/')
     target_map_name = os.path.splitext(path_list[-1])[0]
 
-    polygon_output_handler()
-    print('Vectorized outputs are settled at... ', dir_to_integrated_output)
+    if input_vectorization == True:
+        polygon_output_handler()
+        print('Vectorized outputs are settled at... ', dir_to_integrated_output)
+    else:
+        copy_raster_output(dir_to_integrated_output)
 
 
 

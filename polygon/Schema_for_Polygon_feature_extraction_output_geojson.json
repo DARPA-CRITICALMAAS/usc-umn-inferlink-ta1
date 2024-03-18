@@ -1,0 +1,72 @@
+{
+	"$schema": "Schema_for_Polygon_feature_extraction_output_geojson"
+    "type": "FeatureCollection",
+    "crs": {
+        "type": "name",
+        "properties": {
+            "name": "urn:ogc:def:crs:EPSG::3857"
+        }
+    },
+    "features": [{
+            "type": "Feature",
+            "properties": {
+                "id": Integer,
+                "name": "PolygonFeature",
+                "PolygonType": {
+                    "id": Integer,
+                    "name": String,
+                    "color": Hex_color_code,
+                    "pattern": String,
+                    "abbreviation": String,
+                    "description": String,
+                    "category": String
+                },
+                "GeologicUnit": {
+                    "name": String,
+                    "description": String,
+                    "comments": String,
+                    "age_text": String,
+                    "t_interval": String,
+                    "b_interval": String,
+                    "t_age": Integer,
+                    "b_age": Integer,
+                    "lithology": List[String]
+                }
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": Image_coordinates
+            }
+        }, {
+            "type": "Feature",
+            "properties": {
+                "id": Integer,
+                "name": "PolygonFeature",
+                "PolygonType": {
+                    "id": Integer,
+                    "name": String,
+                    "color": Hex_color_code,
+                    "pattern": String,
+                    "abbreviation": String,
+                    "description": String,
+                    "category": String
+                },
+                "GeologicUnit": {
+                    "name": String,
+                    "description": String,
+                    "comments": String,
+                    "age_text": String,
+                    "t_interval": String,
+                    "b_interval": String,
+                    "t_age": Integer,
+                    "b_age": Integer,
+                    "lithology": List[String]
+                }
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": Image_coordinates
+            }
+        },
+    ]
+}
