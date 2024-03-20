@@ -33,9 +33,9 @@ def run_segmentation(file, support_data_dir):
     print('image_size',image.size)
 
     resized_img, scaling_factor = resize_img(np.array(image))
-    seg_mask, bbox = run_sam(np.array(image), resized_img, scaling_factor, device, support_data_dir)
+    seg_mask, bbox, rotated_bbox_points = run_sam(np.array(image), resized_img, scaling_factor, device, support_data_dir)
 
-    return seg_mask, bbox, image, image.width, image.height
+    return seg_mask, rotated_bbox_points, image, image.width, image.height
 
 
 def load_data(topo_histo_meta_path, topo_current_meta_path):
@@ -344,59 +344,107 @@ def run_georeferencing(args):
 #     if os.path.exists(output_tiff):
 #         os.remove(output_tiff)
 #     os.system(command1)
+"""
+min_bbox_point: list of points, containing the rotated bounding box for map segmentation area, in the format of [row,col]
+row_first: output reformated bbox in [row,col] format, otherwise [col,row]
 
-    
+"""
+def reformat_bbox(min_bbox_points, row_first = True):
+
+    # Find the indices of the points with the minimum and maximum sum of coordinates
+    top_left_index = np.argmin(np.sum(min_bbox_points, axis=1))
+    bottom_right_index = np.argmax(np.sum(min_bbox_points, axis=1))
+
+    # Find the indices of the points with the minimum and maximum difference of coordinates
+    top_right_index = np.argmax(np.diff(min_bbox_points, axis=1))
+    bottom_left_index = np.argmin(np.diff(min_bbox_points, axis=1))
+
+    # Assign the identified points
+    top_left = min_bbox_points[top_left_index]
+    top_right = min_bbox_points[top_right_index]
+    bottom_right = min_bbox_points[bottom_right_index]
+    bottom_left = min_bbox_points[bottom_left_index]
+
+    if row_first:
+        ret_bbox =  {'top_left':top_left, 'top_right':top_right, 'bottom_right':bottom_right, 'bottom_left':bottom_left}
+    else:
+        ret_bbox = {'top_left':[top_left[1], top_left[0]], 'top_right':[top_right[1], top_right[0]], 
+                    'bottom_right':[bottom_right[1], bottom_right[0]], 'bottom_left':[bottom_left[1], bottom_left[0]]}
+
+    return ret_bbox 
+
+
 
 def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
 
     top1 = top10.iloc[0]
     
     left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
-    img_left, img_right, img_top, img_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3]
-    
-    if args.more_info:
-        top10_dict = top10.to_dict(orient='records') 
+    # img_left, img_right, img_top, img_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3] # for SAM axis aligned bbox
+    reformatted_bbox = reformat_bbox(seg_bbox, row_first = False)
+    px_points = [reformatted_bbox['top_left'],reformatted_bbox['top_right'], reformatted_bbox['bottom_right'],reformatted_bbox['bottom_left']]
+
+    geo_points = [[left,top],[right, top],[right, bottom],[left,bottom]]
+
+    print(geo_points)
+    print(px_points)
+
+    if args.reformat:
+        # top10_dict = top10.to_dict(orient='records') 
 
         # Use increasing numbers as keys
-        top10_dict = {i + 1: row for i, row in enumerate(top10_dict)}
-        bounds =   { 
-                     "width": width, 
-                     "height": height, 
-                     "title": title, 
-                     "toponyms": toponyms, 
-                     "seg_bbox": seg_bbox, 
-                    "geo":
-                        {"left":left, "right":right, "top":top, "bottom":bottom},
-                    "img":
-                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
-                    "top10": top10_dict,
-                }
-    else:
-        bounds =  { "geo":
-                        {"left":left, "right":right, "top":top, "bottom":bottom},
-                    "img":
-                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
-                }
+        # top10_dict = {i + 1: row for i, row in enumerate(top10_dict)}
+        # georef_output_dict =   { 
+        #              "width": width, 
+        #              "height": height, 
+        #              "title": title, 
+        #              "toponyms": toponyms, 
+        #              "seg_bbox": seg_bbox, 
+        #             "geo":
+        #                 {"left":left, "right":right, "top":top, "bottom":bottom},
+        #             "img":
+        #                 {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
+        #             "top10": top10_dict,
+        #         }
 
-        # gcp_list = []
+        gcp_list = []
         
-        # for i in range(4):
-        #     cur_gcp_dict = {"id": i} 
-        #     cur_gcp_dict["map_geom"] = []
-        #     cur_gcp_dict["px_geom"] = []
-        #     cur_gcp_dict["confidence"] = "None"
+        for i in range(4):
+            cur_gcp_dict = {"id": i+1} 
+            cur_gcp_dict["map_geom"] = geo_points[i]
+            cur_gcp_dict["px_geom"] = px_points[i]
+            cur_gcp_dict["confidence"] = "None"
+            gcp_list.append(cur_gcp_dict)
 
 
-        # bounds = {
-        #     "map":{
-        #         "name":
-        #         "projection_info": {"projection": "EPSG:4326", "provenance": "umn_georef",
-        #         "gcps": gcp_list
-        #     }
-        # }
+        georef_output_dict = {
+            "map":{
+                "name": os.path.basename(args.input_path).rsplit('.', 1)[0],
+                "projection_info": {"projection": "EPSG:4326", "provenance": "umn_georef",
+                "gcps": gcp_list}
+            }
+        }
+
+    else:
+        # import pdb 
+        # pdb.set_trace()
+        rows = np.array(seg_bbox)[:, 0]
+        cols = np.array(seg_bbox)[:, 1]
+
+        # Find left, right, top, and bottom coordinates
+        img_top = int(np.min(rows))
+        img_bottom = int(np.max(rows))
+        img_left = int(np.min(cols))
+        img_right = int(np.max(cols))
+
+        georef_output_dict =  { "geo":
+                        {"left":left, "right":right, "top":top, "bottom":bottom},
+                    "img":
+                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
+                }
 
     with open(args.output_path, 'w') as f:
-        json.dump(bounds, f)
+        json.dump(georef_output_dict, f)
 
 
 
@@ -408,6 +456,7 @@ def main():
     parser.add_argument('--output_path', type=str, default=None) 
     parser.add_argument('--temp_dir', type=str, default='temp') 
     parser.add_argument('--support_data_dir', type=str, default='support_data')
+    parser.add_argument('--reformat', action='store_true' )
     parser.add_argument('--more_info', action='store_true' )
     args = parser.parse_args()
     print('\n')
