@@ -217,7 +217,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    for legend_type in ['polygon']: #, 'line',  'point'
+    for legend_type in ['polygon' 'line',  'point']:
         # check the existence of input files
         legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
         legend_item_path = os.path.join(symbol_json_dir, \
