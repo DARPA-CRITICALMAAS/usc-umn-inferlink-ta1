@@ -19,25 +19,29 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument('--map_dir',
                     type=str,
-                   default='/data/weiweidu/criticalmaas_data/evaluation_maps')
+                   default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps')
 parser.add_argument('--legend_json_dir',
                    type=str,
-                   default='/data/weiweidu/criticalmaas_data/evaluation_legend_outputs')
+                   default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs')
 parser.add_argument('--symbol_json_dir',
                    type=str,
-                   default='/data/weiweidu/criticalmaas_data/hackathon2/evaluation_legend_item_outputs')
+                   default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_item_outputs')
 parser.add_argument('--map_name',
                    type=str,
-                   default='WY_CO_Peach')
+                   default='54565_18569')
 parser.add_argument('--temp_dir',
                   type=str,
                   default='/data/weiweidu/layout_segment_v2/temp')
 parser.add_argument('--output_dir',
                    type=str,
                    default='/data/weiweidu/temp')
+parser.add_argument('--log_path',
+                  type=str,
+                  default='./item_description_logger.log')
 
+args = parser.parse_args()
 logger = logging.getLogger('item_description_logger')
-handler = logging.FileHandler('item_description_logger.log', mode='a')
+handler = logging.FileHandler(f'{args.log_path}', mode='a')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -113,57 +117,58 @@ def run_item_description_extraction(legend_dir, legend_item_dir, map_name, map_d
         col_gpt4_input_path = generate_gpt4_input(refined_grouped_bbox, legend_area, map_tif, map_name, intermediate_dir)       
         
         for i, col_cent in enumerate(col_gpt4_input_path.keys()):
-            img_name = col_gpt4_input_path[col_cent]
-            img_path = os.path.join(intermediate_dir, img_name)
-            if not os.path.exists(img_path):
-                logger.warning(f'Image file not exists {img_path}')
-                continue
-            width = int(img_name.split('.')[0].split('_')[-2])
-            logger.info(f'The GPT4 is processing {i+1}/{len(col_gpt4_input_path.keys())} image {img_name}')
-            
-            heartbeat_interval = 20  # seconds
-            task_duration = 10  # seconds, for example
-            # Create an event to signal when to stop the heartbeat
-            stop_event = threading.Event()
-            # Start the heartbeat thread
-            heartbeat_thread = threading.Thread(target=heartbeat, args=(heartbeat_interval, stop_event))
-            heartbeat_thread.start()
-            # Run the long-running task
-            long_running_task(task_duration)
-            
-            for attempt in range(max_gpt_attempt):
-                logger.info(f'The GPT4 Attempt {attempt+1}/{max_gpt_attempt}')
-                try:
-                    gpt_json_res = gpt_extract_symbol_description(img_path, attempt)
-                    logger.info(f'The GPT4 done {i+1}/{len(col_gpt4_input_path.keys())} images in the legend area')
-                    break
-                except Exception as error:
-                    logger.warning(f'The GPT4 error: {error}')
-                    gpt_json_res = None
-#             gpt_json_res = None
-                
-           # Once the task is done, signal the heartbeat thread to stop and wait for it to finish
-            stop_event.set()
-            heartbeat_thread.join()
-            
-            if not gpt_json_res:
-                logger.warning(f'The GPT4 results are empty')
-            
-            
-            logger.info(f'OCR processing in image')
+            for img_name in col_gpt4_input_path[col_cent]:
+                img_path = os.path.join(intermediate_dir, img_name)
+                if not os.path.exists(img_path):
+                    logger.warning(f'Image file not exists {img_path}')
+                    continue
+                logger.info(f'GPT input image name {img_name}')
+                width = int(img_name.split('.')[0].split('_')[-2])
+                logger.info(f'The GPT4 is processing {i+1}/{len(col_gpt4_input_path.keys())} image {img_name}')
 
-            bbox_ocr_dict = get_symbol_names(map_tif, refined_grouped_bbox[col_cent], width) if refined_grouped_bbox!={} else {}
-            
-            logger.info(f'Matching the results from OCR and GPT4')
-            
-            matched_item_descr = match_orc_gpt_results(bbox_ocr_dict, gpt_json_res, map_tif)
-            
-            if matched_item_descr:
-                all_matched_symbol_descr = {**all_matched_symbol_descr, **matched_item_descr}
-            if gpt_json_res:
-                all_gpt_res = {**all_gpt_res, **gpt_json_res}
-            if bbox_ocr_dict:
-                all_bbox_ocr = {**all_bbox_ocr, **bbox_ocr_dict}
+                heartbeat_interval = 20  # seconds
+                task_duration = 10  # seconds, for example
+                # Create an event to signal when to stop the heartbeat
+                stop_event = threading.Event()
+                # Start the heartbeat thread
+                heartbeat_thread = threading.Thread(target=heartbeat, args=(heartbeat_interval, stop_event))
+                heartbeat_thread.start()
+                # Run the long-running task
+                long_running_task(task_duration)
+
+                for attempt in range(max_gpt_attempt):
+                    logger.info(f'The GPT4 Attempt {attempt+1}/{max_gpt_attempt}')
+                    try:
+                        gpt_json_res = gpt_extract_symbol_description(img_path, attempt)
+                        logger.info(f'The GPT4 done {i+1}/{len(col_gpt4_input_path.keys())} images in the legend area')
+                        break
+                    except Exception as error:
+                        logger.warning(f'The GPT4 error: {error}')
+                        gpt_json_res = None
+    #             gpt_json_res = None
+
+               # Once the task is done, signal the heartbeat thread to stop and wait for it to finish
+                stop_event.set()
+                heartbeat_thread.join()
+
+                if not gpt_json_res:
+                    logger.warning(f'The GPT4 results are empty')
+
+
+                logger.info(f'OCR processing in image')
+
+                bbox_ocr_dict = get_symbol_names(map_tif, refined_grouped_bbox[col_cent], width) if refined_grouped_bbox!={} else {}
+
+                logger.info(f'Matching the results from OCR and GPT4')
+
+                matched_item_descr = match_orc_gpt_results(bbox_ocr_dict, gpt_json_res, map_tif)
+
+                if matched_item_descr:
+                    all_matched_symbol_descr = {**all_matched_symbol_descr, **matched_item_descr}
+                if gpt_json_res:
+                    all_gpt_res = {**all_gpt_res, **gpt_json_res}
+                if bbox_ocr_dict:
+                    all_bbox_ocr = {**all_bbox_ocr, **bbox_ocr_dict}
     
     map_content_bbox, poly_bbox, ptln_bbox = read_legend_json(legend_dir, map_name)
 
@@ -212,7 +217,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    for legend_type in ['polygon', 'line',  'point']:
+    for legend_type in ['polygon']: #, 'line',  'point'
         # check the existence of input files
         legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
         legend_item_path = os.path.join(symbol_json_dir, \

@@ -32,11 +32,13 @@ python map_legend_segmentation.py --input_image xxx.tif --output_dir xxx --postp
 --postprocessing_for_crs: (bool) if transforming crs of output geojson is needed.
 --path_to_mapkurator_output: (str, optional) path to the mapkurator output geojson.
 --path_to_intermediate: (str, optional) directory that stores intermediate outputs. Default to 'intermediate'
---input_legend_segmentation: (str) path to the Uncharted's legend-area segmentation output json.
---competition_custom: (boo, optional) if map-area/ legend-area segmentation output from Uncharted follows their competition schema. Default to False.
+--input_legend_segmentation: (str, optional but recommended) path to the Uncharted's legend-area segmentation output json.
+--only_poly: (bool, optional) set to True if you only want to extract polygon legend items. Default to False.
+--competition_custom: (bool, optional) if map-area/ legend-area segmentation output from Uncharted follows their competition schema. Default to False.
 --version: (str, optional) a value indicating the version. Default to '1.2'.
 --log: (str, optional) path to the logging txt. Default to 'log_file.txt'.
 ```
 
 Please ignore the error messages regarding indexes and projections if there are any.
+Note that extracting line/ point legend items takes a much longer time than extracting only polygon legend items at current version.
 

@@ -68,9 +68,8 @@ if not os.path.isdir(final_output_dir):
     os.mkdir(final_output_dir)
 
 input_map_name = os.path.basename(os.path.dirname(input_dir_root+'/'))
-input_map_name =input_map_name.replace('_g1000_s1000','')
+input_map_name =input_map_name.replace('_g1000_s1000_wo_legend','')
 print(input_map_name)
-
 map_selected_models =[]
 try:
     map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
@@ -101,14 +100,14 @@ try:
     stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
     postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
 except Exception as Argument:
-    logger.warning("Problems in postprocessing module :{0}".format(each_map))  
+    logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
 total_time = end_time - start_time
 print(f"Total execution time: {total_time} seconds")
 
-## {map_name}_point.json.
-##--cropped_legend_dir /your/legend/directory --template_dir /your/template/directory --processed_legend_dir /your/processed/legend/directory
-# python run_final.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory  --map_patches_dir /your/patches/directory --model_weights_dir /your/weights/directory --output_dir_root /your/output/root/directory
-# python run_point_pipe.py --map_metadata_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_run/metadata/ --map_patches_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_run/map_patches/169_34067_g1000_s1000/ --model_weights_dir /home/yaoyi/jang0124/critical-maas/code/pipeline/model-name-official/Model_weights/ --output_dir_root /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_run/out-per-map/ 
+# ## {map_name}_point.json.
+# ##--cropped_legend_dir /your/legend/directory --template_dir /your/template/directory --processed_legend_dir /your/processed/legend/directory
+# # python run_final.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory  --map_patches_dir /your/patches/directory --model_weights_dir /your/weights/directory --output_dir_root /your/output/root/directory
+# # python run_point_pipe.py --map_metadata_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_run/metadata/ --map_patches_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/test-maps-crop/WY_CO_Peach_g1000_s1000_wo_legend/ --model_weights_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/offical-pipelne/point/src/pipeline-scripts/model_weights/ --output_dir_root /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_3/ 

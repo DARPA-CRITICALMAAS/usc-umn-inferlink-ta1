@@ -1,30 +1,51 @@
 import torch
 from transformers import AutoModelForTokenClassification, AutoTokenizer
+from fuzzywuzzy import fuzz
 import pandas as pd
 from rank_bm25 import BM25Okapi
 
-def prepare_bm25(df):
-    
-
+def get_topomaps_metadata(df):
     cand_text_list = []
     map_rowid_list = []
     for index, row in df.iterrows():
         # cand_text = row['map_name'] + row['primary_state'] + row['product_filename']
-        cand_text = row['primary_state'] + ' ' + row['map_name']  
+        cand_text = row['map_name']  
 
-        if not pd.isnull(row['state_list']): 
-            cand_text = cand_text + ' ' + row['state_list']
+        # if not pd.isnull(row['state_list']): 
+        #     cand_text = cand_text + ' ' + row['state_list']
 
         if not pd.isnull(row['county_list']): 
-            cand_text = cand_text + ' ' + row['county_list']
+            cand_text = cand_text + ' ' + row['county_list'].replace(',', ' ')
+
+        cand_text = cand_text + ' ' + row['primary_state'] 
         
         cand_text_list.append(cand_text)
         map_rowid_list.append(index)
 
+    return cand_text_list, map_rowid_list
 
+def fuzzy_find_top_k_matching(query_title, df, k=10):
+    cand_text_list, map_rowid_list = get_topomaps_metadata(df)
+    
+    matches = []
+
+    for row_id, cand_text in zip(map_rowid_list, cand_text_list):
+        title_similarity = fuzz.token_sort_ratio(query_title, cand_text)
+        matches.append((row_id, cand_text, title_similarity))
+
+    # Sort the matches based on similarity in descending order
+    sorted_matches = sorted(matches, key=lambda x: x[2], reverse=True)
+
+    # Return the top k matches
+    top_k_matches = sorted_matches[:k]
+    return top_k_matches
+
+
+def prepare_bm25(df):
+
+    cand_text_list, map_rowid_list = get_topomaps_metadata(df)
 
     corpus = cand_text_list
-
     tokenized_corpus = [doc.split(" ") for doc in corpus]
 
     bm25 = BM25Okapi(tokenized_corpus)

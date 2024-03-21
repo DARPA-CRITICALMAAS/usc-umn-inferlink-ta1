@@ -13,6 +13,28 @@ MODEL_TYPE = "vit_h"
 
 # checkpoint_path = "support_data/sam_vit_h_4b8939.pth"
 
+def min_rotated_bbox(mask):
+    # Find contours in the mask
+    contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Get the rotated bounding box for each contour
+    min_bbox = None
+    for contour in contours:
+        # Fit a rotated rectangle to the contour
+        rotated_rect = cv2.minAreaRect(contour)
+        
+        # Convert the rotated rectangle to points
+        box_points = cv2.boxPoints(rotated_rect)
+        box_points = np.int0(box_points)
+
+        # Update the minimum bounding box if it's not initialized or if the new box is smaller
+        if min_bbox is None or cv2.contourArea(box_points) < cv2.contourArea(min_bbox):
+            min_bbox = box_points
+    
+    # reverse x,y as opencv has different definition from numpy 
+    min_bbox = [[box[1], box[0]] for box in min_bbox]
+
+    return min_bbox
 
 
 def resize_img(img, max_size = 200):
@@ -85,13 +107,18 @@ def run_sam(image, resized_img, scaling_factor, device, support_data_dir):
     
     seg_mask = map_plot_area['segmentation']
     bbox = map_plot_area['bbox']
-    
+
     # pdb.set_trace()
     seg_mask = np.array(seg_mask * 255, dtype=np.uint8)
+    rotated_bbox_points = min_rotated_bbox(seg_mask)
     seg_mask = st.resize(seg_mask, (image.shape[0], image.shape[1]), order=0, preserve_range=True, anti_aliasing=True)
-    bbox = [int(a/scaling_factor) for a in bbox]
 
-    return seg_mask, bbox
+    
+
+    bbox = [int(a/scaling_factor) for a in bbox]
+    rotated_bbox_points = [[int(a/scaling_factor),int(b/scaling_factor)] for a,b in rotated_bbox_points]
+
+    return seg_mask, bbox, rotated_bbox_points
 
 
 def main():

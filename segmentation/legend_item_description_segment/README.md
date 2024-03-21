@@ -11,5 +11,5 @@ Before proceeding, please ensure that you have properly configured the GPT-4 API
 
 ## Running Command
 ```sh
-python gpt4_main.py --map_dir /dir/of/maps --legend_json_dir /dir/of/Uncharted/legend/segment/results --symbol_json_dir /dir/of/USC/legend/segment/results --map_name 'AK_Dillingham' --temp_dir /dir/of/images --output_dir /dir/to/save/json/output
+python gpt4_main.py --map_dir /dir/of/maps --legend_json_dir /dir/of/Uncharted/legend/segment/results --symbol_json_dir /dir/of/USC/legend/segment/results --map_name 'AK_Dillingham' --temp_dir /dir/of/images --output_dir /dir/to/save/json/output --log_path /path/to/save/log
 ```
