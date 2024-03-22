@@ -18,7 +18,7 @@ conda activate loam
 
 ### Create from Separate Steps
 
-This module has been tested with the latest version of pytorch-related libraries.
+This module has been tested with the CUDA versions 11.7, 11.8, and 12.3. Below is a setup run-through for 11.7 and 11.8.
 
 ```
 conda create -n loam python=3.9.16
@@ -63,11 +63,13 @@ Descriptions of the inputs are as follows.
 --path_to_tif: (str, mandatory) path to the source map tif.
 --path_to_json: (str, mandatory) (Legend-item segmentation output) path to the source map json. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/' to run and get the output json ([xxx]_PolygonType_internal.json). This conforms with the competition json format.
 --path_to_legend_solution: (str, mandatory) (Legend-item segmentation output) path to the legend-item segmentation output geojson. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_segmentation/' to run and get the output geojson ([xxx]_PolygonType.geojson). If no valid file for this argument is provided, one will only get raster outputs tif in 'LOAM_Intermediate/Metadata_Preprocessing/intermediate7(2)/Output'.
+
 --path_to_legend_description: (str, optional but recommended) (Legend-description segmentation output) path to the legend-description extraction output json. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_description_segment/' to run and get the output json ([xxx]_Polygon.json).
 --path_to_bound: (str, optional) path to the map-area segmentation output geojson. This can adapt to several different json formats. (e.g., [xxx]_map_segmentation.json or ch2_validation_evaluation_labels_coco.json)
 --dir_to_integrated_output: (str, optional) directory to the vectorization outputs geojson. (Default to 'Vectorization_Output/')
 --dir_to_intermediate: (str, optional) directory to the intermediate output files. (Default to 'Example_Output/')
 --log: (str, optional) path to the logging txt. (Default to 'log_file.txt')
+
 
 --dir_to_groundtruth: (str, optional) directory to the groundtruth data tif.
 --set_json: (bool, optional) whether to use the json file that conforms with the competition schema to identify the legend items. (Default to 'True', will automatically adjust depending on the other input arguments)
@@ -77,6 +79,8 @@ Descriptions of the inputs are as follows.
 
 --testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). Please see the following input argument regarding the tested sub-module(s) (Default to 'False')
 --testing_section: (int, optional) set a series of integers based on the sub-module(s) you want to test. e.g., 3, 23, or 123. (0 for metadata_preprocessing, 1 for metadata_postprocessing, 2 for loam_inference, and 3 for polygon_output_handler)
+
+--allow_cpu: (bool, optional, not recommended) allowing the model to run without access to any GPU. (Default to 'False')
 --trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (Default to '3') (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
 ```
 
