@@ -113,7 +113,13 @@ from LOAM.loam_model import LOAM
 def gpu_checker(input_allow_cpu):
     num_of_gpus = torch.cuda.device_count()
     
-    device = torch.device('cuda:0' if (torch.cuda.is_available()) else 'cpu')
+    try:
+        device = torch.device("cuda")
+    except:
+        print('Torch.device => cuda attempt failed...')
+        device = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
+    print('Using device... ', device)
+    
     netL = LOAM(n_channels=7, n_classes=2, bilinear=False).to(device)
     if device.type == 'cuda':
         if num_of_gpus > 1:

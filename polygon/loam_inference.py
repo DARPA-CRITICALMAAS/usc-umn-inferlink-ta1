@@ -747,10 +747,13 @@ def model_training():
         }
 
         logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-        #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        #logging.info(f'Using device {device}')
-        device = torch.device('cuda:0' if (torch.cuda.is_available()) else 'cpu')
-        logging.info(f'Using device {device}')
+        #device = torch.device('cuda:0' if (torch.cuda.is_available()) else 'cpu')
+        try:
+            device = torch.device("cuda")
+        except:
+            print('Torch.device => cuda attempt failed...')
+            device = torch.device('cuda' if (torch.cuda.is_available()) else 'cpu')
+        print('Using device... ', device)
         num_of_gpus = torch.cuda.device_count()
 
         # Change here to adapt to your data
