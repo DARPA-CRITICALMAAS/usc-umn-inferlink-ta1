@@ -61,7 +61,7 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
     # map_name = os.path.basename(os.path.dirname(crop_dir_path))
     shift_size = crop_shift_size
     file_list = glob.glob(os.path.join(pred_root,map_name) + '/*.json')
-    if len(file_list)!=0:
+    if len(file_list) != 0:
         map_data = []
         for file_path in file_list:
             get_h_w = os.path.basename(file_path).split('.')[0].split('_')
@@ -113,6 +113,18 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
                 feature_collection = FeatureCollection(features_per_symbol[each_pnt])
                 with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
                     dump(feature_collection, f, ensure_ascii=False)
+    
+    else:
+        stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
+        if not os.path.exists(stitch_output_dir_per_map):
+            os.makedirs(stitch_output_dir_per_map) 
+        empty_output =map_name+'_'+'empty'+'.geojson' 
+        output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
+        feature_collection = FeatureCollection({})
+
+        with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                    dump(feature_collection, f, ensure_ascii=False)
+
 
 
 

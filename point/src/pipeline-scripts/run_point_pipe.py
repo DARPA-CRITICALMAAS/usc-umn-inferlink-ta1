@@ -106,8 +106,4 @@ print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
 total_time = end_time - start_time
 print(f"Total execution time: {total_time} seconds")
-
-# ## {map_name}_point.json.
-# ##--cropped_legend_dir /your/legend/directory --template_dir /your/template/directory --processed_legend_dir /your/processed/legend/directory
-# # python run_final.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory  --map_patches_dir /your/patches/directory --model_weights_dir /your/weights/directory --output_dir_root /your/output/root/directory
-# # python run_point_pipe.py --map_metadata_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_run/metadata/ --map_patches_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/test-maps-crop/WY_CO_Peach_g1000_s1000_wo_legend/ --model_weights_dir /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/offical-pipelne/point/src/pipeline-scripts/model_weights/ --output_dir_root /home/yaoyi/jang0124/critical-maas/point-symbol-pipeline/main-pipeline/sample_3/ 
+ 

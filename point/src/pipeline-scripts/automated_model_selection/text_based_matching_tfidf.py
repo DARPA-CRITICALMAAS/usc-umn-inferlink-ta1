@@ -128,10 +128,9 @@ def text_based_matching(input_map_name, metadata_path,
     
     for metadata_file in glob.glob(os.path.join(metadata_path, "*.json")):                                      
         map_name = os.path.basename(metadata_file)
-        if '_gpt_point' in map_name: 
-            print('map_name',map_name)
+        if '_gpt_point' in map_name:          
             map_name = map_name.replace('_gpt_point.json','')
-            
+            print('map_name',map_name)
             if input_map_name in map_name:
                 if map_selected_models.get(input_map_name) is None:
                     map_selected_models[input_map_name] = []
