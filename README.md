@@ -4,6 +4,8 @@
 This repository houses the collaborative efforts of the University of Southern California (USC), the University of Minnesota (UMN), and the InferLink Corporation as part of DARPA's [CRITICALMAAS program](https://knowledge-computing.github.io/criticalmaas-web/) . 
 The project aims to develop advanced techniques for automated line, point, and polygon feature extraction for critical mineral symbols on historical maps, as well as the georeferencing of geologic maps.
 
+## Code Structure
+
 ```
 .
 │
