@@ -35,13 +35,13 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir ./pi
 --map_dir : Directory containing entire map sheets
 --map_metadata_dir: Directory to map metadata that contains the 
 information about coordinate of legend and map dimension. 
---map_patches_dir: Directory for input map patches directory per single map  <br>
---model_weights_dir: Directory to pretrained point feature detection model 
-weights  <br>
---symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend <br>
---output_dir_root: Root directory for output directory  <br>
---text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs <br> ```
-<!-- --cropped_legend_dir: Directory to save the cropped legend  <br>
+--map_patches_dir: Directory for input map patches directory per single map 
+--model_weights_dir: Directory to pretrained point feature detection model weights  
+--symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
+--output_dir_root: Root directory for output directory  
+--text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs  ```
+
+<!-- --cropped_legend_dir: Directory to save the cropped legend <br>
 --template_dir: Directory to the legend template  <br>
 --processed_legend_dir: Directory to save the processed cropped legend  <br> -->
 
