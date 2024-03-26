@@ -32,7 +32,7 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir ./pi
 
 ## Command Line Arguments:
 --map_metadata_dir: Directory to map metadata that contains the 
-information about coordinate of legend and map dimension. <br>
+information about coordinate of legend and map dimension. 
 <!-- --cropped_legend_dir: Directory to save the cropped legend  <br>
 --template_dir: Directory to the legend template  <br>
 --processed_legend_dir: Directory to save the processed cropped legend  <br> -->
