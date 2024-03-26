@@ -1,6 +1,6 @@
 # Map Cropping Module
 ## Overview
-Given the large dimensions of maps, this module crops a maps into patches for the follwoing modules (text spotting module and feature extraction module).
+Given the large dimensions of maps, this module crops a map into patches for the following modules (text spotting module and feature extraction modules).
 
 ## Environment
 - python 3.8
