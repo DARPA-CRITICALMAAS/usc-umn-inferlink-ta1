@@ -1,7 +1,8 @@
 # LDTR: Linear Object Detection Transformer for Accurate Graph Generation by Learning the N-hop Connectivity Information
 
-### LDTR is a Transformer-based model to autormaticallt detect linear objects from the topographic or geological maps
-
+### LDTR is a Transformer-based model to automatically detect linear objects from the topographic or geological maps
+## Environment
+This module extracts line features on a machine equipped with an Intel(R) Xeon(R) 16-Core CPU, 62 GB RAM, and 4 * 10GB memory NVIDIA TITAN Xp GPUs. It typically takes around 5 minutes to extract a single line feature from one map using one 10GB memory NVIDIA TITAN Xp GPU. Efficient utilization of GPU resources is necessary for the efficient execution of this module.
 ## Docker image to run LDTR to extract lines
 **Here is the command to run the LDTR docker image**
 - Pull LDTR docker image from docker-hub
@@ -13,8 +14,8 @@ nvidia-docker pull weiweiduan/ldtr_pytorch:version0
 nvidia-docker run -t -i -v {local_dir}:{docker_dir} -p 8888:8888 weiweiduan/ldtr_pytorch:version0 /bin/bash
 ```
 ## Dokcerfile Usage
-Dockerfile in this subdirectory is used to build the LDTR docker image. Please put requirements.txt and Dockerfile in the same folder when building the image. 
-The Dockerfile includes all libraries and dependencies to run LDTR except the MultiScaleDeformableAttention package. Please first build the image and run the image. After that, please install MultiScaleDeformableAttention in the dokcer container following the steps below:
+The dockerfile in this subdirectory is used to build the LDTR docker image. Please put requirements.txt and Dockerfile in the same folder when building the image. 
+The Dockerfile includes all libraries and dependencies to run LDTR except the MultiScaleDeformableAttention package. Please first build the image and run the image. After that, please install MultiScaleDeformableAttention in the docker container following the steps below:
 ```
 git clone https://github.com/fundamentalvision/Deformable-DETR.git
 cd /root/Deformable-DETR/models/ops
