@@ -7,13 +7,25 @@ This module combines outputs from other modules in th system into a single GeoPa
 - GDAL
 - geopandas
 - pandas
+- rasterio
 - CriticalMAAS TA1 geopackage library (developed by the TA4 team). Please refer [Link](https://github.com/DARPA-CRITICALMAAS/ta1-geopackage/tree/47f585a0386dd5db3e7a9d96cc53d1e1b4f2ce10) for installation 
 
 
 ## Running Command
-```sh
-python run_gpkg_writer.py --output_dir /dir/to/save/gpkg --map_name '22253_25695' --layout_output_dir /dir/to/outputs/of/legend/item-description/sgement/module --georef_output_dir /dir/to/outputs/of/georef/module --poly_output_dir /dir/to/outputs/of/polygon/module --ln_output_dir /dir/to/outputs/of/line/module --pt_output_dir /dir/to/outputs/of/point/module --nongeoref_map_dir /dir/to/tif/map --georef_map_output /dir/to/save/georeferenced/map
 ```
+sh python run_gpkg_writer.py \
+  --output_dir /dir/to/save/gpkg \
+  --map_name '22253_25695' \
+  --layout_output_dir /dir/to/outputs/of/legend/item-description/sgement/module \
+  --georef_output_dir /dir/to/outputs/of/georef/module \
+  --poly_output_dir /dir/to/outputs/of/polygon/module \
+  --ln_output_dir /dir/to/outputs/of/line/module \
+  --pt_output_dir /dir/to/outputs/of/point/module \
+  --nongeoref_map_dir /dir/to/tif/map \
+  --georef_map_output /dir/to/save/georeferenced/map \
+  --log_path /path/to/log/file
+```
+
 Notes: 
 - This module has three outputs: 1. georeferenced tif map, 2. GeoPackage in EPSG:4236 and 3.  GeoPackage in image coordinates
 - The inputs for this module follow the file structure below:
