@@ -7,6 +7,9 @@ This module combines outputs from other modules in the system into a single GeoP
 - GDAL
 - geopandas
 - pandas
+- shapely
+- pytest
+- pyproj
 - CriticalMAAS TA1 geopackage library (developed by the TA4 team). Please refer [Link](https://github.com/DARPA-CRITICALMAAS/ta1-geopackage/tree/47f585a0386dd5db3e7a9d96cc53d1e1b4f2ce10) for installation 
 This module is tested on a machine featuring an Intel(R) Xeon(R) 16-core CPU and 62 GB of RAM. It typically takes approximately 2 minutes to generate a GeoPackage for one map. 
 
