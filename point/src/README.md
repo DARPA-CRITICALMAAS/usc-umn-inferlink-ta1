@@ -10,6 +10,7 @@ Below are steps for conda environment settings
 conda create -n pnt_pipe python=3.8 -y
 conda activate pnt_pipe
 conda install pytorch==1.10.0 torchvision==0.11.0 torchaudio==0.10.0 cudatoolkit=11.3 -c pytorch -c conda-forge
+cd pipeline-scripts
 pip install -r requirements.txt
 
 ```
@@ -17,6 +18,7 @@ pip install -r requirements.txt
 ### Setting with conda environment.yaml
 ```
 conda env create -f point_environment.yml
+cd pipeline-scripts
 conda activate pnt_pipe
 ```
 
