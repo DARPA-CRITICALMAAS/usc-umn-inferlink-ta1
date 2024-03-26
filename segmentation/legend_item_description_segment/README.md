@@ -8,6 +8,7 @@ Before proceeding, please ensure that you have properly configured the GPT-4 API
 ## Environment
 - python 3.10.11
 - pytesseract 0.3.10
+This module is tested on a machine featuring an Intel(R) Xeon(R) 16-core CPU and 62 GB of RAM. It typically takes approximately 3 minutes to extract pairs of map-keys and descriptions from the legend area of a map.
 
 ## Running Command
 ```sh
