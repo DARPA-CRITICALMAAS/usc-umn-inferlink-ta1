@@ -30,7 +30,6 @@ def create_gpkg(output_path, legend_json, map_name):
     db.write_models([
       db.model.map(id=map_name, name=map_name, image_url="test", source_url='test', image_width =img_width, image_height=img_height),
     ])
-#     print(db.enum_values('point_type'))
     return db
 
 
@@ -42,10 +41,12 @@ def write_poly_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     poly_type_list = []
     poly_geom, poly_property = [], []
     
+    if len(feat_list) == 0:
+        return
+    
     for ind, feat in enumerate(feat_list):        
         geo_poly = feat['geometry']['coordinates']
         multi_geo_poly = MultiPolygon([Polygon(i) for i in geo_poly])
-#         print(multi_geo_poly)
         if len(geo_poly[0]) == 0: # skip empty geom
             continue
         
@@ -92,6 +93,9 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     engine = 'pyogrio'
     pt_type_list = []
     pt_feat_list = []
+    
+    if len(feat_list) == 0:
+        return
     
     for ind, feat in enumerate(feat_list):
         geo_pt = Point(feat['geometry']['coordinates'])
@@ -150,6 +154,9 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     global ln_type_id, ln_feat_id
     engine = 'pyogrio'
     ln_type_list, ln_feat_list = [], []
+    
+    if len(feat_list) == 0:
+        return
       
     for ind, feat in enumerate(feat_list):
         if feat['geometry']['type'] == 'MultiLineString':
@@ -207,11 +214,11 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
     return
 
     
-def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_output_path, pt_output_path, logger):    
-    
+def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_output_path, pt_output_path, logger):   
+
     with open(layout_output_path, 'r') as json_file:
         legend_item_descr_json = json.load(json_file)
-        
+      
     out_gpkg_path = f'{output_dir}/{map_name}_img.gpkg'    
     try:
         db_instance = create_gpkg(out_gpkg_path, legend_item_descr_json, map_name)
@@ -224,7 +231,7 @@ def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_out
     if os.path.exists(poly_output_path):
         poly_files = os.listdir(poly_output_path)
         for i, poly_geojson in enumerate(poly_files):
-            if '.geojson' not in poly_geojson:
+            if '.geojson' not in poly_geojson or '_empty' in poly_geojson:
                 continue
             geojson_path = os.path.join(poly_output_path, poly_geojson)
             features = get_feature_from_geojson(geojson_path)    
@@ -236,7 +243,7 @@ def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_out
     if os.path.exists(pt_output_path):
         pt_files = os.listdir(pt_output_path)
         for i, pt_geojson in enumerate(pt_files):
-            if '.geojson' not in pt_geojson:
+            if '.geojson' not in pt_geojson or '_empty' in pt_geojson:
                 continue  
             geojson_path = os.path.join(pt_output_path, pt_geojson)
             features = get_feature_from_geojson(geojson_path)    
@@ -248,7 +255,7 @@ def write_gpkg(output_dir, map_name,layout_output_path, poly_output_path, ln_out
     if os.path.exists(ln_output_path):
         ln_files = os.listdir(ln_output_path)
         for i, ln_geojson in enumerate(ln_files):
-            if '.geojson' not in ln_geojson:
+            if '.geojson' not in ln_geojson or '_empty' in ln_geojson:
                 continue
             ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
             features = get_feature_from_geojson(ln_geojson_path)

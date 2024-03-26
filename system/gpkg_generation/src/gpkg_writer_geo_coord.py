@@ -96,6 +96,9 @@ def write_poly_into_gpkg(db, feat_list, map_name, crs):
     poly_type_list = []
     poly_geom, poly_property = [], []
     
+    if len(feat_list) == 0:
+        return
+    
     for ind, feat in enumerate(feat_list):        
         geo_poly = feat['geometry']['coordinates']
         multi_geo_poly = MultiPolygon([Polygon(i) for i in geo_poly])
@@ -147,6 +150,9 @@ def write_pt_into_gpkg(db, feat_list, map_name, crs):
     engine = 'pyogrio'
     pt_type_list = []
     pt_feat_list = []
+    
+    if len(feat_list) == 0:
+        return
     
     for ind, feat in enumerate(feat_list):
         geo_pt = Point(feat['geometry']['coordinates'])
@@ -204,6 +210,9 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs):
     global ln_type_id, ln_feat_id
     engine = 'pyogrio'
     ln_type_list, ln_feat_list = [], []
+    
+    if len(feat_list) == 0:
+        return
     
     for ind, feat in enumerate(feat_list):
 #         print(feat['geometry']['coordinates'])
