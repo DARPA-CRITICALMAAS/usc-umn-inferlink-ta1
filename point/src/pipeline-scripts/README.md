@@ -36,8 +36,7 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 
 ```
 --map_dir : Directory containing entire map sheets
---map_metadata_dir: Directory to map metadata that contains the 
-information about coordinate of legend and map dimension. 
+--map_metadata_dir: Directory to map metadata that contains the information about coordinate of legend and map dimension. 
 --map_patches_dir: Directory for input map patches directory per single map 
 --model_weights_dir: Directory to pretrained point feature detection model weights  
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
