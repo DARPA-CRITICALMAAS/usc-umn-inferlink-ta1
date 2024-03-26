@@ -1,6 +1,6 @@
 # GeoPackge Generation Module
 ## Overview
-This module combines outputs from other modules in th system into a single GeoPackage output. 
+This module combines outputs from other modules in the system into a single GeoPackage output. 
 
 ## Environment
 - python 3.10
@@ -8,7 +8,7 @@ This module combines outputs from other modules in th system into a single GeoPa
 - geopandas
 - pandas
 - CriticalMAAS TA1 geopackage library (developed by the TA4 team). Please refer [Link](https://github.com/DARPA-CRITICALMAAS/ta1-geopackage/tree/47f585a0386dd5db3e7a9d96cc53d1e1b4f2ce10) for installation 
-
+This module is tested on a machine featuring an Intel(R) Xeon(R) 16-core CPU and 62 GB of RAM. It typically takes approximately 2 minutes to generate a GeoPackage for one map. 
 
 ## Running Command
 ```sh
