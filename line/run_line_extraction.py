@@ -385,6 +385,7 @@ if __name__ == '__main__':
                     predict_png(args)
                 if args.predict_vector:
                     output_geo_path = predict_shp(args)
+                is_extracted = True
                     
             if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
                 is_extracted = True
@@ -394,4 +395,12 @@ if __name__ == '__main__':
                     predict_png(args)
                 if args.predict_vector:
                     output_geo_path = predict_shp(args)
-                    
+                is_extracted = True
+    if not is_extracted:
+        output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
+        empty_geojson = {
+            "type": "FeatureCollection",
+            "features": []
+        }
+        with open(output_geo_path, 'w') as f:
+            json.dump(empty_geojson, f)
