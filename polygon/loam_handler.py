@@ -264,6 +264,23 @@ def main():
     legend_counter = poly_size_check(input_json)
     if legend_counter == 0:
         print('There is zero poly legend items in this map...')
+        path_list = input_tif.replace('\\','/').split('/')
+        target_map_name = os.path.splitext(path_list[-1])[0]
+        output_geo_path = os.path.join(dir_to_integrated_output, target_map_name, target_map_name+'_empty.geojson')
+
+        if not os.path.exists(dir_to_integrated_output):
+            os.makedirs(dir_to_integrated_output)
+        if not os.path.exists(os.path.join(dir_to_integrated_output, target_map_name)):
+            os.makedirs(os.path.join(dir_to_integrated_output, target_map_name))
+
+        empty_geojson = {
+            "type": "FeatureCollection",
+            "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3857" } },
+            "features": []
+        }
+
+        with open(output_geo_path, 'w') as f:
+            json.dump(empty_geojson, f)
         sys.exit(0)
 
     this_testing = str_to_bool(args.testing)
