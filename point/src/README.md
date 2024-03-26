@@ -10,7 +10,6 @@ Below are steps for conda environment settings
 conda create -n pnt_pipe python=3.8 -y
 conda activate pnt_pipe
 conda install pytorch==1.10.0 torchvision==0.11.0 torchaudio==0.10.0 cudatoolkit=11.3 -c pytorch -c conda-forge
-cd pipeline-scripts
 pip install -r requirements.txt
 
 ```
@@ -18,7 +17,6 @@ pip install -r requirements.txt
 ### Setting with conda environment.yaml
 ```
 conda env create -f point_environment.yml
-cd pipeline-scripts
 conda activate pnt_pipe
 ```
 
@@ -27,11 +25,11 @@ conda activate pnt_pipe
 To run the point symbol pipeline, use the following command:
 
 ``` 
-python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir ./pipeline-scripts/model_weight/ --text_spotting_dir /your/textspotter/output/directory --output_dir_root /your/output/root/directory --symbol_info_json_file ./pipeline-scripts/automated_model_selection/symbol_info.json
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --text_spotting_dir /your/textspotter/output/directory --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json
 ```
 
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir ./pipeline-scripts/model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file ./pipeline-scripts/automated_model_selection/symbol_info.json```) 
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) 
 
 
 ## Command Line Arguments:
