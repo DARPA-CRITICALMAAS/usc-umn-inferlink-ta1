@@ -5,9 +5,34 @@ import cv2
 import json
 import numpy as np
 import logging
+from argparse import ArgumentParser
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+parser = ArgumentParser()
+parser.add_argument('--input_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps', help='a folder has testing maps')
+parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs_', help='a output folder from the legend segment module')
+parser.add_argument('--map_name', default='10705_61989', help='testing map name')
+parser.add_argument('--patch_sizes', type=int, nargs='+', help='a list of patch size')
+parser.add_argument('--strides', type=int, nargs='+', \
+                    help='a list of stride, the length is the same as path_sizes')
+parser.add_argument('--only_crop_map_area', type=str2bool, nargs='+', \
+                    help='a list of T/F, the length is the same as path_sizes')
+parser.add_argument('--output_dir', default='/data/weiweidu', help='a folder to save cropped images')
+parser.add_argument('--log_path', type=str, default='./map_crop_logger.log')
+
+args = parser.parse_args()
 
 logger = logging.getLogger('map_crop_logger')
-handler = logging.FileHandler('map_crop_logger.log', mode='a')
+handler = logging.FileHandler(f'{args.log_path}', mode='a')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -99,29 +124,7 @@ def crop_map_main(args):
         logger.info(f'Saved the cropped images for {args.map_name} in {output_path}')
     return
 
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 if __name__ == '__main__':
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    parser.add_argument('--input_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps', help='a folder has testing maps')
-    parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs_', help='a output folder from the legend segment module')
-    parser.add_argument('--map_name', default='10705_61989', help='testing map name')
-    parser.add_argument('--patch_sizes', type=int, nargs='+', help='a list of patch size')
-    parser.add_argument('--strides', type=int, nargs='+', \
-                        help='a list of stride, the length is the same as path_sizes')
-    parser.add_argument('--only_crop_map_area', type=str2bool, nargs='+', \
-                        help='a list of T/F, the length is the same as path_sizes')
-    parser.add_argument('--output_dir', default='/data/weiweidu', help='a folder to save cropped images')
-    
     args = parser.parse_args()
     
     #sanity check
