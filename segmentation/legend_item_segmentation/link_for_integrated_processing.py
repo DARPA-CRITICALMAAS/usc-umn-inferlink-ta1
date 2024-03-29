@@ -157,17 +157,17 @@ def processing_uncharted_json_single(input_image, input_legend_segmentation, tar
 
     for this_gj in gj['segments']:
         if 'legend_polygons' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder0, np.array(this_gj['poly_bounds']), 1)
+            cv2.fillConvexPoly(legend_area_placeholder0, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder0[legend_area_placeholder0 > 0] = 255
-            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds']), 1)
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder[legend_area_placeholder > 0] = 255
         if 'legend_points_lines' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder1, np.array(this_gj['poly_bounds']), 1)
+            cv2.fillConvexPoly(legend_area_placeholder1, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder1[legend_area_placeholder1 > 0] = 255
-            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds']), 1)
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder[legend_area_placeholder > 0] = 255
         if 'map' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder2, np.array(this_gj['poly_bounds']), 1)
+            cv2.fillConvexPoly(legend_area_placeholder2, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder2[legend_area_placeholder2 > 0] = 255
 
     cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_poly.tif'), legend_area_placeholder0)
