@@ -444,7 +444,7 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
                 }
 
     with open(args.output_path, 'w') as f:
-        json.dump(georef_output_dict, f)
+        json.dump([georef_output_dict], f)
 
 
 
