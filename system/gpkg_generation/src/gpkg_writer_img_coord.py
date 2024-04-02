@@ -8,6 +8,8 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon, Point, MultiLineString, Polygon, LineString
 from pytest import mark
 from gpkg_helper import reverse_geom_coords
+import sqlalchemy
+import sys
 
 poly_feat_id, poly_type_id, geo_unit_id, ln_type_id, ln_feat_id, pt_feat_id, pt_type_id = 0, 0, 0, 0, 0, 0, 0
 
@@ -60,7 +62,7 @@ def write_poly_into_gpkg(db, feat_list, map_name, crs="CRITICALMAAS:pixel"):
         poly_geom.append(poly_feat)
         poly_feat_id += 1
         
-    geo_unit_feat = {'id': str(geo_unit_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age': feat['properties']['GeologicUnit']['t_age'] if feat['properties']['GeologicUnit']['t_age'] and feat['properties']['GeologicUnit']['t_age'].isdigit() else None, 'b_age':feat['properties']['GeologicUnit']['b_age'] if feat['properties']['GeologicUnit']['b_age'] and feat['properties']['GeologicUnit']['b_age'].isdigit() else None,'lithology':feat['properties']['GeologicUnit']['lithology']}
+    geo_unit_feat = {'id': str(geo_unit_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age': feat['properties']['GeologicUnit']['t_age'] if feat['properties']['GeologicUnit']['t_age'] and feat['properties']['GeologicUnit']['t_age'] else None, 'b_age':feat['properties']['GeologicUnit']['b_age'] if feat['properties']['GeologicUnit']['b_age'] and feat['properties']['GeologicUnit']['b_age'] else None,'lithology':feat['properties']['GeologicUnit']['lithology']}
 
     geo_unit_list.append(geo_unit_feat)
 

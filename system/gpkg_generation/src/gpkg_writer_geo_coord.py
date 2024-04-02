@@ -116,7 +116,7 @@ def write_poly_into_gpkg(db, feat_list, map_name, crs):
         poly_geom.append(poly_feat)
         poly_feat_id += 1
         
-    geo_unit_feat = {'id': str(geo_unit_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age': feat['properties']['GeologicUnit']['t_age'] if feat['properties']['GeologicUnit']['t_age'] and feat['properties']['GeologicUnit']['t_age'].isdigit() else None, 'b_age':feat['properties']['GeologicUnit']['b_age'] if feat['properties']['GeologicUnit']['b_age'] and feat['properties']['GeologicUnit']['b_age'].isdigit() else None,'lithology':feat['properties']['GeologicUnit']['lithology']}
+    geo_unit_feat = {'id': str(geo_unit_id), 'name':feat['properties']['GeologicUnit']['name'],'description':feat['properties']['GeologicUnit']['description'], 'age_text':feat['properties']['GeologicUnit']['age_text'],'t_interval':feat['properties']['GeologicUnit']['t_interval'], 'b_interval':feat['properties']['GeologicUnit']['b_interval'], 't_age': feat['properties']['GeologicUnit']['t_age'] if feat['properties']['GeologicUnit']['t_age'] and feat['properties']['GeologicUnit']['t_age'] else None, 'b_age':feat['properties']['GeologicUnit']['b_age'] if feat['properties']['GeologicUnit']['b_age'] and feat['properties']['GeologicUnit']['b_age'] else None,'lithology':feat['properties']['GeologicUnit']['lithology']}
 
     geo_unit_list.append(geo_unit_feat)
     
