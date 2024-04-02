@@ -216,7 +216,10 @@ def write_ln_into_gpkg(db, feat_list, map_name, crs):
     
     for ind, feat in enumerate(feat_list):
 #         print(feat['geometry']['coordinates'])
-        ln_geom = MultiLineString([feat['geometry']['coordinates']])
+        if feat['geometry']['type'] == 'MultiLineString':
+            ln_geom = MultiLineString(feat['geometry']['coordinates'])
+        else:
+            ln_geom = LineString(feat['geometry']['coordinates'])
         if len(feat['geometry']['coordinates']) == 0: # skip the empty geom
             continue
         
@@ -293,7 +296,7 @@ def write_gpkg(output_dir, map_name, layout_output_path, \
     if os.path.exists(poly_output_path):
         poly_files = os.listdir(poly_output_path)
         for i, poly_geojson in enumerate(poly_files):
-            if '.geojson' not in poly_geojson:
+            if '.geojson' not in poly_geojson or '_empty' in poly_geojson:
                 continue                        
             img_poly_geojson_path = os.path.join(poly_output_path, poly_geojson)
             geo_poly_geojson_path = img2geo_geojson(trans_matrix, img_poly_geojson_path)
@@ -306,7 +309,7 @@ def write_gpkg(output_dir, map_name, layout_output_path, \
     if os.path.exists(pt_output_path):
         pt_files = os.listdir(pt_output_path)
         for i, pt_geojson in enumerate(pt_files):
-            if '.geojson' not in pt_geojson:
+            if '.geojson' not in pt_geojson or '_empty' in pt_geojson::
                 continue  
             img_pt_geojson_path = os.path.join(pt_output_path, pt_geojson)
             geo_pt_geojson_path = img2geo_geojson(trans_matrix, img_pt_geojson_path)
@@ -318,7 +321,7 @@ def write_gpkg(output_dir, map_name, layout_output_path, \
     if os.path.exists(ln_output_path):
         ln_files = os.listdir(ln_output_path)
         for i, ln_geojson in enumerate(ln_files):
-            if '.geojson' not in ln_geojson:
+            if '.geojson' not in ln_geojson or '_empty' in ln_geojson:
                 continue
             img_ln_geojson_path = os.path.join(ln_output_path, ln_geojson)
             geo_ln_geojson_path = img2geo_geojson(trans_matrix, img_ln_geojson_path)
