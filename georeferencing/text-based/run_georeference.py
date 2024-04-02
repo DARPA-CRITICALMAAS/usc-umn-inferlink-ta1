@@ -414,13 +414,14 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
             cur_gcp_dict["map_geom"] = geo_points[i]
             cur_gcp_dict["px_geom"] = px_points[i]
             cur_gcp_dict["confidence"] = "None"
+            cur_gcp_dict["provenance"] = "modelled"
             gcp_list.append(cur_gcp_dict)
 
 
         georef_output_dict = {
             "map":{
                 "name": os.path.basename(args.input_path).rsplit('.', 1)[0],
-                "projection_info": {"projection": "EPSG:4326", "provenance": "umn_georef",
+                "projection_info": {"projection": "EPSG:4326", "provenance":"modelled",
                 "gcps": gcp_list}
             }
         }
