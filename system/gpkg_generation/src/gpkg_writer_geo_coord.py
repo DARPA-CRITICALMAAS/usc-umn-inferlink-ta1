@@ -309,7 +309,7 @@ def write_gpkg(output_dir, map_name, layout_output_path, \
     if os.path.exists(pt_output_path):
         pt_files = os.listdir(pt_output_path)
         for i, pt_geojson in enumerate(pt_files):
-            if '.geojson' not in pt_geojson or '_empty' in pt_geojson::
+            if '.geojson' not in pt_geojson or '_empty' in pt_geojson:
                 continue  
             img_pt_geojson_path = os.path.join(pt_output_path, pt_geojson)
             geo_pt_geojson_path = img2geo_geojson(trans_matrix, img_pt_geojson_path)
