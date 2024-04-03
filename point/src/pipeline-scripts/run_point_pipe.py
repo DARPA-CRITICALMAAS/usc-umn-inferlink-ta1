@@ -67,8 +67,14 @@ final_output_dir = os.path.join(output_dir_root, 'output-per-symbol')
 if not os.path.isdir(final_output_dir):
     os.mkdir(final_output_dir)
 
-input_map_name = os.path.basename(os.path.dirname(input_dir_root+'/'))
-input_map_name =input_map_name.replace('_g1000_s1000_wo_legend','')
+crop_map_name = os.path.basename(os.path.dirname(input_dir_root+'/'))
+crop_name_list = crop_map_name.split('_')
+map_name_list = crop_name_list[:-4]
+input_map_name = ''
+for idx,each_str in enumerate(map_name_list):
+    input_map_name += each_str
+    if idx != len(map_name_list)-1:
+        input_map_name += '_'
 print(input_map_name)
 map_selected_models =[]
 try:
