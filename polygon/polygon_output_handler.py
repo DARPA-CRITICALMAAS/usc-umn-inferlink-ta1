@@ -118,7 +118,12 @@ def polygon_output_handler():
         os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate'))
     if not os.path.exists(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name)):
         os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name))
-    
+    if not os.path.exists(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0')):
+        os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0'))
+    if not os.path.exists(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_1')):
+        os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_1'))
+    if not os.path.exists(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2')):
+        os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2'))
 
     link_description = True
     if os.path.isfile(path_to_legend_solution) == False:

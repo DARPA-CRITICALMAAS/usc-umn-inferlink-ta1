@@ -243,9 +243,15 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
     '''
     #print(mirrored_polygon)
 
+    debugging_for_unreproducible_error = True
+
     # Simplify the vectorization results
     mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
     mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
+
+    if debugging_for_unreproducible_error:
+        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
 
     for index, poi in mirrored_polygon.iterrows():
         this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
@@ -253,11 +259,34 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
         this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
         this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
         mirrored_polygon.loc[index, 'geometry'] = this_reduced_polygon
+
+        if debugging_for_unreproducible_error and index == 0:
+            f = open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature_breakdown.txt')), 'w')
+            f.write(fname.replace('_predict.png', ''))
+            f.write('\n\npoi["geometry"]: \n' + str(poi['geometry']))
+            this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
+            f.write('\n\nthis_reduced_polygon_v1: \n' + str(this_reduced_polygon))
+            this_reduced_polygon = this_reduced_polygon.buffer(2).buffer(-4).buffer(2)
+            f.write('\n\nthis_reduced_polygon_v2: \n' + str(this_reduced_polygon))
+            this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
+            f.write('\n\nthis_reduced_polygon_v3: \n' + str(this_reduced_polygon))
+            this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
+            f.write('\n\nthis_reduced_polygon_v4: \n' + str(this_reduced_polygon))
+            f.close()
+
     
+    if debugging_for_unreproducible_error:
+        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_1', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
+
     mirrored_polygon = mirrored_polygon.explode()
     mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
     mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
     
+    if debugging_for_unreproducible_error:
+        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
+
     #mirrored_polygon = mirrored_polygon.drop('level_0', axis=1)
     #mirrored_polygon = mirrored_polygon.drop('level_1', axis=1)
     mirrored_polygon.reset_index(inplace=True)
