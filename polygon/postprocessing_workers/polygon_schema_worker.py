@@ -257,7 +257,7 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
         this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
         this_reduced_polygon = this_reduced_polygon.buffer(2).buffer(-4).buffer(2)
         this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
-        this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
+        # this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
         mirrored_polygon.loc[index, 'geometry'] = this_reduced_polygon
 
         if debugging_for_unreproducible_error and index == 0:
