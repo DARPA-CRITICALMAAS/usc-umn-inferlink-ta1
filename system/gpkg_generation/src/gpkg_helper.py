@@ -28,7 +28,7 @@ def reverse_geom_coords(geom):
     elif isinstance(geom, (MultiLineString)):
         multiline = []
         for i, line in enumerate(geom.geoms):
-            multiline.append(LineString([(x, y) for x, y in line.coords]))
+            multiline.append(LineString([(y, x) for x, y in line.coords]))
         return MultiLineString(multiline)
     else:
         # Extend to other geometry types if necessary
