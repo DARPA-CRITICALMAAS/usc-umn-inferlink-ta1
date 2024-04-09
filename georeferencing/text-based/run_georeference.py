@@ -413,7 +413,7 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
             cur_gcp_dict = {"id": i+1} 
             cur_gcp_dict["map_geom"] = geo_points[i]
             cur_gcp_dict["px_geom"] = px_points[i]
-            cur_gcp_dict["confidence"] = "None"
+            cur_gcp_dict["confidence"] = None
             cur_gcp_dict["provenance"] = "modelled"
             gcp_list.append(cur_gcp_dict)
 
@@ -426,26 +426,40 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
             }
         }
 
+        with open(args.output_path, 'w') as f:
+            json.dump([georef_output_dict], f)
+
     else:
-        # import pdb 
-        # pdb.set_trace()
-        rows = np.array(seg_bbox)[:, 0]
-        cols = np.array(seg_bbox)[:, 1]
+        gcp_list = []
+        
+        for i in range(4):
+            cur_gcp_dict = {"gcp_id": i+1} 
+            cur_gcp_dict["map_geom"] = {"latitude":geo_points[i][1], "longitude":geo_points[i][0]}
+            cur_gcp_dict["px_geom"] = {"columns_from_left":px_points[i][1], "rows_from_top":px_points[i][0]} 
+            cur_gcp_dict["confidence"] = None
+            cur_gcp_dict["model"] = "umn"
+            cur_gcp_dict["model_version"] = "0.0.1"
+            cur_gcp_dict["crs"] = "EPSG:4326"
+            gcp_list.append(cur_gcp_dict)
 
-        # Find left, right, top, and bottom coordinates
-        img_top = int(np.min(rows))
-        img_bottom = int(np.max(rows))
-        img_left = int(np.min(cols))
-        img_right = int(np.max(cols))
+        
+        georef_output_dict = {
+            "cog_id": None,
+            # "map_name": os.path.basename(args.input_path).rsplit('.', 1)[0],
+            "georeference_results":[
+                {
+                    "likely_CRSs":["EPSG:4326"],
+                    "map_area": None,
+                    "projections": None,
+                },
+            ],
+            "gcps": gcp_list,
+            "system":"umn",
+            "system_version":"0.0.1"
+        }
 
-        georef_output_dict =  { "geo":
-                        {"left":left, "right":right, "top":top, "bottom":bottom},
-                    "img":
-                        {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
-                }
-
-    with open(args.output_path, 'w') as f:
-        json.dump([georef_output_dict], f)
+        with open(args.output_path, 'w') as f:
+            json.dump(georef_output_dict, f, indent = 4)
 
 
 
