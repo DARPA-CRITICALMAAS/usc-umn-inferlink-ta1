@@ -59,10 +59,6 @@ predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
     os.makedirs(predict_output_dir)
 
-stitch_output_dir = os.path.join(output_dir_root, 'stitch-per-symbol')
-if not os.path.isdir(stitch_output_dir):
-    os.mkdir(stitch_output_dir)
-
 final_output_dir = os.path.join(output_dir_root, 'output-per-symbol')
 if not os.path.isdir(final_output_dir):
     os.mkdir(final_output_dir)
@@ -95,18 +91,12 @@ if os.path.exists(map_input_dir_root):
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
-        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, stitch_output_dir, crop_shift_size)
+        stitch_to_each_point_cdr(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, crop_shift_size)
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
     logger.warning("No cropped image patches exists : {0}".format(map_input_dir_root))    
 
-print(" === Running a postprocessing module === ")
-try: 
-    stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
-    postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
-except Exception as Argument:
-    logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
