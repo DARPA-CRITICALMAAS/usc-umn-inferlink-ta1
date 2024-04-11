@@ -17,6 +17,82 @@ import pandas as pd
 
 
 
+def rebuilding_json(gj, this_abbr, rounding_off=False):
+    # Process to combine 'properties' and 'geometry' at the same level
+    combined_features = []
+    for feature in gj['features']:
+        combined_feature = {**feature['properties'], **feature['geometry']}
+        combined_features.append(combined_feature)
+
+    for feature in combined_features:
+        polygon_feature = {
+            "id": f"polygon_feature_{this_abbr}_instance_{feature['id']}",
+            "geometry": {
+                # Use the existing 'coordinates' from the feature's geometry
+                "coordinates": feature['coordinates']
+            },
+            "properties": {
+                "model": feature.get('model'),  # Using .get() to avoid KeyError if key doesn't exist
+                "model_version": feature.get('model_version'),
+                "confidence": feature.get('confidence'),
+                "model_config": feature.get('model_config'),
+            }
+        }
+
+        feature['polygon_features'] = {
+            "features": [polygon_feature]
+        }
+    
+
+    for feature in combined_features:
+        if 'coordinates' in feature:
+            del feature['coordinates']
+        if 'model' in feature:
+            del feature['model']
+        if 'model_version' in feature:
+            del feature['model_version']
+        if 'confidence' in feature:
+            del feature['confidence']
+        if 'model_config' in feature:
+            del feature['model_config']
+        if 'type' in feature:
+            del feature['type']
+        
+        # some formatting fix
+        feature['id'] = 'polygon_feature_'+str(int(this_abbr))+'_instance_'+str(feature['id'])
+
+        if 'legend_bbox' in feature and feature['legend_bbox']:
+            bbox_str = feature['legend_bbox'].strip('POLYGON ((').strip('))')
+            if rounding_off==True:
+                feature['legend_bbox'] = [list(map(int, coord.split())) for coord in bbox_str.split(', ')]
+            else:
+                bbox_list = [list(map(float, coord.split())) for coord in bbox_str.split(', ')]
+                feature['legend_bbox'] = [[round(coord, 1) for coord in point] for point in bbox_list]
+        
+        if 'polygon_features' in feature:
+            for polygon_feature in feature['polygon_features']['features']:
+                if rounding_off==True:
+                    int_coords = [[[int(coord) for coord in point] for point in polygon] for polygon in polygon_feature['geometry']['coordinates']]
+                    polygon_feature['geometry']['coordinates'] = int_coords
+                else:
+                    rounded_coords = [[[round(coord, 3) for coord in point] for point in polygon] for polygon in polygon_feature['geometry']['coordinates']]
+                    polygon_feature['geometry']['coordinates'] = rounded_coords
+    
+    return combined_features
+
+
+
+def recursive_updating_none(obj):
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            obj[key] = recursive_updating_none(value)
+    elif isinstance(obj, list):
+        obj = [recursive_updating_none(item) for item in obj]
+    elif obj == "":
+        return None
+    return obj
+
+
 def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_info, map_name, fname, dir_to_raster_polygon, dir_to_integrated_output, targeted_crs):
     chronology_age_b_int = [0.0042, 0.0082, 0.0117, 0.129, 0.774, 1.80, 2.58, 
                     3.60, 5.333, 7.246, 11.63, 13.82, 15.97, 20.44, 23.03, 
@@ -269,7 +345,6 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
 
 
 
-    #os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson'))
     mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'name', 'geometry', 
                                                     'PolygonType', #: {'id', 'name', 'color', 'pattern', 'abbreviation', 'description', 'category'},  
                                                     'GeologicUnit'#: {'name', 'description', 'comments', 'age_text', 't_interval', 'b_interval', 't_age', 'b_age', 'lithology'}
@@ -286,8 +361,6 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
     mirrored_polygon['cdr_projection_id'] = [None for _ in range(polygon_extraction.shape[0])]
     mirrored_polygon['legend_bbox'] = [str(info_for_this_poly['geometry'].values[0]) for _ in range(polygon_extraction.shape[0])]
     
-    #mirrored_polygon['polygon_features'] = [({'features': {'id': polygon_extraction['id'], 'properties': {'model':polygon_extraction['model'], 'model_version':polygon_extraction['model_version'], 'confidence':polygon_extraction['confidence']}}}) for _ in range(polygon_extraction.shape[0])]
-
     if info_for_this_poly.shape[0] != 1:
         mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(polygon_extraction.shape[0])]
         mirrored_polygon['abbreviation'] = [None for _ in range(polygon_extraction.shape[0])]
@@ -323,64 +396,11 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
     mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')), driver='GeoJSON')
 
 
+
     with open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')),) as f:
         gj = json.load(f)
-
-
-
-    # Process to combine 'properties' and 'geometry' at the same level
-    combined_features = []
-    for feature in gj['features']:
-        combined_feature = {**feature['properties'], **feature['geometry']}
-        combined_features.append(combined_feature)
-
-    for feature in combined_features:
-        polygon_feature = {
-            "id": f"polygon_feature_{this_abbr}_instance_{feature['id']}",
-            "geometry": {
-                # Use the existing 'coordinates' from the feature's geometry
-                "coordinates": feature['coordinates']
-            },
-            "properties": {
-                "model": feature.get('model'),  # Using .get() to avoid KeyError if key doesn't exist
-                "model_version": feature.get('model_version'),
-                "confidence": feature.get('confidence'),
-                "model_config": feature.get('model_config'),
-            }
-        }
-
-        feature['polygon_features'] = {
-            "features": [polygon_feature]
-        }
-    
-
-    for feature in combined_features:
-        if 'coordinates' in feature:
-            del feature['coordinates']
-        if 'model' in feature:
-            del feature['model']
-        if 'model_version' in feature:
-            del feature['model_version']
-        if 'confidence' in feature:
-            del feature['confidence']
-        if 'model_config' in feature:
-            del feature['model_config']
-        if 'type' in feature:
-            del feature['type']
-        
-        # some formatting fix
-        feature['id'] = 'polygon_feature_'+str(int(this_abbr))+'_instance_'+str(feature['id'])
-
-        if 'legend_bbox' in feature and feature['legend_bbox']:
-            bbox_str = feature['legend_bbox'].strip('POLYGON ((').strip('))')
-            bbox_list = [list(map(int, coord.split())) for coord in bbox_str.split(', ')]
-            feature['legend_bbox'] = bbox_list
-        
-        if 'polygon_features' in feature:
-            for polygon_feature in feature['polygon_features']['features']:
-                int_coords = [[[int(coord) for coord in point] for point in polygon] for polygon in polygon_feature['geometry']['coordinates']]
-                polygon_feature['geometry']['coordinates'] = int_coords
-
+    combined_features = rebuilding_json(gj, this_abbr, rounding_off=False)
+    combined_features = recursive_updating_none(combined_features)
 
     #empty_geojson = polygon_extraction.set_index('id').T.to_dict('dict')
     with open(os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson')), 'w') as outfile: 
@@ -391,3 +411,5 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
 
 
     return True
+
+
