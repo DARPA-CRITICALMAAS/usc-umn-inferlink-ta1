@@ -397,6 +397,8 @@ if __name__ == '__main__':
                     output_geo_path = predict_shp(args)
                 is_extracted = True
     if not is_extracted:
+        if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
+            os.mkdir(f'{args.prediction_dir}/{args.map_name}')
         output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
         empty_geojson = {
             "type": "FeatureCollection",
