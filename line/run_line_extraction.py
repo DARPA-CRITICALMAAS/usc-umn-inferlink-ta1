@@ -13,6 +13,7 @@ from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_li
 from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
+from helper.write_cdr_geojson import write_geojson_cdr
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -244,7 +245,7 @@ def construct_graph(args, map_content_mask):
                     n1_in_map = [n1[0] + x_id, n1[1] + y_id]
                     n2_in_map = [n2[0] + x_id, n2[1] + y_id]
                     
-                    line = geometry.LineString([[n1_in_map[0],n1_in_map[1]], [n2_in_map[0],n2_in_map[1]]])
+                    line = geometry.LineString([[n1_in_map[1],n1_in_map[0]], [n2_in_map[1],n2_in_map[0]]])
                     lines = add_lines_sindex(line, lines, args)
                     
             batch_cnt += 1
@@ -279,7 +280,7 @@ def predict_png(args):
     for line in lines:                       
         node1, node2 = list(line.coords)
         node1, node2 = [int(node1[0]), int(node1[1])], [int(node2[0]), int(node2[1])]
-        cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 1)
+        cv2.line(pred_png, (node1[0], node1[1]), (node2[0], node2[1]), (255,255,255), 1)
     save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
@@ -323,16 +324,13 @@ def predict_shp(args, description=None):
     
     dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-    output_shp_attr_path = shp_path[:-4] + '_attr.shp'
-    write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                    legend_text=description, image_coords=True)
+
     geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
     if not os.path.exists(geojson_output_dir):
         os.mkdir(geojson_output_dir)
-
     geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-    shp_file = geopandas.read_file(output_shp_attr_path)
-    shp_file.to_file(geojson_path, driver='GeoJSON')
+    
+    write_geojson_cdr(geojson_path, dash_pattern_dict, legend_text=description)
     print('*** save the predicted geojson in {} ***'.format(geojson_path))
     return geojson_path
     
@@ -397,6 +395,8 @@ if __name__ == '__main__':
                     output_geo_path = predict_shp(args)
                 is_extracted = True
     if not is_extracted:
+        if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
+            os.mkdir(f'{args.prediction_dir}/{args.map_name}')
         output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
         empty_geojson = {
             "type": "FeatureCollection",
