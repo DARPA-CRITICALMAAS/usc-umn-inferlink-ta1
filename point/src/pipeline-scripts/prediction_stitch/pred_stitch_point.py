@@ -18,6 +18,7 @@ import geopandas
 # logging.basicConfig(level=logging.INFO) 
 import torch
 
+
 def predict_img_patches(map_name,crop_dir_path,model_dir_root,selected_models,predict_output_dir):
 
     # map_name = os.path.basename(os.path.dirname(crop_dir_path))
@@ -57,9 +58,32 @@ def predict_img_patches(map_name,crop_dir_path,model_dir_root,selected_models,pr
             with open(out_file_path, "w") as out:
                 json.dump(entire_res, out)
 
-def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shift_size): 
+def write_to_tif(out_file_path, output_tif):
+    output_tif = output_tif.astype(np.uint8)
+    im = Image.fromarray(output_tif) 
+    im.save(out_file_path, "TIFF")
+
+
+def geodict_to_raster(geodict,pnt_name,map_name,map_sheet_dir,raster_output_dir, empty_flag):
+    #input: geodict : dictionary per each symbol
+    map_sheet_file = map_name + ".tif"
+    file_path = os.path.join(map_sheet_dir, map_sheet_file)
+    tif_image = Image.open(file_path)
+    width, height = tif_image.size
+
+    raster_layer_per_pnt = np.zeros((height,width))
+    if not empty_flag:
+        point_features_list = geodict['features']     
+        for point_feature_info in point_features_list:
+            coord = point_feature_info['geometry']['coordinates']
+            x, y = int(coord[0]), int(coord[1])
+            raster_layer_per_pnt[y,x] = 1
+  
+    write_to_tif(os.path.join(raster_output_dir,map_name +'_'+pnt_name+'.tif'), raster_layer_per_pnt)
+
+def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_sheets_dir ,save_raster): 
     # map_name = os.path.basename(os.path.dirname(crop_dir_path))
-    shift_size = crop_shift_size
+    # shift_size = crop_shift_size
     file_list = glob.glob(os.path.join(pred_root,map_name) + '/*.json')
     if len(file_list) != 0:
         map_data = []
@@ -106,24 +130,31 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
             os.makedirs(stitch_output_dir_per_map) 
+
         if len(features_per_symbol) != 0:
             for each_pnt in features_per_symbol.keys():
-                each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
-                output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,each_file_per_pnt_name)
                 feature_collection = FeatureCollection(features_per_symbol[each_pnt])
-                with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
-                    dump(feature_collection, f, ensure_ascii=False)
+                if not save_raster:
+                    each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
+                    output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,each_file_per_pnt_name)              
+                    with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                        dump(feature_collection, f, ensure_ascii=False)
+                else:
+                    geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
     
     else:
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
             os.makedirs(stitch_output_dir_per_map) 
-        empty_output =map_name+'_'+'empty'+'.geojson' 
-        output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
         feature_collection = FeatureCollection({})
+        if not save_raster:    
+            empty_output =map_name+'_'+'empty'+'.geojson' 
+            output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
+            with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                        dump(feature_collection, f, ensure_ascii=False)
+        else:
+            geodict_to_raster(feature_collection,'empty',map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=True)
 
-        with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
-                    dump(feature_collection, f, ensure_ascii=False)
 
 
 

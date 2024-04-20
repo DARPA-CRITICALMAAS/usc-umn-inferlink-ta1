@@ -35,7 +35,8 @@ def parse_arguments():
                         help="Json file contains internal metadata for point symbols.")
     parser.add_argument("--output_dir_root", type=str, default="",
                         help="Root directory for output directory.")
-
+    parser.add_argument("--save_raster", default=False, action ='store_true',
+                        help="Root directory for output directory.")
     return parser.parse_args()
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ start_time = time.time()
 
 args = parse_arguments()
 
+map_sheets_dir =  args.map_dir
 metadata_path = args.map_metadata_dir
 spotter_path = args.text_spotting_dir
 input_dir_root = args.map_patches_dir
@@ -53,7 +55,8 @@ model_weights_dir = args.model_weights_dir
 output_dir_root = args.output_dir_root
 symbol_info_json_file = args.symbol_info_json_file
 crop_shift_size = args.crop_shift_size
-
+save_raster = args.save_raster
+print(save_raster)
 
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
@@ -95,18 +98,18 @@ if os.path.exists(map_input_dir_root):
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
-        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, stitch_output_dir, crop_shift_size)
+        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, map_sheets_dir ,save_raster)
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
     logger.warning("No cropped image patches exists : {0}".format(map_input_dir_root))    
 
-print(" === Running a postprocessing module === ")
-try: 
-    stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
-    postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
-except Exception as Argument:
-    logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
+# print(" === Running a postprocessing module === ")
+# try: 
+#     stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
+#     postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
+# except Exception as Argument:
+#     logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
