@@ -24,10 +24,16 @@ conda activate pnt_pipe
 
 To run the point symbol pipeline, use the following command:
 
-``` 
-python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --text_spotting_dir /your/textspotter/output/directory --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json
-```
+(1) Generate raster layer output: (add ```--save_raster``` argument ) 
 
+``` 
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --save_raster
+```
+(2) Generate geojson output: (remove ```--save_raster``` argument ) 
+
+``` 
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json 
+```
 
 This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) 
 
