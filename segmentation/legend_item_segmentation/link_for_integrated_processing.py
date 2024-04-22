@@ -50,10 +50,10 @@ def processing_uncharted_json_batch(input_legend_segmentation, target_map_name, 
         #print(target_map_name.split('.')[0], this_file_name)
         if target_map_name.split('.')[0] in this_file_name.replace('%20', ' '):
             target_id = this_id
-            legend_area_placeholder = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int8)
-            legend_area_placeholder0 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int8)
-            legend_area_placeholder1 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int8)
-            legend_area_placeholder2 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int8)
+            legend_area_placeholder = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int32)
+            legend_area_placeholder0 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int32)
+            legend_area_placeholder1 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int32)
+            legend_area_placeholder2 = np.zeros((this_gj['height'], this_gj['width']), dtype=np.int32)
             break
     
     cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'), legend_area_placeholder.astype(np.int8))
@@ -150,24 +150,24 @@ def processing_uncharted_json_single(input_image, input_legend_segmentation, tar
     
     img0 = cv2.imread(input_image)
     gray0 = cv2.cvtColor(img0,cv2.COLOR_BGR2GRAY)
-    legend_area_placeholder = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int8)
-    legend_area_placeholder0 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int8)
-    legend_area_placeholder1 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int8)
-    legend_area_placeholder2 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int8)
+    legend_area_placeholder = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int32)
+    legend_area_placeholder0 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int32)
+    legend_area_placeholder1 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int32)
+    legend_area_placeholder2 = np.zeros((gray0.shape[0],gray0.shape[1]), dtype=np.int32)
 
     for this_gj in gj['segments']:
         if 'legend_polygons' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder0, np.array(this_gj['poly_bounds'], dtype=np.int8), 1)
+            cv2.fillConvexPoly(legend_area_placeholder0, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder0[legend_area_placeholder0 > 0] = 255
-            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int8), 1)
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder[legend_area_placeholder > 0] = 255
         if 'legend_points_lines' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder1, np.array(this_gj['poly_bounds'], dtype=np.int8), 1)
+            cv2.fillConvexPoly(legend_area_placeholder1, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder1[legend_area_placeholder1 > 0] = 255
-            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int8), 1)
+            cv2.fillConvexPoly(legend_area_placeholder, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder[legend_area_placeholder > 0] = 255
         if 'map' in this_gj['class_label']:
-            cv2.fillConvexPoly(legend_area_placeholder2, np.array(this_gj['poly_bounds'], dtype=np.int8), 1)
+            cv2.fillConvexPoly(legend_area_placeholder2, np.array(this_gj['poly_bounds'], dtype=np.int32), 1)
             legend_area_placeholder2[legend_area_placeholder2 > 0] = 255
 
     cv2.imwrite(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_poly.tif'), legend_area_placeholder0.astype(np.int8))
