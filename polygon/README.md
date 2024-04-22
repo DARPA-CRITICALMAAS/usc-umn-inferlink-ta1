@@ -66,7 +66,8 @@ Descriptions of the inputs are as follows.
 
 --path_to_legend_description: (str, optional but recommended) (Legend-description segmentation output) path to the legend-description extraction output json. Please refer to 'usc-umn-inferlink-ta1/segmentation/legend_item_description_segment/' to run and get the output json ([xxx]_Polygon.json).
 --path_to_bound: (str, optional) path to the map-area segmentation output geojson. This can adapt to several different json formats. (e.g., [xxx]_map_segmentation.json or ch2_validation_evaluation_labels_coco.json)
---dir_to_integrated_output: (str, optional) directory to the vectorization outputs geojson. (Default to 'Vectorization_Output/')
+--dir_to_integrated_output: (str, optional) directory to the vectorization outputs geojson. (Default to 'Example_Output/LOAM_Output')
+--dir_to_raster_output: (str, optional) directory to the raster outputs tif. (Default to 'Example_Output/LOAM_Raster_Output')
 --dir_to_intermediate: (str, optional) directory to the intermediate output files. (Default to 'Example_Output/')
 --log: (str, optional) path to the logging txt. (Default to 'log_file.txt')
 
