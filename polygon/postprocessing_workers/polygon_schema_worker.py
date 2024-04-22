@@ -359,7 +359,8 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
     #mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
     mirrored_polygon['crs'] = ['CRITICALMAAS:pixel, EPSG:3857' for _ in range(polygon_extraction.shape[0])]
     mirrored_polygon['cdr_projection_id'] = [None for _ in range(polygon_extraction.shape[0])]
-    mirrored_polygon['legend_bbox'] = [str(info_for_this_poly['geometry'].values[0]) for _ in range(polygon_extraction.shape[0])]
+    if info_for_this_poly.shape[0] > 0:
+        mirrored_polygon['legend_bbox'] = [str(info_for_this_poly['geometry'].values[0]) for _ in range(polygon_extraction.shape[0])]
     
     if info_for_this_poly.shape[0] != 1:
         mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(polygon_extraction.shape[0])]
