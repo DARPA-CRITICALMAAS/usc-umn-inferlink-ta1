@@ -81,6 +81,9 @@ Descriptions of the inputs are as follows.
 --testing: (bool, optional) set to TRUE if you only want to test particular sub-module(s). Please see the following input argument regarding the tested sub-module(s) (Default to 'False')
 --testing_section: (int, optional) set a series of integers based on the sub-module(s) you want to test. e.g., 3, 23, or 123. (0 for metadata_preprocessing, 1 for metadata_postprocessing, 2 for loam_inference, and 3 for polygon_output_handler)
 
+--set_json: (bool, optional) set to TRUE if you only use competition json. (Default to 'False')
+--set_schema: (bool, optional) set to TRUE if you do not want to follow output schema. (Default to 'False')
+
 --allow_cpu: (bool, optional, not recommended) allowing the model to run without access to any GPU. (Default to 'False')
 --trade_off: (int, optional) set a value that indicates your trade-off between efficiency and accuracy. (Default to '3') (0 for highest accuracy with lowest efficiency, and 6 for highest efficiency with lowest accuracy)
 ```
