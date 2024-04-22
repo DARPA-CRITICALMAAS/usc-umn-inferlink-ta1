@@ -76,7 +76,7 @@ def argument_checker():
 
 
 
-def file_checker(input_tif, input_json, path_to_legend_solution, path_to_legend_description, input_path_to_model):
+def file_checker(input_tif, input_json, path_to_legend_solution, path_to_legend_description, input_path_to_model, inpt_set_schema):
     # make sure that files needed are existing...
     file_integrity = True
     if os.path.isfile(input_tif) == False :
@@ -87,11 +87,11 @@ def file_checker(input_tif, input_json, path_to_legend_solution, path_to_legend_
         print('Please provide the correct path to the json file from legend-item segmentation for bounding box...')
         print('Current path:' + input_json)
         file_integrity = False
-    if os.path.isfile(path_to_legend_solution) == False or '.geojson' not in path_to_legend_solution:
+    if inpt_set_schema == True and (os.path.isfile(path_to_legend_solution) == False or '.json' not in input_json):
         print('Please provide the correct path to the geojson file from legend-item segmentation for schema format...')
         print('Current path:' + path_to_legend_solution)
         file_integrity = False
-    if os.path.isfile(path_to_legend_description) == False:
+    if inpt_set_schema == True and (os.path.isfile(path_to_legend_description) == False):
         print('Please provide the correct path to the json file from legend-description extraction for schema content...')
         print('Current path:' + path_to_legend_description)
         file_integrity = False
@@ -205,6 +205,7 @@ def main():
     #dir_to_solution = args.dir_to_solution
     dir_to_groundtruth = args.dir_to_groundtruth
     set_json = str_to_bool(args.set_json)
+    set_schema = str_to_bool(args.set_schema)
     map_preprocessing = str_to_bool(args.map_area_segmentation)
     performance_evaluation = str_to_bool(args.performance_evaluation)
 
@@ -227,6 +228,10 @@ def main():
     except:
         print('Please input a valid number for number of threads in multi-processing...')
         sys.exit(1)
+    
+    if set_json:
+        path_to_legend_solution = 'placeholder.geojson'
+        path_to_legend_description = 'placeholder.json'
     
     print('')
     print('')
@@ -261,7 +266,7 @@ def main():
             map_preprocessing = True
 
     
-    file_checker(input_tif, input_json, path_to_legend_solution, path_to_legend_description, input_path_to_model)
+    file_checker(input_tif, input_json, path_to_legend_solution, path_to_legend_description, input_path_to_model, set_schema)
     gpu_checker(input_allow_cpu)
     
     legend_counter = poly_size_check(input_json)
@@ -335,6 +340,7 @@ def main():
             input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
             input_dir_to_integrated_output = dir_to_integrated_output,
             input_dir_to_raster_output = dir_to_raster_output,
+            input_set_schema = set_schema,
             input_vectorization = True
         )
     else:
@@ -397,6 +403,7 @@ def main():
                 input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
                 input_dir_to_integrated_output = dir_to_integrated_output,
                 input_dir_to_raster_output = dir_to_raster_output,
+                input_set_schema = set_schema,
                 input_vectorization = True
             )
 
@@ -425,7 +432,8 @@ if __name__ == '__main__':
     parser.add_argument('--dir_to_intermediate', type=str, default='Example_Output') # default='LOAM_Intermediate/Metadata_Preprocessing/'
     parser.add_argument('--dir_to_groundtruth', type=str, default='Data/validation_groundtruth')
 
-    parser.add_argument('--set_json', type=str, default='True')
+    parser.add_argument('--set_json', type=str, default='False')
+    parser.add_argument('--set_schema', type=str, default='True')
     parser.add_argument('--map_area_segmentation', type=str, default='False')
     parser.add_argument('--performance_evaluation', type=str, default='False')
 
