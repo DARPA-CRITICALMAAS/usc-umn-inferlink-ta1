@@ -21,7 +21,7 @@ import shutil
 import warnings
 warnings.filterwarnings("ignore")
 
-
+import postprocessing_workers.geojson_to_tif as geojson_to_tif
 import postprocessing_workers.polygon_schema_worker as polygon_schema_worker
 PROCESSES = 10
 
@@ -125,6 +125,10 @@ def polygon_output_handler():
     if not os.path.exists(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2')):
         os.makedirs(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2'))
 
+    if not os.path.exists(os.path.join(dir_to_raster_output, map_name)):
+        os.makedirs(os.path.join(dir_to_raster_output, map_name))
+    
+
     link_description = True
     if os.path.isfile(path_to_legend_solution) == False:
         print('Please provide the output file from legend-item segmentation that has the suffix of "_PolygonType.geojson"...')
@@ -221,6 +225,42 @@ def polygon_output_handler():
                 polygon_feature_counter = polygon_feature_counter + 1
                 if polygon_feature_counter % 10 == 0:
                     print('Finalizing vectorization of polygon features...... ('+str(polygon_feature_counter)+'/'+str(len(info_set))+')')
+    
+
+
+    info_set_v0 = []
+    path_to_source_tif = os.path.join(path_to_source)
+    example_input = cv2.imread(path_to_source_tif)
+    example_input_shape = example_input.shape
+    for fname in os.listdir(dir_to_raster_polygon):
+        if os.path.isfile(os.path.join(dir_to_raster_polygon, fname)):
+            #print(os.path.join(dir_to_raster_polygon, fname), map_name.replace('.tif', '_'))
+            if '_predict.png' in fname and map_name.replace('.tif', '_') in fname:
+                path_to_extraction_geojson = os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson'))
+                path_to_extraction_tif = os.path.join(dir_to_raster_output, map_name, fname.replace('_predict.png', '_PolygonFeature.tif'))
+                info_set_v0.append([path_to_extraction_geojson, path_to_extraction_tif, example_input_shape])
+    print(len(info_set))
+
+
+
+    with multiprocessing.Pool(PROCESSES) as pool:
+        #multiprocessing_results = [pool.apply_async(validation_evaluation_worker, (info_id,info_set[info_id],)) for info_id in range(0, len(info_set))]
+        callback = pool.starmap_async(geojson_to_tif.geojson_to_tif, [(info_id, info_set_v0[info_id], ) for info_id in range(0, len(info_set_v0))]) # len(info_set)
+        multiprocessing_results  = callback.get()
+            
+        for returned_info in multiprocessing_results:
+            #map_name, legend_name, precision, recall, f_score = returned_info
+            try:
+                returned = returned_info
+                get_output_tif = returned[0]
+                path_to_output_tif = returned[1]
+
+                if get_output_tif == False:
+                    print('geojson not available due to large file size...')
+                    print(path_to_output_tif)
+            except:
+                print('Error occured during geojson_to_tif...')
+
 
 
 
@@ -244,17 +284,19 @@ path_to_json = 'Data/OR_Camas.json' # json listing all map keys => will be the s
 
 dir_to_raster_polygon = 'LOAM_Intermediate/predict/cma/'
 dir_to_integrated_output = 'Vectorization_Output'
+dir_to_raster_output = 'Raster_Output'
 
 target_map_name = 'OR_Camas'
 
 
-def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_to_legend_description, input_path_to_json, input_dir_to_raster_polygon, input_dir_to_integrated_output, input_vectorization):
+def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_to_legend_description, input_path_to_json, input_dir_to_raster_polygon, input_dir_to_integrated_output, input_dir_to_raster_output, input_vectorization):
     global path_to_source
     global path_to_legend_solution
     global path_to_legend_description
     global path_to_json
     global dir_to_raster_polygon
     global dir_to_integrated_output
+    global dir_to_raster_output
     global target_map_name
 
     path_to_source = input_path_to_tif
@@ -263,6 +305,7 @@ def output_handler(input_path_to_tif, input_path_to_legend_solution, input_path_
     path_to_json = input_path_to_json
     dir_to_raster_polygon = input_dir_to_raster_polygon
     dir_to_integrated_output = input_dir_to_integrated_output
+    dir_to_raster_output = input_dir_to_raster_output
 
     path_list = path_to_source.replace('\\','/').split('/')
     target_map_name = os.path.splitext(path_list[-1])[0]

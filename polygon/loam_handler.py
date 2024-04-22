@@ -219,6 +219,8 @@ def main():
         efficiency_trade_off = int(args.trade_off)
     if efficiency_trade_off > 6:
         efficiency_trade_off = 6
+
+    dir_to_raster_output = args.dir_to_raster_output
     
     try:
         input_threads = int(args.threads)
@@ -240,6 +242,7 @@ def main():
     os.makedirs(os.path.dirname(dir_to_integrated_output), exist_ok=True)
     os.makedirs(os.path.dirname(dir_to_intermediate), exist_ok=True)
     os.makedirs(os.path.dirname(dir_to_intermediate_preprocessing), exist_ok=True)
+    os.makedirs(os.path.dirname(dir_to_raster_output), exist_ok=True)
     
     path_to_checkpoints = os.path.join(dir_to_intermediate, 'checkpoints')
     os.makedirs(path_to_checkpoints, exist_ok=True)
@@ -331,6 +334,7 @@ def main():
             input_path_to_json = input_json,
             input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
             input_dir_to_integrated_output = dir_to_integrated_output,
+            input_dir_to_raster_output = dir_to_raster_output,
             input_vectorization = True
         )
     else:
@@ -392,6 +396,7 @@ def main():
                 input_path_to_json = input_json,
                 input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
                 input_dir_to_integrated_output = dir_to_integrated_output,
+                input_dir_to_raster_output = dir_to_raster_output,
                 input_vectorization = True
             )
 
@@ -435,7 +440,10 @@ if __name__ == '__main__':
     parser.add_argument('--testing_section', type=str, default='0')
 
     parser.add_argument('--allow_cpu', type=str, default='False')
-    parser.add_argument('--trade_off', type=str, default='3')
+    parser.add_argument('--trade_off', type=str, default='1')
+
+    parser.add_argument('--raster_dir', type=str, default='True')
+    parser.add_argument('--dir_to_raster_output', type=str, default='Example_Output/LOAM_Raster_Output')
 
 
     # python loam_handler.py --path_to_tif Input_Data/RI_Uxbridge.tif --path_to_json Input_Data/RI_Uxbridge.json --map_area_segmentation True --performance_evaluation False
