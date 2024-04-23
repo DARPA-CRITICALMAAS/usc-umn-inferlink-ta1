@@ -56,7 +56,9 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 --model_weights_dir: Directory to pretrained point feature detection model weights  
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
 --output_dir_root: Root directory for output directory
---save_raster : Enable this argument if you want to generate output with raster layer 
+--save_raster : Enable this argument if you want to generate output with raster layer
+--cmp_eval_gt_path : Json file contains point symbol pairs in the competition evaluation dataset
+--cmp_eval : Enable this argument if you want to generate competition evaluation outputs 
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
 
 ```
