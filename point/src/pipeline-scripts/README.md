@@ -35,7 +35,13 @@ python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/
 python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json 
 ```
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) 
+(3) Evaluate with the competition evaluation dataset : 
+We support generating raster outputs from the competition evaluation dataset. Please follow the command line below to generate raster outputs:
+``` 
+python run_point_pipe.py --map_dir /your/map/directory --model_weights_dir model_weight/ --map_patches_dir /your/patches/directory/per/map --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval
+```
+
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ) ,  (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) and (3) point symbol pairs on competition evaluation data (```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json``` )
 
 
 ## Command Line Arguments:
