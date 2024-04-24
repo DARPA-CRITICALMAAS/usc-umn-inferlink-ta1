@@ -59,7 +59,7 @@ def rebuilding_json(gj, this_abbr, rounding_off=False):
             del feature['type']
         
         # some formatting fix
-        #feature['id'] = 'polygon_feature_'+str(int(this_abbr))+'_instance_'+str(feature['id'])
+        feature['id'] = 'polygon_feature_'+str(this_abbr)+'_instance_'+str(feature['id'])
 
         if 'legend_bbox' in feature and feature['legend_bbox']:
             bbox_str = feature['legend_bbox'].strip('POLYGON ((').strip('))')
