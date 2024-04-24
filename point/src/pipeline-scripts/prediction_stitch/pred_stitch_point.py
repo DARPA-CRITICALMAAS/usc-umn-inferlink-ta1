@@ -130,7 +130,7 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
             os.makedirs(stitch_output_dir_per_map) 
-        print(features_per_symbol)
+        # print(features_per_symbol)
         if len(features_per_symbol) != 0:
             for each_pnt in features_per_symbol.keys():
                 if len(features_per_symbol[each_pnt]) != 0:

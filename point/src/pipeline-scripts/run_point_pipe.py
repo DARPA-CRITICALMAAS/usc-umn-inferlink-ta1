@@ -41,11 +41,11 @@ def parse_arguments():
                         help="Perform evaluation on competition evaluation dataset.")
     parser.add_argument("--cmp_eval_gt_path",type=str, default="automated_model_selection/cmp-eval-pair.json",
                         help="File path containing GT-pair of competition evaluation dataset")
+    parser.add_argument("--log_dir",type=str, default="",
+                        help="Directory to save a log file")
     return parser.parse_args()
 
-logger = logging.getLogger(__name__)
-FileOutputHandler = logging.FileHandler('logs_point.txt')
-logger.addHandler(FileOutputHandler)
+
 
 start_time = time.time()
 
@@ -62,6 +62,11 @@ crop_shift_size = args.crop_shift_size
 save_raster = args.save_raster
 cmp_eval = args.cmp_eval
 cmp_eval_gt_path = args.cmp_eval_gt_path
+log_dir = args.log_dir
+
+logger = logging.getLogger(__name__)
+FileOutputHandler = logging.FileHandler(os.path.join(log_dir,'logs_point.txt'))
+logger.addHandler(FileOutputHandler)
 
 if cmp_eval:
     save_raster = True
