@@ -24,12 +24,27 @@ conda activate pnt_pipe
 
 To run the point symbol pipeline, use the following command:
 
+(1) Generate raster layer output: (add ```--save_raster``` argument ) 
+
 ``` 
-python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --text_spotting_dir /your/textspotter/output/directory --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --save_raster
+```
+(2) Generate geojson output: (remove ```--save_raster``` argument ) 
+
+``` 
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json 
 ```
 
+(3) Evaluate with the competition evaluation dataset : 
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) 
+(add ```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval ``` argument ) 
+
+We support generating raster outputs from the competition evaluation dataset. Please follow the command line below to generate raster outputs:
+``` 
+python run_point_pipe.py --map_dir /your/map/directory --model_weights_dir model_weight/ --map_patches_dir /your/patches/directory/per/map --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval
+```
+
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ) ,  (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) and (3) point symbol pairs on competition evaluation data (```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json``` )
 
 
 ## Command Line Arguments:
@@ -40,7 +55,10 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 --map_patches_dir: Directory for input map patches directory per single map 
 --model_weights_dir: Directory to pretrained point feature detection model weights  
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
---output_dir_root: Root directory for output directory  
+--output_dir_root: Root directory for output directory
+--save_raster : Enable this argument if you want to generate output with raster layer
+--cmp_eval_gt_path : Json file contains point symbol pairs in the competition evaluation dataset
+--cmp_eval : Enable this argument if you want to generate competition evaluation outputs 
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
 
 ```
