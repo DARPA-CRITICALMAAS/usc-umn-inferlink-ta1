@@ -130,20 +130,48 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
             os.makedirs(stitch_output_dir_per_map) 
-
+        print(features_per_symbol)
         if len(features_per_symbol) != 0:
             for each_pnt in features_per_symbol.keys():
-                feature_collection = FeatureCollection(features_per_symbol[each_pnt])
-                if not save_raster:
-                    each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
-                    output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,each_file_per_pnt_name)              
-                    with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
-                        dump(feature_collection, f, ensure_ascii=False)
+                if len(features_per_symbol[each_pnt]) != 0:
+                    feature_collection = FeatureCollection(features_per_symbol[each_pnt])
+                    if not save_raster:
+                        each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
+                        output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,each_file_per_pnt_name)              
+                        with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                            dump(feature_collection, f, ensure_ascii=False)
+                    else:
+                        if cmp_eval:
+                            each_pnt = pnt_pair_per_map[each_pnt]
+                            print('saving point symbol outputs named with', each_pnt)
+                        geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
                 else:
-                    if cmp_eval:
-                        each_pnt = pnt_pair_per_map[each_pnt]
-                        print('saving point symbol outputs named with', each_pnt)
-                    geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
+                    stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
+                    if not os.path.exists(stitch_output_dir_per_map):
+                        os.makedirs(stitch_output_dir_per_map) 
+                    feature_collection = FeatureCollection({})
+                    if not save_raster:    
+                        empty_output =map_name+'_'+'empty'+'.geojson' 
+                        output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
+                        with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                                    dump(feature_collection, f, ensure_ascii=False)
+                    else:
+                        geodict_to_raster(feature_collection,'empty',map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=True)
+        else:
+            stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
+            if not os.path.exists(stitch_output_dir_per_map):
+                os.makedirs(stitch_output_dir_per_map) 
+            feature_collection = FeatureCollection({})
+            if not save_raster:    
+                empty_output =map_name+'_'+'empty'+'.geojson' 
+                output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
+                with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
+                            dump(feature_collection, f, ensure_ascii=False)
+            else:
+                geodict_to_raster(feature_collection,'empty',map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=True)
+
+
+
     
     else:
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
