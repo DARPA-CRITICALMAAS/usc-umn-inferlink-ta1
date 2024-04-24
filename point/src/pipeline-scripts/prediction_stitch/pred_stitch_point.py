@@ -81,7 +81,7 @@ def geodict_to_raster(geodict,pnt_name,map_name,map_sheet_dir,raster_output_dir,
   
     write_to_tif(os.path.join(raster_output_dir,map_name +'_'+pnt_name+'.tif'), raster_layer_per_pnt)
 
-def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_sheets_dir ,save_raster): 
+def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_sheets_dir ,save_raster, cmp_eval, pnt_pair_per_map ): 
     # map_name = os.path.basename(os.path.dirname(crop_dir_path))
     # shift_size = crop_shift_size
     file_list = glob.glob(os.path.join(pred_root,map_name) + '/*.json')
@@ -140,6 +140,9 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
                     with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
                         dump(feature_collection, f, ensure_ascii=False)
                 else:
+                    if cmp_eval:
+                        each_pnt = pnt_pair_per_map[each_pnt]
+                        print('saving point symbol outputs named with', each_pnt)
                     geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
     
     else:

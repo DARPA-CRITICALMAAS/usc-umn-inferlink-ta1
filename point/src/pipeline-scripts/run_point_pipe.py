@@ -4,7 +4,7 @@ from automated_model_selection.text_based_matching_tfidf import *
 from prediction_stitch.pred_stitch_point import * 
 import time
 import pickle
-import os
+import json
 import time
 import argparse
 import logging
@@ -36,7 +36,11 @@ def parse_arguments():
     parser.add_argument("--output_dir_root", type=str, default="",
                         help="Root directory for output directory.")
     parser.add_argument("--save_raster", default=False, action ='store_true',
-                        help="Root directory for output directory.")
+                        help="Saving raster outputs.")
+    parser.add_argument("--cmp_eval", default=False, action ='store_true',
+                        help="Perform evaluation on competition evaluation dataset.")
+    parser.add_argument("--cmp_eval_gt_path",type=str, default="automated_model_selection/cmp-eval-pair.json",
+                        help="File path containing GT-pair of competition evaluation dataset")
     return parser.parse_args()
 
 logger = logging.getLogger(__name__)
@@ -56,7 +60,14 @@ output_dir_root = args.output_dir_root
 symbol_info_json_file = args.symbol_info_json_file
 crop_shift_size = args.crop_shift_size
 save_raster = args.save_raster
-print(save_raster)
+cmp_eval = args.cmp_eval
+cmp_eval_gt_path = args.cmp_eval_gt_path
+
+if cmp_eval:
+    save_raster = True
+    f = open(cmp_eval_gt_path,'r')
+    cmp_eval_dict = json.load(f)
+    f.close()
 
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
@@ -78,15 +89,24 @@ for idx,each_str in enumerate(map_name_list):
     input_map_name += each_str
     if idx != len(map_name_list)-1:
         input_map_name += '_'
-print(input_map_name)
-map_selected_models =[]
-try:
-    map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
-                                        use_shape=True, use_keywords=True, use_long_description=False)
-    print(map_selected_models)
-except Exception as Argument:
-    logger.warning("Problems in pretrained models selection module")
 
+map_selected_models =[]
+pnt_pair_per_map = {}
+if not cmp_eval:
+    try:
+        map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
+                                            use_shape=True, use_keywords=True, use_long_description=False)
+    except Exception as Argument:
+        logger.warning("Problems in pretrained models selection module")
+else:
+    if input_map_name in cmp_eval_dict.keys():
+        pnts_pair_list = cmp_eval_dict[input_map_name]
+        for each_pair in pnts_pair_list:
+            map_selected_models.append(each_pair[0]+'.pt')
+            pnt_pair_per_map[each_pair[0]] = each_pair[1]
+
+print(map_selected_models)
+# print(pnt_pair_per_map)
 # for mapname, point_symbol in model_dict.items():
 selected_model_weights = map_selected_models 
 map_input_dir_root=input_dir_root
@@ -98,7 +118,7 @@ if os.path.exists(map_input_dir_root):
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
-        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, map_sheets_dir ,save_raster)
+        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
