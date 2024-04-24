@@ -280,6 +280,10 @@ def main():
             os.makedirs(dir_to_integrated_output)
         if not os.path.exists(os.path.join(dir_to_integrated_output, target_map_name)):
             os.makedirs(os.path.join(dir_to_integrated_output, target_map_name))
+        if not os.path.exists(dir_to_raster_output):
+            os.makedirs(dir_to_raster_output)
+        if not os.path.exists(os.path.join(dir_to_raster_output, target_map_name)):
+            os.makedirs(os.path.join(dir_to_raster_output, target_map_name))
 
         empty_geojson = {
             "type": "FeatureCollection",
