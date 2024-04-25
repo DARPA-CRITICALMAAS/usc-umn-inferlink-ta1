@@ -119,6 +119,7 @@ if os.path.exists(map_input_dir_root):
     try: 
         print("=== Running a model prediction module ===")
         predict_img_patches(input_map_name, map_input_dir_root, model_weights_dir, selected_model_weights, predict_output_dir)
+    
     except Exception as Argument:
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:

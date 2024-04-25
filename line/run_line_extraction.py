@@ -279,8 +279,10 @@ def predict_png(args):
     for line in lines:                       
         node1, node2 = list(line.coords)
         node1, node2 = [int(node1[0]), int(node1[1])], [int(node2[0]), int(node2[1])]
-        cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 1)
-    save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
+        cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 2)
+    save_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.png'
+    if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
+        os.mkdir(f'{args.prediction_dir}/{args.map_name}')
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
 
@@ -399,10 +401,15 @@ if __name__ == '__main__':
     if not is_extracted:
         if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
             os.mkdir(f'{args.prediction_dir}/{args.map_name}')
-        output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
-        empty_geojson = {
-            "type": "FeatureCollection",
-            "features": []
-        }
-        with open(output_geo_path, 'w') as f:
-            json.dump(empty_geojson, f)
+        if args.predict_raster:
+            height, width = data['map_dimension']
+            output_png_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.png'
+            cv2.imwrite(output_png_path, np.zeros((height, width)))
+        if args.predict_vector:
+            output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
+            empty_geojson = {
+                "type": "FeatureCollection",
+                "features": []
+            }
+            with open(output_geo_path, 'w') as f:
+                json.dump(empty_geojson, f)

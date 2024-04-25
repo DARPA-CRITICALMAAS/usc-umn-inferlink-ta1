@@ -218,3 +218,38 @@ def read_legend_json(legend_json_dir, map_name):
         if item['class_label'] == 'map':
             map_content_bbox = item['bbox'] 
     return map_content_bbox, poly_bbox, ptln_bbox
+
+def gt_to_legend_item_description_output(gt_legend_item_json_dir, legend_dir, output_dir, map_name):
+    gt_legend_item_json_path = os.path.join(gt_legend_item_json_dir, map_name+'.json')
+    with open(gt_legend_item_json_path, 'r') as f:
+        gt_legend_item_json = json.load(f)
+
+    output_dict = {}
+    for item in gt_legend_item_json['shapes']:
+        bbox = []
+        for p in item["points"]:
+            bbox.extend(p) 
+        output_dict[str(bbox)] = {"symbol name": item["label"], "description": ""}
+         
+    map_content_bbox, poly_bbox, ptln_bbox = read_legend_json(legend_dir, map_name)
+
+    output_dict['map_content_box'] = map_content_bbox
+    output_dict['poly_box'] = poly_bbox
+    output_dict['ptln_box'] = ptln_bbox
+    output_dict['map_dimension'] = [gt_legend_item_json["imageHeight"], gt_legend_item_json["imageWidth"]]
+
+    for legend_type in ['polygon', 'line',  'point']:
+        if legend_type == 'polygon':           
+            output_path = os.path.join(output_dir, f'{map_name}_{legend_type}.json')
+            with open(output_path, "w") as outfile:
+                json.dump(output_dict, outfile)
+        else:
+            output_path = os.path.join(output_dir, f'{map_name}_gpt_{legend_type}.json')
+            with open(output_path, "w") as outfile:
+                json.dump(output_dict, outfile)
+            output_path = os.path.join(output_dir, f'{map_name}_{legend_type}.json')
+            with open(output_path, "w") as outfile:
+                json.dump(output_dict, outfile)
+    return 
+        
+    

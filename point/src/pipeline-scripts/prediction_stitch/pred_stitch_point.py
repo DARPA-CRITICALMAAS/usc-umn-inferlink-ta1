@@ -62,12 +62,14 @@ def write_to_tif(out_file_path, output_tif):
     output_tif = output_tif.astype(np.uint8)
     im = Image.fromarray(output_tif) 
     im.save(out_file_path, "TIFF")
+    return 
 
 
 def geodict_to_raster(geodict,pnt_name,map_name,map_sheet_dir,raster_output_dir, empty_flag):
+    print('++===LLLL', os.path.join(raster_output_dir,map_name +'_'+pnt_name+'.tif'))
     #input: geodict : dictionary per each symbol
     map_sheet_file = map_name + ".tif"
-    file_path = os.path.join(map_sheet_dir, map_sheet_file)
+    file_path = os.path.join(map_sheet_dir, map_name, map_sheet_file)
     tif_image = Image.open(file_path)
     width, height = tif_image.size
 
@@ -78,7 +80,6 @@ def geodict_to_raster(geodict,pnt_name,map_name,map_sheet_dir,raster_output_dir,
             coord = point_feature_info['geometry']['coordinates']
             x, y = int(coord[0]), int(coord[1])
             raster_layer_per_pnt[y,x] = 1
-  
     write_to_tif(os.path.join(raster_output_dir,map_name +'_'+pnt_name+'.tif'), raster_layer_per_pnt)
 
 def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_sheets_dir ,save_raster, cmp_eval, pnt_pair_per_map ): 
@@ -122,7 +123,6 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
                 bbox=[x1,y1,x2,y2]
             else:
                 bbox=[0,0,0,0]
-                print(map_name)
             if sym_type not in features_per_symbol.keys():
                 features_per_symbol[sym_type] = []
             features_per_symbol[sym_type].append(Feature(geometry = point, properties={'type': sym_type, "id": len(features_per_symbol[sym_type]), "score": score, "bbox": bbox ,"dip" : 0 ,"dip_direction" : 0.0, "provenance": "modelled" }))
@@ -130,7 +130,6 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
             os.makedirs(stitch_output_dir_per_map) 
-        # print(features_per_symbol)
         if len(features_per_symbol) != 0:
             for each_pnt in features_per_symbol.keys():
                 if len(features_per_symbol[each_pnt]) != 0:
@@ -144,7 +143,7 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root, map_shee
                         if cmp_eval:
                             each_pnt = pnt_pair_per_map[each_pnt]
                             print('saving point symbol outputs named with', each_pnt)
-                        geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
+                            geodict_to_raster(feature_collection,each_pnt,map_name,map_sheets_dir,stitch_output_dir_per_map, empty_flag=False)
                 else:
                     stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
                     if not os.path.exists(stitch_output_dir_per_map):

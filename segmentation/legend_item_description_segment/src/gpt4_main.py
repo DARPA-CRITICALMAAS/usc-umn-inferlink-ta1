@@ -3,7 +3,7 @@ import os
 import cv2
 import random
 import numpy as np
-from utils import read_poly_roi_from_json, read_ln_pt_roi_from_json, read_symbol_bbox_from_json, read_legend_json
+from utils import read_poly_roi_from_json, read_ln_pt_roi_from_json, read_symbol_bbox_from_json, read_legend_json, gt_to_legend_item_description_output
 from input_process import generate_pts4group, group_by_columns
 from input_process import remove_fp_bbox
 from gpt4_input_generation import generate_gpt4_input
@@ -23,6 +23,9 @@ parser.add_argument('--map_dir',
 parser.add_argument('--legend_json_dir',
                    type=str,
                    default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs')
+parser.add_argument('--gt_legend_json_dir',
+                   type=str,
+                   default='')
 parser.add_argument('--symbol_json_dir',
                    type=str,
                    default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_item_outputs')
@@ -206,35 +209,42 @@ if __name__ == '__main__':
     
     map_dir = args.map_dir
     legend_json_dir = args.legend_json_dir
+    gt_legend_json_dir = args.gt_legend_json_dir #"/ta1/inputs/modules/legend_item_description" #
     symbol_json_dir = args.symbol_json_dir
     temp_dir = args.temp_dir
     output_dir = args.output_dir
     map_name = args.map_name
-    
+
+    logger.info(f"=== gt_legend_json_dir: {gt_legend_json_dir}")
     if not os.path.exists(temp_dir):
             os.mkdir(temp_dir)
 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-
-    for legend_type in ['polygon', 'line',  'point']:
-        # check the existence of input files
+        
+    if gt_legend_json_dir != "":
+        gt_legend_item_json_path = os.path.join(gt_legend_json_dir, map_name+'.json')
         legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
-        legend_item_path = os.path.join(symbol_json_dir, \
-                                        map_name+('_PolygonType.geojson' if legend_type=='polygon' \
-                                                  else '_PointLineType.geojson'))
-        map_path = os.path.join(map_dir, map_name+'.tif')
-
-        if not os.path.exists(legend_path):
-            logger.error(f'No results from legend segment module.')
-            continue
-        
-        if not os.path.exists(legend_item_path):
-            logger.warning(f'No results from legend item module.')
-        
-        if not os.path.exists(map_path):
-            logger.error(f'The map does not exist at {map_path}.')
-            continue
-
-        run_item_description_extraction(legend_json_dir, symbol_json_dir,map_name, map_dir, \
-                                        temp_dir, output_dir, legend_type=legend_type)
+        gt_to_legend_item_description_output(gt_legend_json_dir, legend_json_dir, output_dir, map_name)
+    else:
+        for legend_type in ['polygon', 'line',  'point']:
+            # check the existence of input files
+            legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
+            legend_item_path = os.path.join(symbol_json_dir, \
+                                            map_name+('_PolygonType.geojson' if legend_type=='polygon' \
+                                                      else '_PointLineType.geojson'))
+            map_path = os.path.join(map_dir, map_name+'.tif')
+    
+            if not os.path.exists(legend_path):
+                logger.error(f'No results from legend segment module.')
+                continue
+            
+            if not os.path.exists(legend_item_path):
+                logger.warning(f'No results from legend item module.')
+            
+            if not os.path.exists(map_path):
+                logger.error(f'The map does not exist at {map_path}.')
+                continue
+    
+            run_item_description_extraction(legend_json_dir, symbol_json_dir,map_name, map_dir, \
+                                            temp_dir, output_dir, legend_type=legend_type)
