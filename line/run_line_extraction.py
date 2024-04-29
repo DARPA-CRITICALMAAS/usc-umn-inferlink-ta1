@@ -284,6 +284,7 @@ def predict_png(args):
     save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
+    return True if np.sum(pred_png[:,:,0]/255) < 1000 else False
 
 def predict_shp(args, description=None):
     """
@@ -341,60 +342,42 @@ if __name__ == '__main__':
     f = open(json_path)
     data = json.load(f)
     
-    is_extracted = False
+    extracted_fault, extracted_thrust = False, False
     for _, sym_property in data.items():
         if not isinstance(sym_property, dict):
             continue
         sym_name = sym_property['symbol name']
         description = sym_property['description']
-        if 'fault' in description.lower() or 'fault' in sym_name.lower(): 
-            is_extracted = True
+        if ('fault' in description.lower() or 'fault' in sym_name.lower())\
+            and not extracted_fault:            
+            extracted_fault = True
             args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
             args.line_feature_name = 'fault_line'
+            bright_param = 1.0
             if args.predict_raster:
-                predict_png(args)
+                is_empty = predict_png(args)
+            if is_empty:
+                print('increase brightness')
+                bright_param = 1.5
+                _ = predict_png(args, brightness=bright_param)
             if args.predict_vector:
-                output_geo_path = predict_shp(args, description)
-                
+                output_shp_path = predict_shp(args, bright_param, description)             
 
-        if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
-            is_extracted = True
+        if ('thrust' in description.lower() or 'thrust' in sym_property['symbol name'].lower()) and \
+             not extracted_thrust:            
+            extracted_thrust = True     
             args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
             args.line_feature_name = 'thrust_fault_line'
+            bright_param = 1.0
             if args.predict_raster:
-                predict_png(args)
+                is_empty = predict_png(args)
+            if is_empty:
+                bright_param = 1.5
+                _ = predict_png(args, brightness=bright_param)
             if args.predict_vector:
-                output_geo_path = predict_shp(args)
+                predict_shp(args, bright_param, description)
                                                                   
-    if not is_extracted:
-        json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
-        f = open(json_path)
-        data = json.load(f)
-        for _, sym_property in data.items():
-            if not isinstance(sym_property, dict):
-                continue
-            sym_name = sym_property['symbol name']
-            description = sym_property['description']
-            if 'fault' in description.lower() or 'fault' in sym_name.lower(): 
-                is_extracted = True
-                args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
-                args.line_feature_name = 'fault_line'
-                if args.predict_raster:
-                    predict_png(args)
-                if args.predict_vector:
-                    output_geo_path = predict_shp(args)
-                is_extracted = True
-                    
-            if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
-                is_extracted = True
-                args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
-                args.line_feature_name = 'thrust_fault_line'
-                if args.predict_raster:
-                    predict_png(args)
-                if args.predict_vector:
-                    output_geo_path = predict_shp(args)
-                is_extracted = True
-    if not is_extracted:
+    if not (extracted_fault or extracted_thrust):
         if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
             os.mkdir(f'{args.prediction_dir}/{args.map_name}')
         output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
