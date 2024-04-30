@@ -14,6 +14,7 @@ from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
 from helper.write_cdr_geojson import write_geojson_cdr
+import torch
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -142,7 +143,7 @@ def add_lines_sindex(line2add, line_list, args):
     return line_list
             
     
-def construct_graph(args, map_content_mask):    
+def construct_graph(args, map_content_mask, brightness=1.0):    
     # Load the config files
     with open(args.config) as f:
         print('\n*** Config file')
@@ -180,7 +181,7 @@ def construct_graph(args, map_content_mask):
     net = build_model(config).to(device)
 
     test_ds, img_names = build_road_network_data(
-        config, mode='test'
+        config, mode='test', brightness=brightness
     )
 
     test_loader = DataLoader(test_ds,
@@ -251,7 +252,7 @@ def construct_graph(args, map_content_mask):
             batch_cnt += 1
     return lines
 
-def predict_png(args):
+def predict_png(args, brightness=1.0):
     """
     generate png prediction result
     """
@@ -274,7 +275,7 @@ def predict_png(args):
     cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
                   (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
     
-    lines = construct_graph(args, map_content_mask)
+    lines = construct_graph(args, map_content_mask, brightness)
  
     pred_png = np.zeros((map_height, map_width, 3))
     for line in lines:                       
@@ -286,7 +287,7 @@ def predict_png(args):
     print('*** save the predicted map in {} ***'.format(save_path))
     return True if np.sum(pred_png[:,:,0]/255) < 1000 else False
 
-def predict_shp(args, description=None):
+def predict_shp(args, brightness=1.0, description=None):
     """
     generate shp prediction
     """
@@ -308,7 +309,7 @@ def predict_shp(args, description=None):
     cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
                   (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
                                          
-    lines = construct_graph(args, map_content_mask)
+    lines = construct_graph(args, map_content_mask, brightness)
     nodup_lines = rm_dup_lines(lines)
     print('num of lines = ', len(nodup_lines))
     
@@ -338,7 +339,7 @@ def predict_shp(args, description=None):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    json_path = os.path.join(args.map_legend_json, args.map_name+'_line.json')
+    json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
     f = open(json_path)
     data = json.load(f)
     

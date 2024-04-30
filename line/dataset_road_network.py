@@ -28,7 +28,7 @@ class Sat2GraphDataLoader(Dataset):
     Args:
         Dataset ([type]): [description]
     """
-    def __init__(self, data, transform):
+    def __init__(self, data, transform, brightness=1.0):
         """[summary]
 
         Args:
@@ -37,6 +37,7 @@ class Sat2GraphDataLoader(Dataset):
         """
         self.data = data
         self.transform = transform
+        self.brightness = brightness
 
         self.mean = [0.485, 0.456, 0.406]
         self.std = [0.229, 0.224, 0.225]
@@ -61,8 +62,14 @@ class Sat2GraphDataLoader(Dataset):
         data = self.data[idx]
         image_data = imageio.imread(data['img'])
         image_pil = Image.fromarray(image_data)
+#         enhancer = ImageEnhance.Brightness(image_pil)
+#         image_bright = enhancer.enhance(self.brightness) 
+#         contrast_enhancer = ImageEnhance.Contrast(image_bright)
+#         image_data = contrast_enhancer.enhance(1.5)
+#         image_data = np.array(image_data)
+
         contrast_enhancer = ImageEnhance.Contrast(image_pil)
-        image_data = contrast_enhancer.enhance(1.0)  # Adjust the factor (1.5 increases contrast)
+        image_data = contrast_enhancer.enhance(self.brightness)  # Adjust the factor (1.5 increases contrast)
         image_data = np.array(image_data)
         image_data = torch.tensor(image_data, dtype=torch.float).permute(2,0,1)
         image_data = image_data/255.0
@@ -77,7 +84,7 @@ class Sat2GraphDataLoader(Dataset):
         return image_data, seg_data-0.5, coordinates[:,:2], lines[:,1:]
 
 
-def build_road_network_data(config, mode='train', split=0.95):
+def build_road_network_data(config, mode='train', split=0.95, brightness=1.0):
     """[summary]
 
     Args:
@@ -109,6 +116,7 @@ def build_road_network_data(config, mode='train', split=0.95):
         ds = Sat2GraphDataLoader(
             data=data_dicts,
             transform=val_transform,
+            brightness=brightness,
         )
         print('test data size: ', len(data_dicts))
         return ds, img_names
