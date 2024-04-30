@@ -3,7 +3,7 @@ import os
 from osgeo import gdal
 from osgeo.gdalconst import *
 from shapely.ops import linemerge
-from shapely.geometry import LineString
+from shapely.geometry import LineString, MultiLineString
 import math
 from copy import deepcopy
 
@@ -324,5 +324,5 @@ def integrate_lines(lines):
             merged_lines = linemerge(temp_merged)
         else:
             merged_lines = temp_merged
-    return list(merged_lines)
+    return list(merged_lines) if isinstance(merged_lines, MultiLineString) else list(MultiLineString([merged_lines]))
     
