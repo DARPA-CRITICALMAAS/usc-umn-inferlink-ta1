@@ -27,12 +27,12 @@ To run the point symbol pipeline, use the following command:
 (1) Generate raster layer output: (add ```--save_raster``` argument ) 
 
 ``` 
-python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --save_raster
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --save_raster --gpu_id 0
 ```
 (2) Generate geojson output: (remove ```--save_raster``` argument ) 
 
 ``` 
-python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json 
+python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --gpu_id 0 
 ```
 
 (3) Evaluate with the competition evaluation dataset : 
@@ -41,7 +41,7 @@ python run_point_pipe.py --map_dir /your/map/directory --map_metadata_dir /your/
 
 We support generating raster outputs from the competition evaluation dataset. Please follow the command line below to generate raster outputs:
 ``` 
-python run_point_pipe.py --map_dir /your/map/directory --model_weights_dir model_weight/ --map_patches_dir /your/patches/directory/per/map --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval
+python run_point_pipe.py --map_dir /your/map/directory --model_weights_dir model_weight/ --map_patches_dir /your/patches/directory/per/map --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval --gpu_id 0
 ```
 
 This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ) ,  (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) and (3) point symbol pairs on competition evaluation data (```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json``` )
@@ -58,7 +58,8 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 --output_dir_root: Root directory for output directory
 --save_raster : Enable this argument if you want to generate output with raster layer
 --cmp_eval_gt_path : Json file contains point symbol pairs in the competition evaluation dataset
---cmp_eval : Enable this argument if you want to generate competition evaluation outputs 
+--cmp_eval : Enable this argument if you want to generate competition evaluation outputs
+--gpu_id : Specifying GPU id for running the module
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
 
 ```
