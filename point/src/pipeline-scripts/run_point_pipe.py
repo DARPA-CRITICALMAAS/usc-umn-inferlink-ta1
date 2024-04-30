@@ -35,7 +35,8 @@ def parse_arguments():
                         help="Json file contains internal metadata for point symbols.")
     parser.add_argument("--output_dir_root", type=str, default="",
                         help="Root directory for output directory.")
-
+    parser.add_argument('--gpu_id', type=int, default=0)
+    
     return parser.parse_args()
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,10 @@ model_weights_dir = args.model_weights_dir
 output_dir_root = args.output_dir_root
 symbol_info_json_file = args.symbol_info_json_file
 crop_shift_size = args.crop_shift_size
+gpu_id = args.gpu_id
 
+os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+print('using gpu id :', torch.cuda.current_device())
 
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
