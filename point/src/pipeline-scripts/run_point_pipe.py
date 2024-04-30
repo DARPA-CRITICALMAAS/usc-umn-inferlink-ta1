@@ -43,6 +43,7 @@ def parse_arguments():
                         help="File path containing GT-pair of competition evaluation dataset")
     parser.add_argument("--log_dir",type=str, default="",
                         help="Directory to save a log file")
+    parser.add_argument('--gpu_id', type=int, default=0)
     return parser.parse_args()
 
 
@@ -63,6 +64,10 @@ save_raster = args.save_raster
 cmp_eval = args.cmp_eval
 cmp_eval_gt_path = args.cmp_eval_gt_path
 log_dir = args.log_dir
+gpu_id = args.gpu_id
+
+os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+print('using gpu id :', torch.cuda.current_device())
 
 logger = logging.getLogger(__name__)
 FileOutputHandler = logging.FileHandler(os.path.join(log_dir,'logs_point.txt'))
