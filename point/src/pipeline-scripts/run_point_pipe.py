@@ -57,7 +57,7 @@ crop_shift_size = args.crop_shift_size
 gpu_id = args.gpu_id
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-print('using gpu id :', torch.cuda.current_device())
+# print('using gpu id :', torch.cuda.current_device())
 
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
