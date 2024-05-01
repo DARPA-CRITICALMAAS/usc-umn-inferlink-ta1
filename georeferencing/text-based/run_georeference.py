@@ -28,7 +28,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 
 def run_segmentation(file, support_data_dir):
-    image = Image.open(file) # read image with PIL library
+    image = Image.open(file).convert('RGB') # read image with PIL library
 
     print('image_size',image.size)
 
