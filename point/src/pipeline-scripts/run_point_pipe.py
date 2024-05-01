@@ -57,7 +57,7 @@ crop_shift_size = args.crop_shift_size
 gpu_id = args.gpu_id
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-print('using gpu id :', torch.cuda.current_device())
+# print('using gpu id :', torch.cuda.current_device())
 
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
@@ -76,11 +76,14 @@ for idx,each_str in enumerate(map_name_list):
     if idx != len(map_name_list)-1:
         input_map_name += '_'
 print(input_map_name)
+entire_pt_models = ['mine_tunnel.pt', 'lineation.pt', 'inclined_flow_banding.pt', 'overturned_bedding.pt', 'gravel_pit.pt', 'drill_hole.pt', 'prospect.pt', 'inclined_metamorphic.pt', 'inclined_bedding.pt', 'quarry.pt', 'mine_shaft.pt']
 map_selected_models =[]
 try:
-    map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
-                                        use_shape=True, use_keywords=True, use_long_description=False)
+    # map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
+    #                                     use_shape=True, use_keywords=True, use_long_description=False)
+    map_selected_models = entire_pt_models
     print(map_selected_models)
+    
 except Exception as Argument:
     logger.warning("Problems in pretrained models selection module")
 
