@@ -13,6 +13,8 @@ from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_li
 from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
+from helper.write_cdr_geojson import write_geojson_cdr
+import torch
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -141,7 +143,7 @@ def add_lines_sindex(line2add, line_list, args):
     return line_list
             
     
-def construct_graph(args, map_content_mask):    
+def construct_graph(args, map_content_mask, brightness=1.0):    
     # Load the config files
     with open(args.config) as f:
         print('\n*** Config file')
@@ -179,7 +181,7 @@ def construct_graph(args, map_content_mask):
     net = build_model(config).to(device)
 
     test_ds, img_names = build_road_network_data(
-        config, mode='test'
+        config, mode='test', brightness=brightness
     )
 
     test_loader = DataLoader(test_ds,
@@ -244,13 +246,13 @@ def construct_graph(args, map_content_mask):
                     n1_in_map = [n1[0] + x_id, n1[1] + y_id]
                     n2_in_map = [n2[0] + x_id, n2[1] + y_id]
                     
-                    line = geometry.LineString([[n1_in_map[0],n1_in_map[1]], [n2_in_map[0],n2_in_map[1]]])
+                    line = geometry.LineString([[n1_in_map[1],n1_in_map[0]], [n2_in_map[1],n2_in_map[0]]])
                     lines = add_lines_sindex(line, lines, args)
                     
             batch_cnt += 1
     return lines
 
-def predict_png(args):
+def predict_png(args, brightness=1.0):
     """
     generate png prediction result
     """
@@ -273,18 +275,19 @@ def predict_png(args):
     cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
                   (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
     
-    lines = construct_graph(args, map_content_mask)
+    lines = construct_graph(args, map_content_mask, brightness)
  
     pred_png = np.zeros((map_height, map_width, 3))
     for line in lines:                       
         node1, node2 = list(line.coords)
         node1, node2 = [int(node1[0]), int(node1[1])], [int(node2[0]), int(node2[1])]
-        cv2.line(pred_png, (node1[1], node1[0]), (node2[1], node2[0]), (255,255,255), 1)
+        cv2.line(pred_png, (node1[0], node1[1]), (node2[0], node2[1]), (255,255,255), 1)
     save_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.png'
     cv2.imwrite(save_path, pred_png)
     print('*** save the predicted map in {} ***'.format(save_path))
+    return True if np.sum(pred_png[:,:,0]/255) < 1000 else False
 
-def predict_shp(args, description=None):
+def predict_shp(args, brightness=1.0, description=None):
     """
     generate shp prediction
     """
@@ -306,7 +309,7 @@ def predict_shp(args, description=None):
     cv2.rectangle(map_content_mask, (int(map_content_y),int(map_content_x)), \
                   (int(map_content_y)+int(map_content_w),int(map_content_x)+int(map_content_h)), 255, -1)
                                          
-    lines = construct_graph(args, map_content_mask)
+    lines = construct_graph(args, map_content_mask, brightness)
     nodup_lines = rm_dup_lines(lines)
     print('num of lines = ', len(nodup_lines))
     
@@ -323,80 +326,61 @@ def predict_shp(args, description=None):
     
     dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
                                                       patch_path=args.cropped_image_dir, roi_buffer=30)
-    output_shp_attr_path = shp_path[:-4] + '_attr.shp'
-    write_shp_in_imgcoord_with_attr(output_shp_attr_path, dash_pattern_dict,\
-                                    legend_text=description, image_coords=True)
+
     geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
     if not os.path.exists(geojson_output_dir):
         os.mkdir(geojson_output_dir)
-
     geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
-    shp_file = geopandas.read_file(output_shp_attr_path)
-    shp_file.to_file(geojson_path, driver='GeoJSON')
+    
+    write_geojson_cdr(geojson_path, dash_pattern_dict, legend_text=description)
     print('*** save the predicted geojson in {} ***'.format(geojson_path))
     return geojson_path
     
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    json_path = os.path.join(args.map_legend_json, args.map_name+'_line.json')
+    json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
     f = open(json_path)
     data = json.load(f)
     
-    is_extracted = False
+    extracted_fault, extracted_thrust = False, False
     for _, sym_property in data.items():
         if not isinstance(sym_property, dict):
             continue
         sym_name = sym_property['symbol name']
         description = sym_property['description']
-        if 'fault' in description.lower() or 'fault' in sym_name.lower(): 
-            is_extracted = True
+        if ('fault' in description.lower() or 'fault' in sym_name.lower())\
+            and not extracted_fault:            
+            extracted_fault = True
             args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
             args.line_feature_name = 'fault_line'
+            bright_param = 1.0
             if args.predict_raster:
-                predict_png(args)
+                is_empty = predict_png(args)
+            if is_empty:
+                print('increase brightness')
+                bright_param = 1.5
+                _ = predict_png(args, brightness=bright_param)
             if args.predict_vector:
-                output_geo_path = predict_shp(args, description)
-                
+                output_shp_path = predict_shp(args, bright_param, description)             
 
-        if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
-            is_extracted = True
+        if ('thrust' in description.lower() or 'thrust' in sym_property['symbol name'].lower()) and \
+             not extracted_thrust:            
+            extracted_thrust = True     
             args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
             args.line_feature_name = 'thrust_fault_line'
+            bright_param = 1.0
             if args.predict_raster:
-                predict_png(args)
+                is_empty = predict_png(args)
+            if is_empty:
+                bright_param = 1.5
+                _ = predict_png(args, brightness=bright_param)
             if args.predict_vector:
-                output_geo_path = predict_shp(args)
+                predict_shp(args, bright_param, description)
                                                                   
-    if not is_extracted:
-        json_path = os.path.join(args.map_legend_json, args.map_name+'_gpt_line.json')
-        f = open(json_path)
-        data = json.load(f)
-        for _, sym_property in data.items():
-            if not isinstance(sym_property, dict):
-                continue
-            sym_name = sym_property['symbol name']
-            description = sym_property['description']
-            if 'fault' in description.lower() or 'fault' in sym_name.lower(): 
-                is_extracted = True
-                args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
-                args.line_feature_name = 'fault_line'
-                if args.predict_raster:
-                    predict_png(args)
-                if args.predict_vector:
-                    output_geo_path = predict_shp(args)
-                is_extracted = True
-                    
-            if 'thrust' in description.lower() or 'thrust' in sym_name.lower():   
-                is_extracted = True
-                args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
-                args.line_feature_name = 'thrust_fault_line'
-                if args.predict_raster:
-                    predict_png(args)
-                if args.predict_vector:
-                    output_geo_path = predict_shp(args)
-                is_extracted = True
-    if not is_extracted:
+    if not (extracted_fault or extracted_thrust):
+        if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
+            os.mkdir(f'{args.prediction_dir}/{args.map_name}')
         output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
         empty_geojson = {
             "type": "FeatureCollection",

@@ -57,8 +57,7 @@ def predict_img_patches(map_name,crop_dir_path,model_dir_root,selected_models,pr
             with open(out_file_path, "w") as out:
                 json.dump(entire_res, out)
 
-def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shift_size): 
-    # map_name = os.path.basename(os.path.dirname(crop_dir_path))
+def stitch_to_each_point_cdr(map_name, crop_dir_path,pred_root,stitch_root,crop_shift_size):
     shift_size = crop_shift_size
     file_list = glob.glob(os.path.join(pred_root,map_name) + '/*.json')
     if len(file_list) != 0:
@@ -100,8 +99,13 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
                 bbox=[0,0,0,0]
                 print(map_name)
             if sym_type not in features_per_symbol.keys():
-                features_per_symbol[sym_type] = []
-            features_per_symbol[sym_type].append(Feature(geometry = point, properties={'type': sym_type, "id": len(features_per_symbol[sym_type]), "score": score, "bbox": bbox ,"dip" : 0 ,"dip_direction" : 0.0, "provenance": "modelled" }))
+                features_per_symbol[sym_type] = {"id":str(0),
+                                                "crs" : "CRITICALMAAS:pixel",
+                                                "cdr_projection_id": None,
+                                                "name": sym_type,
+                                                "description": None,
+                                                "legend_bbox": None, "point_features": list([])}                               
+            features_per_symbol[sym_type]["point_features"].append(FeatureCollection([Feature(geometry = point, id= str(len(features_per_symbol[sym_type]["point_features"])), properties={"model":sym_type+'.pt', "confidence": score, "model_version": "v1", "bbox": bbox ,"dip" : None ,"dip_direction" : None })]))
 
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
         if not os.path.exists(stitch_output_dir_per_map):
@@ -110,9 +114,9 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
             for each_pnt in features_per_symbol.keys():
                 each_file_per_pnt_name=map_name+'_'+each_pnt+'.geojson'
                 output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,each_file_per_pnt_name)
-                feature_collection = FeatureCollection(features_per_symbol[each_pnt])
+                # features_per_symbol[each_pnt]["point_features"] = FeatureCollection(features_per_symbol[each_pnt]["point_features"])
                 with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
-                    dump(feature_collection, f, ensure_ascii=False)
+                    dump(features_per_symbol[each_pnt], f, ensure_ascii=False)
     
     else:
         stitch_output_dir_per_map = os.path.join(stitch_root, map_name)
@@ -121,10 +125,5 @@ def stitch_to_each_point(map_name, crop_dir_path,pred_root,stitch_root,crop_shif
         empty_output =map_name+'_'+'empty'+'.geojson' 
         output_geojson_per_pnt = os.path.join(stitch_output_dir_per_map,empty_output)
         feature_collection = FeatureCollection({})
-
         with open(output_geojson_per_pnt, 'w', encoding='utf8') as f:
                     dump(feature_collection, f, ensure_ascii=False)
-
-
-
-
