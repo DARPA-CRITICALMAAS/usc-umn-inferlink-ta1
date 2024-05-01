@@ -7,6 +7,7 @@ from segmentation_sam import resize_img, run_sam
 import urllib.request
 import rasterio
 import json 
+import pdb
 import numpy as np
 import torch
 import base64
@@ -25,10 +26,9 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 
 def run_segmentation(file, support_data_dir, device):
-    image = Image.open(file) # read image with PIL library
+    image = Image.open(file).convert('RGB') # read image with PIL library
 
     print('image_size',image.size)
-
     resized_img, scaling_factor = resize_img(np.array(image))
     seg_mask, bbox, rotated_bbox_points = run_sam(np.array(image), resized_img, scaling_factor, device, support_data_dir)
 

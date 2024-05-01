@@ -40,7 +40,7 @@ def min_rotated_bbox(mask):
 def resize_img(img, max_size = 200):
     # Get the original width and height
     height, width, _ = img.shape
-    
+
     # Determine the scaling factor to fit the longer side to max_size
     if width >= height:
         scaling_factor = 1. * max_size / width
@@ -108,7 +108,6 @@ def run_sam(image, resized_img, scaling_factor, device, support_data_dir):
     seg_mask = map_plot_area['segmentation']
     bbox = map_plot_area['bbox']
 
-    # pdb.set_trace()
     seg_mask = np.array(seg_mask * 255, dtype=np.uint8)
     rotated_bbox_points = min_rotated_bbox(seg_mask)
     seg_mask = st.resize(seg_mask, (image.shape[0], image.shape[1]), order=0, preserve_range=True, anti_aliasing=True)
@@ -129,7 +128,6 @@ def main():
 
     seg_mask, bbox = run_sam(image, resized_img, scaling_factor, device)
 
-    pdb.set_trace()
 
     print(bbox)
 
