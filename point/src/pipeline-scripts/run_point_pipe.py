@@ -67,7 +67,7 @@ log_dir = args.log_dir
 gpu_id = args.gpu_id
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
-print('using gpu id :', torch.cuda.current_device())
+# print('using gpu id :', torch.cuda.current_device())
 
 logger = logging.getLogger(__name__)
 FileOutputHandler = logging.FileHandler(os.path.join(log_dir,'logs_point.txt'))
