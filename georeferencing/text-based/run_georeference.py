@@ -246,7 +246,7 @@ def run_georeferencing(args):
     title = getTitle(base64_image)
 
     if title == -1: # exception when extracting the title 
-        logging.Error('Failed to extract title, exit with code -1')
+        logging.error('Failed to extract title, exit with code -1')
         return -1 
 
     title = to_camel(title)
@@ -467,7 +467,12 @@ def main():
     assert args.input_path is not None
     assert args.output_path is not None 
     
-    seg_bbox, top10, image_width, image_height, title, toponyms = run_georeferencing(args)
+    ret = run_georeferencing(args)
+
+    if ret == -1:
+        return -1 
+    else:
+        seg_bbox, top10, image_width, image_height, title, toponyms
 
     # generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
