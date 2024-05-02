@@ -73,13 +73,16 @@ def sort_ref_closest_match(sim_matrix, word_list):
 
 def generate_human_readable(tokens):
     ret = []
+    print(tokens)
     for t in tokens:
         if t == '[SEP]':
             continue
 
         if t.startswith("##"):
-            assert len(ret) > 0
-            ret[-1] = ret[-1] + t.strip('##')
+            if len(ret) > 0:
+                ret[-1] = ret[-1] + t.strip('##')
+            else:
+                pass #ignore this token since it is supposed to be a continuing subtoken
         else:
             ret.append(t)
 

@@ -60,7 +60,7 @@ def get_topo_basemap(query_sentence, bm25, df_merged, device ):
 
     print(query_sentence)
     query_tokens, human_readable_tokens = get_toponym_tokens(query_sentence, device)
-    print(human_readable_tokens)
+    print(query_tokens, human_readable_tokens)
 
     query_sent = ' '.join(human_readable_tokens)
 
