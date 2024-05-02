@@ -472,7 +472,7 @@ def main():
     if ret == -1:
         return -1 
     else:
-        seg_bbox, top10, image_width, image_height, title, toponyms
+        seg_bbox, top10, image_width, image_height, title, toponyms = ret
 
     # generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
