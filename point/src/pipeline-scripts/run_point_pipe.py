@@ -2,6 +2,7 @@ import os
 from postprocessing.remove_pnts_from_text_legend import *
 from automated_model_selection.text_based_matching_tfidf import *
 from prediction_stitch.pred_stitch_point import * 
+from prediction_stitch.pred_stitch_strike import * 
 import time
 import pickle
 import json
@@ -44,6 +45,8 @@ def parse_arguments():
     parser.add_argument("--log_dir",type=str, default="",
                         help="Directory to save a log file")
     parser.add_argument('--gpu_id', type=int, default=0)
+    parser.add_argument("--strike_model_dir", type=str, default="strike_model_weights/",
+                        help="Directory to pretrained point feature detection model weights.")
     return parser.parse_args()
 
 
@@ -65,6 +68,7 @@ cmp_eval = args.cmp_eval
 cmp_eval_gt_path = args.cmp_eval_gt_path
 log_dir = args.log_dir
 gpu_id = args.gpu_id
+strike_model_dir = args.strike_model_dir
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
 # print('using gpu id :', torch.cuda.current_device())
@@ -82,6 +86,10 @@ if cmp_eval:
 predict_output_dir = os.path.join(output_dir_root, 'prediction')
 if not os.path.exists(predict_output_dir):
     os.makedirs(predict_output_dir)
+
+predict_strike_output_dir = os.path.join(output_dir_root, 'prediction-strike')
+if not os.path.exists(predict_strike_output_dir):
+    os.makedirs(predict_strike_output_dir)
 
 stitch_output_dir = os.path.join(output_dir_root, 'stitch-per-symbol')
 if not os.path.isdir(stitch_output_dir):
@@ -101,11 +109,13 @@ for idx,each_str in enumerate(map_name_list):
         input_map_name += '_'
 
 map_selected_models =[]
+entire_pt_models = ['mine_tunnel.pt', 'lineation.pt', 'inclined_flow_banding.pt', 'overturned_bedding.pt', 'gravel_pit.pt', 'drill_hole.pt', 'prospect.pt', 'inclined_metamorphic.pt', 'inclined_bedding.pt', 'quarry.pt', 'mine_shaft.pt']
 pnt_pair_per_map = {}
 if not cmp_eval:
     try:
-        map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
-                                            use_shape=True, use_keywords=True, use_long_description=False)
+        # map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
+        #                                     use_shape=True, use_keywords=True, use_long_description=False)
+        map_selected_models = entire_pt_models
     except Exception as Argument:
         logger.warning("Problems in pretrained models selection module")
 else:
@@ -124,12 +134,14 @@ if os.path.exists(map_input_dir_root):
     try: 
         print("=== Running a model prediction module ===")
         predict_img_patches(input_map_name, map_input_dir_root, model_weights_dir, selected_model_weights, predict_output_dir)
+        predict_img_patches_strike(input_map_name, map_input_dir_root, strike_model_dir, os.listdir(strike_model_dir), predict_strike_output_dir)
     
     except Exception as Argument:
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
         stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
+        stitch_to_each_strike(input_map_name, map_input_dir_root, predict_strike_output_dir, final_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
