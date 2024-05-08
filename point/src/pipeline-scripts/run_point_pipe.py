@@ -1,5 +1,6 @@
 import os
 from postprocessing.remove_pnts_from_text_legend import *
+from postprocessing.get_dip_direct import *
 from automated_model_selection.text_based_matching_tfidf import *
 from prediction_stitch.pred_stitch_point import * 
 from prediction_stitch.pred_stitch_strike import * 
@@ -140,19 +141,23 @@ if os.path.exists(map_input_dir_root):
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
-        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, final_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
-        stitch_to_each_strike(input_map_name, map_input_dir_root, predict_strike_output_dir, final_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
+        stitch_to_each_point(input_map_name, map_input_dir_root, predict_output_dir, stitch_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
+        stitch_to_each_strike(input_map_name, map_input_dir_root, predict_strike_output_dir, stitch_output_dir, map_sheets_dir ,save_raster , cmp_eval, pnt_pair_per_map )
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
     logger.warning("No cropped image patches exists : {0}".format(map_input_dir_root))    
 
-# print(" === Running a postprocessing module === ")
-# try: 
-#     stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
-#     postprocessing(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
-# except Exception as Argument:
-#     logger.warning("Problems in postprocessing module :{0}".format(input_map_name))  
+print(" === Running a dip direction saving module === ")
+try: 
+    stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
+    final_output_dir_per_map = os.path.join(final_output_dir,input_map_name)
+    if not os.path.exists(final_output_dir_per_map):
+        os.makedirs(final_output_dir_per_map)
+    get_dip_direction(stitch_output_dir_per_map,final_output_dir_per_map)
+    # remove_pnts_from_text_legend(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
+except Exception as Argument:
+    logger.warning("Problems in dip direction saving module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
