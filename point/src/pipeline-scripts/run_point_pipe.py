@@ -110,7 +110,7 @@ for idx,each_str in enumerate(map_name_list):
         input_map_name += '_'
 
 map_selected_models =[]
-entire_pt_models = ['mine_tunnel.pt', 'lineation.pt', 'inclined_flow_banding.pt', 'overturned_bedding.pt', 'gravel_pit.pt', 'drill_hole.pt', 'prospect.pt', 'inclined_metamorphic.pt', 'inclined_bedding.pt', 'quarry.pt', 'mine_shaft.pt']
+entire_pt_models = ['mine_tunnel.pt', 'lineation.pt', 'inclined_flow_banding.pt', 'overturned_bedding.pt', 'gravel_pit.pt', 'drill_hole.pt','drill_hole_filled.pt','prospect.pt', 'inclined_metamorphic.pt', 'inclined_bedding.pt', 'quarry.pt', 'mine_shaft.pt']
 pnt_pair_per_map = {}
 if not cmp_eval:
     try:
@@ -149,15 +149,16 @@ else:
     logger.warning("No cropped image patches exists : {0}".format(map_input_dir_root))    
 
 print(" === Running a dip direction saving module === ")
-try: 
-    stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
-    final_output_dir_per_map = os.path.join(final_output_dir,input_map_name)
-    if not os.path.exists(final_output_dir_per_map):
-        os.makedirs(final_output_dir_per_map)
-    get_dip_direction(stitch_output_dir_per_map,final_output_dir_per_map)
-    # remove_pnts_from_text_legend(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
-except Exception as Argument:
-    logger.warning("Problems in dip direction saving module :{0}".format(input_map_name))  
+if not save_raster:
+    try: 
+        stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
+        final_output_dir_per_map = os.path.join(final_output_dir,input_map_name)
+        if not os.path.exists(final_output_dir_per_map):
+            os.makedirs(final_output_dir_per_map)
+        get_dip_direction(stitch_output_dir_per_map,final_output_dir_per_map)
+        # remove_pnts_from_text_legend(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
+    except Exception as Argument:
+        logger.warning("Problems in dip direction saving module :{0}".format(input_map_name))  
 
 print(" === Done processing point symbol pipeline === ")
 end_time = time.time()
