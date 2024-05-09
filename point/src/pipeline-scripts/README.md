@@ -44,7 +44,7 @@ We support generating raster outputs from the competition evaluation dataset. Pl
 python run_point_pipe.py --map_dir /your/map/directory --model_weights_dir model_weight/ --map_patches_dir /your/patches/directory/per/map --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json --save_raster --cmp_eval --gpu_id 0
 ```
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ) ,  (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) and (3) point symbol pairs on competition evaluation data (```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json``` )
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ) ,  (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```), (3) point symbol pairs on competition evaluation data (```--cmp_eval_gt_path automated_model_selection/cmp-eval-pair.json``` ) and (4) pretrained model for strike extraction (```--strike_model_dir strike_model_weights/``` ) 
 
 
 ## Command Line Arguments:
@@ -53,14 +53,16 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 --map_dir : Directory containing entire map sheets
 --map_metadata_dir: Directory to map metadata that contains the information about coordinate of legend and map dimension. 
 --map_patches_dir: Directory for input map patches directory per single map 
---model_weights_dir: Directory to pretrained point feature detection model weights  
+--model_weights_dir: Directory of pretrained point feature detection model weights  
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
 --output_dir_root: Root directory for output directory
 --save_raster : Enable this argument if you want to generate output with raster layer
 --cmp_eval_gt_path : Json file contains point symbol pairs in the competition evaluation dataset
 --cmp_eval : Enable this argument if you want to generate competition evaluation outputs
 --gpu_id : Specifying GPU id for running the module
+--log_dir : Directory to save a log file f(.txt) for point symbol module
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
+--strike_model_dir : Directory of pretrained strike extraction model weights  
 
 ```
 
