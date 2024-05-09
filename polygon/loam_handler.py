@@ -452,7 +452,7 @@ if __name__ == '__main__':
     parser.add_argument('--testing_section', type=str, default='0')
 
     parser.add_argument('--allow_cpu', type=str, default='False')
-    parser.add_argument('--trade_off', type=str, default='6')
+    parser.add_argument('--trade_off', type=str, default='0')
 
     parser.add_argument('--raster_dir', type=str, default='True')
     parser.add_argument('--dir_to_raster_output', type=str, default='Example_Output/LOAM_Raster_Output')
