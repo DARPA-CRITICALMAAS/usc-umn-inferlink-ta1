@@ -9,12 +9,14 @@ import collections
 from shapely.ops import *
 from shapely import geometry
 from shapely.strtree import STRtree
+from shapely.geometry import LineString, MultiLineString
 from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema, conflate_lines, geometry_to_coordinates, remove_small_gaps
 from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
 from helper.write_cdr_geojson import write_geojson_cdr
 import torch
+import geojson
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -323,13 +325,36 @@ def predict_shp(args, brightness=1.0, description=None):
     
     # dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
     #                                                   patch_path=args.cropped_image_dir, roi_buffer=30)
-
+    
     geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
     if not os.path.exists(geojson_output_dir):
         os.mkdir(geojson_output_dir)
-    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
     
+    interm_geojson_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.geojson'
+    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
+
     refined_lines = remove_small_gaps(merged_lines)
+    geometries = []
+    for line in refined_lines:
+        if isinstance(line, MultiLineString):
+            temp_dict = {
+                 "type": "MultiLineString",
+                "coordinates": geometry_to_coordinates(line)
+            }
+        else:
+            temp_dict = {
+                "type": "LineString",
+                "coordinates": geometry_to_coordinates(line)
+            }
+        geometries.append(temp_dict)
+    # Create a GeoJSON feature collection
+    feature_collection = geojson.FeatureCollection([
+        geojson.Feature(geometry=geometry, properties={}) for geometry in geometries
+    ])
+
+    with open(interm_geojson_path, "w") as f:
+        geojson.dump(feature_collection, f)
+    dash_pattern_dict = {}
     dash_pattern_dict['solid'] = refined_lines
     write_geojson_cdr(geojson_path, dash_pattern_dict, legend_text=description)
     print('*** save the predicted geojson in {} ***'.format(geojson_path))
@@ -351,7 +376,7 @@ if __name__ == '__main__':
         if ('fault' in description.lower() or 'fault' in sym_name.lower())\
             and not extracted_fault:            
             extracted_fault = True
-            args.checkpoint = f'{args.trained_model_dir}/checkpoint_epoch=100.pt'
+            args.checkpoint = f'{args.trained_model_dir}/checkpoint_epoch=180.pt'
             args.line_feature_name = 'fault_line'
             bright_param = 1.1
             if args.predict_raster:
