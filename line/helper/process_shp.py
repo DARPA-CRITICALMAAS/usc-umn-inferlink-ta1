@@ -4,8 +4,10 @@ from osgeo import gdal
 from osgeo.gdalconst import *
 from shapely.ops import linemerge
 from shapely.geometry import LineString, MultiLineString
+from shapely.geometry import MultiPolygon, Polygon, Point
 import math
 from copy import deepcopy
+import networkx as nx
 
 def convert_to_image_coord0(x, y, path): # convert geocoord to image coordinate
     dataset = gdal.Open(path, GA_ReadOnly)
@@ -314,6 +316,31 @@ def rm_dup_lines(lines):
 #                 merged_lines.append(temp_merged_line)
 #     return merged_lines
 
+# Define a function to check if two LineStrings share vertices
+def is_overlapped(line1, line2):
+    if isinstance(line1, list):
+        line1 = LineString(line1)
+        line2 = LineString(line2)
+    return line1.intersects(line2)
+
+def is_overlapped_within_buffer(line1, line2, buffer_distance):
+    # Create buffer zones around line1 and line2
+    buffer_line1 = line1.buffer(buffer_distance)
+    buffer_line2 = line2.buffer(buffer_distance)
+    if buffer_line1.intersects(buffer_line2):
+        inters_geo = buffer_line1.intersection(buffer_line2)
+        if inters_geo.geom_type == 'Point':
+            return inters_geo.coords[0]
+        elif inters_geo.geom_type == 'MultiPoint':
+            return inters_geo[0].coords[0]
+        elif inters_geo.geom_type == 'Polygon':
+            return list(inters_geo.exterior.coords)[0]
+        else:
+            print(inters_geo.geom_type)
+    else:
+        return None
+    
+
 def integrate_lines(lines):
     merged_lines = LineString(lines[0])
 
@@ -324,5 +351,130 @@ def integrate_lines(lines):
             merged_lines = linemerge(temp_merged)
         else:
             merged_lines = temp_merged
-    return list(merged_lines) if isinstance(merged_lines, MultiLineString) else list(MultiLineString([merged_lines]))
+    return list(merged_lines)
+
+
+def conflate_lines(lines, refine_connect=True, connect_thres=4):
+    refined_lines = []
+    # Create a graph
+    G = nx.Graph()
+    # Add LineStrings as nodes to the graph
+    for i, line in enumerate(lines):
+#         line_shp = LineString(line)
+        G.add_node(i, line=line)
+    # Add edges between LineStrings that share vertices
+    for i, line1 in enumerate(G.nodes(data='line')):
+        for j, line2 in enumerate(G.nodes(data='line')):
+            if i != j and is_overlapped(line1[1], line2[1]):
+                G.add_edge(i, j)
+
+    if refine_connect:# remove the edge which connected to more than connect_thres edges
+        for node in list(G.nodes()):
+            if G.degree(node) > connect_thres:
+                G.remove_node(node)
     
+    # Get connected components (groups of LineStrings with shared vertices)
+    connected_components = list(nx.connected_components(G))
+    # Iterate over each connected component
+    for i, component in enumerate(connected_components):
+        # Create a subgraph for the component
+        subgraph = G.subgraph(component)
+        # Remove vertices with degree > 2 within the component
+        nodes_to_remove = [node for node in list(subgraph.nodes()) if subgraph.degree(node) > 2]
+#         print(nodes_to_remove)
+#         if nodes_to_remove != []:
+#             print(G.nodes[nodes_to_remove[0]]['line'])
+        refined_lines.extend([MultiLineString([G.nodes[ii]['line']]) for ii in nodes_to_remove])
+        G.remove_nodes_from(nodes_to_remove)
+    
+    connected_components = list(nx.connected_components(G))
+    for sub_component in connected_components:
+        indices = list(sub_component)
+        lines = [LineString(G.nodes[ii]['line']) for ii in indices]
+        multi_line_string = MultiLineString(lines)
+#         print(multi_line_string)
+        refined_lines.append(multi_line_string)
+#         polygon = multi_line_string.convex_hull
+        
+    return refined_lines
+
+# Function to convert a MultiLineString or LineString to a list of coordinates
+def geometry_to_coordinates(geometry):
+    if isinstance(geometry, MultiLineString):
+        coordinates = [list(line.coords) for line in geometry]
+    elif isinstance(geometry, LineString):
+        coordinates = list(geometry.coords)
+    else:
+        print(geometry.geom_type)
+        raise ValueError("Input geometry must be a MultiLineString or LineString")
+    return coordinates
+
+def closest_point_to_multilinestring(point, multilinestring):
+    point = Point(point)
+    closest_distance = float('inf')  # Initialize closest distance to positive infinity
+    closest_point = None  # Initialize closest point to None
+
+    # Iterate through all LineString components of the MultiLineString
+    for linestring in multilinestring.geoms:
+        # Iterate through all points on the LineString
+        for coords in linestring.coords:
+            # Calculate the distance between the given point and the current point on the LineString
+            distance = point.distance(Point(coords))
+            # Check if the current point is closer than the previous closest point
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_point = Point(coords)
+
+    return list(closest_point.coords)[0]
+
+def merge_two_lines_with_buffered_points(line1, line2, intersect_point):
+    close_pt1 = closest_point_to_multilinestring(intersect_point, line1)
+    close_pt2 = closest_point_to_multilinestring(intersect_point, line2)
+    line = MultiLineString([[close_pt1, close_pt2]])
+#     all_lines = list(line1.geoms) + [line] + list(line2.geoms)
+#     multi_lines = MultiLineString(all_lines)
+    return line #multi_lines
+    
+
+def remove_small_gaps(lines, buffer_dist=20):
+    refined_lines = []
+    # Create a graph
+    G = nx.Graph()
+    # Add LineStrings as nodes to the graph
+    for i, line in enumerate(lines):
+#         line_shp = LineString(line)
+        G.add_node(i, line=line)
+    # Add edges between LineStrings that share vertices
+    for i, line1 in enumerate(G.nodes(data='line')):
+        for j, line2 in enumerate(G.nodes(data='line')):
+            if i != j and is_overlapped(line1[1], line2[1]):
+                G.add_edge(i, j)
+    # Find nodes with degree < 2
+    nodes_degree_less_than_2 = [node for node in G.nodes() if nx.degree(G, node) < 2]
+    print(nodes_degree_less_than_2)
+    for i in range(len(nodes_degree_less_than_2)):
+        for j in range(i+1, len(nodes_degree_less_than_2)):
+            ind1 = nodes_degree_less_than_2[i]
+            ind2 = nodes_degree_less_than_2[j]
+            line1 = G.nodes[ind1]['line']
+            line2 = G.nodes[ind2]['line']
+            intersected_point = is_overlapped_within_buffer(line1, line2, buffer_dist)
+            if intersected_point:
+                line_to_add = merge_two_lines_with_buffered_points(line1, line2, intersected_point)
+                ind = len(G.nodes())
+                G.add_node(ind, line=line_to_add)
+                G.add_edge(ind1, ind)
+                G.add_edge(ind, ind1)
+                G.add_edge(ind2, ind)
+                G.add_edge(ind, ind2)
+
+    connected_components = list(nx.connected_components(G))
+    for sub_component in connected_components:
+        indices = list(sub_component)
+        lines = []
+        for ii in indices:
+            lines.extend(list(G.node[ii]['line'].geoms))
+        multi_line_string = MultiLineString(lines)
+#         print(multi_line_string)
+        refined_lines.append(multi_line_string)
+    return refined_lines
