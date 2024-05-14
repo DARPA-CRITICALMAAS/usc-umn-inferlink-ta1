@@ -246,7 +246,7 @@ def run_georeferencing(args):
     title = getTitle(base64_image)
 
     if title == -1: # exception when extracting the title 
-        logging.Error('Failed to extract title, exit with code -1')
+        logging.error('Failed to extract title, exit with code -1')
         return -1 
 
     title = to_camel(title)
@@ -378,6 +378,7 @@ def reformat_bbox(min_bbox_points, row_first = True):
 def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
 
     top1 = top10.iloc[0]
+    # print(top1['product_url'])
     
     left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
     # img_left, img_right, img_top, img_bottom = seg_bbox[0], seg_bbox[0]+seg_bbox[2], seg_bbox[1], seg_bbox[1]+seg_bbox[3] # for SAM axis aligned bbox
@@ -482,6 +483,13 @@ def main():
     assert args.output_path is not None 
     
     seg_bbox, top10, image_width, image_height, title, toponyms = run_georeferencing(args)
+
+    ret = run_georeferencing(args)
+
+    if ret == -1:
+        return -1 
+    else:
+        seg_bbox, top10, image_width, image_height, title, toponyms = ret
 
     # generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
