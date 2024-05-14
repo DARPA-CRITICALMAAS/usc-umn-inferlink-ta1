@@ -217,15 +217,19 @@ def map_area_cropping(target_map_name, input_image, path_to_intermediate, input_
                     flag_identify, placeholder_generated = processing_uncharted_json_single(input_image, input_legend_segmentation, target_map_name, output_segmentation, placeholder_handler)
 
             if flag_identify == False:
-                return False
+                return False, None
         else:
             shutil.copyfile(input_legend_segmentation, output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
         solution = cv2.imread(output_segmentation.replace('exc_crop_binary.tif', 'area_crop_binary.tif'))
-        solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
+        try:
+            solution = cv2.cvtColor(solution, cv2.COLOR_BGR2GRAY)
+        except:
+            print('------------- Unable to proceed with cv2.COLOR_BGR2GRAY...')
+            return False, None
     else:
         print('------------- Require legend-area segmentation output from Uncharted......')
 
-        return False
+        return False, None
         if preprocessing_for_cropping == True:
             # if preprocessing for map area segmentation is needed...
             print('Step (0/9): Preprocessing for map area segmentation...')
@@ -518,6 +522,75 @@ def rectangularization(path_to_intermediate, intermediate_stage, target_map_name
 
 
 
+def refine_poly_roi(target_map_name, path_to_intermediate):
+    output_segmentation = os.path.join(path_to_intermediate, 'exc_crop_binary.tif')
+    segmentatation_poly = output_segmentation.replace('exc_crop_binary.tif', 'area_crop_poly.tif')
+    roi_poly = cv2.imread(segmentatation_poly)
+    roi_poly = cv2.cvtColor(roi_poly, cv2.COLOR_BGR2GRAY)
+
+    contours, hierarchy = cv2.findContours(roi_poly, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    max_contour_size = 0
+    valid_contours = None
+    # list for storing names of shapes
+    for c in contours:
+        # Discard shapes that are too large or small to be a valid legend
+        area = cv2.contourArea(c)
+        if area > max_contour_size and area < roi_poly.shape[0]*roi_poly.shape[1]:
+            max_contour_size = area
+            valid_contours = c
+    
+
+    
+    print('Step ( 4/10): Tranferring from contours to polygons...')
+    roi_img = np.ones((roi_poly.shape[0], roi_poly.shape[1]), dtype='uint8')
+    if valid_contours is not None:
+        cv2.drawContours(roi_img, [valid_contours], 0, 255, 1)
+
+    # flood fill background to find inner holes
+    floodfill_candidate = np.ones((roi_img.shape[0], roi_img.shape[1]), dtype='uint8') * 255
+    holes = np.copy(roi_img)
+    cv2.floodFill(holes, None, (0, 0), 255)
+
+    # invert holes mask, bitwise or with img fill in holes
+    holes = cv2.bitwise_not(holes)
+    valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
+    floodfill_block = cv2.bitwise_and(255-roi_img, valid_holes)
+    floodfill_block[floodfill_block > 0] = 255 # 254
+
+    shutil.copyfile(os.path.join(path_to_intermediate, 'area_crop_poly.tif'), os.path.join(path_to_intermediate, 'area_crop_poly_v0.tif'))
+    cv2.imwrite(os.path.join(path_to_intermediate, 'area_crop_poly.tif'), floodfill_block)
+
+
+
+
+    segmentatation_poly = output_segmentation.replace('exc_crop_binary.tif', 'area_crop_ptln.tif')
+    roi_ptln = cv2.imread(segmentatation_poly)
+    roi_ptln = cv2.cvtColor(roi_ptln, cv2.COLOR_BGR2GRAY)
+
+    #segmentatation_poly = output_segmentation
+    #roi = cv2.imread(segmentatation_poly)
+    #roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+    roi = cv2.bitwise_or(floodfill_block, roi_ptln)
+    shutil.copyfile(os.path.join(path_to_intermediate, 'area_crop_binary.tif'), os.path.join(path_to_intermediate, 'area_crop_binary_v0.tif'))
+    cv2.imwrite(os.path.join(path_to_intermediate, 'area_crop_binary.tif'), roi)
+
+
+    segmentatation_poly = output_segmentation.replace('exc_crop_binary.tif', 'area_crop_rgb.tif')
+    roi_rgb = cv2.imread(segmentatation_poly)
+    roi_rgb = cv2.cvtColor(roi_rgb, cv2.COLOR_BGR2RGB)
+    roi_rgb = cv2.bitwise_and(roi_rgb, roi_rgb, mask=roi)
+    roi_rgb = cv2.cvtColor(roi_rgb, cv2.COLOR_RGB2BGR)
+    shutil.copyfile(os.path.join(path_to_intermediate, 'area_crop_rgb.tif'), os.path.join(path_to_intermediate, 'area_crop_rgb_v0.tif'))
+    cv2.imwrite(os.path.join(path_to_intermediate, 'area_crop_rgb.tif'), roi_rgb)
+
+
+
+
+    return
+
+
+
 
 
 
@@ -530,6 +603,9 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     if not os.path.exists(os.path.join(path_to_intermediate, str('intermediate4'))):
         os.makedirs(os.path.join(path_to_intermediate,  str('intermediate4')))
 
+
+
+    refine_poly_roi(target_map_name, path_to_intermediate)
 
 
     print('Step ( 2/10): Applying color thresholding and contour finding...')
@@ -546,6 +622,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     basemap_name = os.path.join(path_to_intermediate, 'area_crop_rgb.tif')
     source_basemap = cv2.imread(basemap_name)
     img_rgb = cv2.cvtColor(source_basemap, cv2.COLOR_BGR2RGB)
+    img_hsv = cv2.cvtColor(source_basemap, cv2.COLOR_BGR2HSV)
     img_gray = cv2.cvtColor(source_basemap, cv2.COLOR_BGR2GRAY)
     
     '''
@@ -555,26 +632,54 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     # Edge Detection
     thresh_blur = cv2.GaussianBlur(thresh, (11, 11), 0)
     canny = cv2.Canny(thresh_blur, 0, 200)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_canny_0.tif')), canny)
     canny_dilate = cv2.dilate(canny, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_canny_1.tif')), canny_dilate)
     '''
 
     # setting threshold of gray image
-    _, threshold = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
+    _, threshold = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY) # 60, 255
 
     # using a findContours() function
-    
     kernel = np.ones((2, 4), np.uint8)
     threshold_dilate = cv2.dilate(255-threshold, kernel, iterations = 1)
     #threshold_dilate = cv2.erode(threshold_dilate, kernel, iterations = 1)
     threshold_dilate = 255 - threshold_dilate
 
-    _, threshold_dilate = cv2.threshold(threshold_dilate, 127, 255, cv2.THRESH_BINARY)
+    _, threshold_dilate = cv2.threshold(threshold_dilate, 127, 255, cv2.THRESH_BINARY) # 60, 255
     contours, hierarchy = cv2.findContours(threshold_dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     #contours, hierarchy = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     adaptive_threshold = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 4)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_0.tif')), threshold)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_1.tif')), threshold_dilate)
-    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_adaptive.tif')), adaptive_threshold)
+
+
+
+    ### Use a more strict threshold to handle polygon legend items with mixture contents
+    # setting threshold of gray image
+    _, threshold_v2 = cv2.threshold(img_gray, 60, 255, cv2.THRESH_BINARY) # 60, 255
+
+    # using a findContours() function
+    kernel = np.ones((2, 4), np.uint8)
+    threshold_dilate_v2 = cv2.dilate(255-threshold_v2, kernel, iterations = 1)
+    #threshold_dilate_v2 = cv2.erode(threshold_dilate_v2, kernel, iterations = 1)
+    threshold_dilate_v2 = 255 - threshold_dilate_v2
+
+    _, threshold_dilate_v2 = cv2.threshold(threshold_dilate_v2, 60, 255, cv2.THRESH_BINARY) # 60, 255
+    contours_v2, hierarchy_v2 = cv2.findContours(threshold_dilate_v2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    #contours, hierarchy = cv2.findContours(threshold_v2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    adaptive_threshold_v2 = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 4)
+
+
+    #threshold = cv2.bitwise_and(threshold, threshold_v2)
+    #threshold_dilate = cv2.bitwise_and(threshold_dilate, threshold_dilate_v2)
+    #adaptive_threshold = cv2.bitwise_or(adaptive_threshold, adaptive_threshold_v2)
+
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_0_v1.tif')), threshold)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_1_v1.tif')), threshold_dilate)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_adaptive_v1.tif')), adaptive_threshold)
+
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_0_v2.tif')), threshold_v2)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_fixed_1_v2.tif')), threshold_dilate_v2)
+    cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_thresholding_adaptive_v2.tif')), adaptive_threshold_v2)
 
 
     print('Step ( 3/10): Filtering contours for poly legend items...')
@@ -600,7 +705,7 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         approx = cv2.approxPolyDP(c, 0.01 * cv2.arcLength(c, True), True)
 
         # Only quadrilaterals shapes are valid
-        if len(approx) != 4:
+        if len(approx) != 4: # or len(approx) != 3:
             continue
 
         # Discard shapes that are too large or small to be a valid legend
@@ -618,6 +723,41 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         candidate_rect_areas.append(rect_area)
         candidate_contours.append(c)
         candidate_width.append(w)
+    
+
+    ##################
+    i = 0
+    # list for storing names of shapes
+    for c in contours_v2:
+        # here we are ignoring first counter because
+        # findcontour function detects whole image as shape
+        if i == 0:
+            i = 1
+            continue
+
+        # cv2.approxPloyDP() function to approximate the shape
+        approx = cv2.approxPolyDP(c, 0.01 * cv2.arcLength(c, True), True)
+
+        # Only quadrilaterals shapes are valid
+        if len(approx) != 4: # or len(approx) != 3:
+            continue
+
+        # Discard shapes that are too large or small to be a valid legend
+        area = cv2.contourArea(c)
+        if area <= min_contour_size or area >= max_contour_size:
+            continue
+
+        # Discard shapes that are quads but not rectangular
+        x,y,w,h = cv2.boundingRect(c)
+        rect_area = w*h
+        if rect_area > area*4:
+            continue
+
+        candidate_areas.append(area)
+        candidate_rect_areas.append(rect_area)
+        candidate_contours.append(c)
+        candidate_width.append(w)
+    ##################
 
     # Calculate valid area threshold
     valid_bounds = 0.66 # Percent +/- threshold from median
@@ -880,8 +1020,153 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
         
         poly_candidate_sweeping = np.copy(floodfill_block)
         poly_candidate_sweeping[poly_candidate_sweeping > 0] = 255 # 254
-        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), poly_candidate_sweeping)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly1_2.tif')), poly_candidate_sweeping)
 
+
+    
+
+
+    if True:
+        print('Updating approach...')
+
+        # Define thresholds for saturation and value to exclude black and white
+        # Note: Adjust these thresholds according to your specific needs
+        saturation_threshold_low = 30   # Lower bound for saturation
+        value_threshold_low = 90        # Lower bound for value
+        value_threshold_high = 225      # Upper bound for value
+        # Black colors can generally be characterized by very low value, while white colors can be characterized by very high value and low saturation.
+
+        # Create masks based on the thresholds, extracting colored areas (excluding black and white)
+        threshold = cv2.inRange(img_hsv, (0, saturation_threshold_low, value_threshold_low), (180, 255, value_threshold_high))
+
+        # find their boundaries using Canny
+        threshold_dilate = cv2.Canny(threshold, 10, 20)
+        kernel = np.ones((5, 5), np.uint8)
+        threshold_dilate = cv2.dilate(threshold_dilate, kernel, iterations = 1)
+        threshold_dilate = cv2.erode(threshold_dilate, kernel, iterations = 1)
+
+        # flood fill background to find inner holes
+        floodfill_candidate = np.ones((threshold_dilate.shape[0], threshold_dilate.shape[1]), dtype='uint8') * 255
+        holes = np.copy(threshold_dilate)
+        cv2.floodFill(holes, None, (0, 0), 255)
+
+        # invert holes mask, bitwise or with img fill in holes
+        holes = cv2.bitwise_not(holes)
+        valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
+        #floodfill_block = cv2.bitwise_and(255-threshold, valid_holes)
+        floodfill_block_original = cv2.erode(valid_holes, kernel, iterations = 1)
+
+        # combine floodfill_output (fill-up based on boundaries) with threshold_dilate_output (fill-up based on thresholding)
+        kernel = np.ones((10, 15), np.uint8)
+        threshold_dilate_eroded = cv2.erode(threshold_dilate, kernel, iterations = 1)
+        floodfill_block = cv2.bitwise_or(floodfill_block_original, threshold_dilate_eroded)
+        
+        # identify areas that can be used for the triangular/ irregular polygon legend items, by excluding areas of the existing-identified polygon legend items
+        kernel = np.ones((5, 10), np.uint8)
+        inv_taboo = 255-cv2.dilate(poly_candidate_sweeping, kernel, iterations = 1)
+        inv_taboo = cv2.bitwise_and(roi_poly, inv_taboo)
+
+        triangular_candidate = cv2.bitwise_and(inv_taboo, floodfill_block)
+        kernel = np.ones((5, 3), np.uint8)
+        poly_tri_candidate_sweeping = cv2.erode(triangular_candidate, kernel, iterations = 1)
+
+        # turn the triangular/ irregular polygon legend items into rectangular shape
+        kernel = np.ones((1, 3), np.uint8)
+        for sweeping in range(0, 200):
+            poly_tri_candidate_sweeping = cv2.dilate(poly_tri_candidate_sweeping, kernel, iterations = 1)
+            poly_tri_candidate_sweeping = cv2.bitwise_and(poly_tri_candidate_sweeping, column_summary)
+        kernel = np.ones((1, 5), np.uint8)
+        poly_tri_candidate_sweeping = cv2.erode(poly_tri_candidate_sweeping, kernel, iterations = 1)
+        
+        # extend the height of polygon legend items as much as possible
+        kernel = np.ones((5, 10), np.uint8)
+        inv_hieght_taboo = 255-cv2.dilate(poly_tri_candidate_sweeping, kernel, iterations = 1)
+        inv_hieght_taboo = cv2.bitwise_and(inv_taboo, inv_hieght_taboo)
+        kernel = np.ones((15, 30), np.uint8)
+        inv_hieght_taboo = cv2.dilate(inv_hieght_taboo, kernel, iterations = 1)
+
+        kernel = np.ones((4, 1), np.uint8)
+        poly_tri_candidate_sweeping_cand = cv2.dilate(poly_tri_candidate_sweeping, kernel, iterations = 1)
+        poly_tri_candidate_sweeping_cand = cv2.bitwise_and(poly_tri_candidate_sweeping_cand, inv_hieght_taboo)
+        poly_tri_candidate_sweeping = cv2.bitwise_or(poly_tri_candidate_sweeping, poly_tri_candidate_sweeping_cand)
+
+        
+        #adaptive_threshold = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 21, 4)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_0.tif')), threshold)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_1.tif')), threshold_dilate)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_2.tif')), holes)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_3.tif')), floodfill_block_original)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_4.tif')), floodfill_block)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_5.tif')), triangular_candidate)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_6.tif')), poly_tri_candidate_sweeping)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_candidate_7.tif')), poly_tri_candidate_sweeping_cand)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_triangular_taboo_0.tif')), inv_hieght_taboo)
+
+
+
+        ### Filter out legend items based on areas...
+        poly_contours, poly_hierarchy = cv2.findContours(poly_tri_candidate_sweeping, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        max_contour_size = 50000 # 1% of image
+        min_contour_size = 200
+        min_bounding_size = 10
+
+        poly_valid_contours = []
+        i = 0
+        # list for storing names of shapes
+        for c in poly_contours:
+            # here we are ignoring first counter because
+            # findcontour function detects whole image as shape
+            #if i == 0:
+            #    i = 1
+            #    continue
+
+            # Discard shapes that are too large or small to be a valid legend
+            area = cv2.contourArea(c)
+            if area <= min_contour_size or area >= max_contour_size:
+                print('get 0...')
+                continue
+
+            # Discard shapes that are quads but not rectangular
+            x,y,w,h = cv2.boundingRect(c)
+            if h <= min_bounding_size or w <= min_bounding_size:
+                print('get 1...')
+                continue
+
+            poly_valid_contours.append(c)
+
+        poly_img_0 = np.ones((img_rgb.shape[0], img_rgb.shape[1], img_rgb.shape[2]), dtype='uint8')
+
+        # list for storing names of shapes
+        for i in range(0,len(poly_valid_contours)):
+            # using drawContours() function
+            cv2.drawContours(poly_img_0, [poly_valid_contours[i]], 0, (0, 0, 255), 1)
+        poly_img_0 = cv2.cvtColor(poly_img_0, cv2.COLOR_RGB2GRAY)
+
+        # flood fill background to find inner holes
+        floodfill_candidate = np.ones((poly_img_0.shape[0], poly_img_0.shape[1]), dtype='uint8') * 255
+        holes = np.copy(poly_img_0)
+        cv2.floodFill(holes, None, (0, 0), 255)
+
+        # invert holes mask, bitwise or with img fill in holes
+        holes = cv2.bitwise_not(holes)
+        valid_holes = cv2.bitwise_and(holes, floodfill_candidate)
+        floodfill_block = cv2.bitwise_and(255-poly_img_0, valid_holes)
+        
+        poly_candidate_sweeping_v2 = np.copy(floodfill_block)
+        poly_candidate_sweeping_v2[poly_candidate_sweeping_v2 > 0] = 255 # 254
+
+
+        # make sure the new legend item does not overlap with existing legend items
+        kernel = np.ones((3, 3), np.uint8)
+        poly_candidate_sweeping_v2 = cv2.bitwise_and(poly_candidate_sweeping_v2, 255-cv2.dilate(poly_candidate_sweeping, kernel, iterations = 1))
+        poly_candidate_sweeping_v2[poly_candidate_sweeping_v2 > 0] = 255
+
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_candidate_poly2.tif')), poly_candidate_sweeping_v2)
+
+        poly_candidate_sweeping = cv2.bitwise_or(poly_candidate_sweeping, poly_candidate_sweeping_v2)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate3'), target_map_name.replace('.tif', '_candidate_poly3.tif')), poly_candidate_sweeping)
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate4'), target_map_name.replace('.tif', '_candidate_poly2.tif')), poly_candidate_sweeping)
 
 
 
@@ -889,7 +1174,10 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
     if  only_poly == True:
         print('============= You opt out extracting point and line legend items at this stage. Thanks for saving our times...')
         print('============= You can not bypass extraction for point and line legend items at this stage...')
-    if True:
+
+        ptln_candidate_sweeping = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
+        cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
+    else:
         ptln_candidate_sweeping = np.zeros((column_summary.shape[0], column_summary.shape[1]), dtype='uint8')
         cv2.imwrite(os.path.join(path_to_intermediate, str('intermediate2'), target_map_name.replace('.tif', '_candidate_ptln2.tif')), ptln_candidate_sweeping)
     
@@ -1251,8 +1539,10 @@ def map_key_extraction(target_map_name, path_to_intermediate, path_to_mapkurator
 
 
 
-
-    integrated_raster_legend_item = cv2.bitwise_or(poly_candidate_sweeping, ptln_candidate_sweeping)
+    if only_poly == True:
+        integrated_raster_legend_item = np.copy(poly_candidate_sweeping)
+    else:
+        integrated_raster_legend_item = cv2.bitwise_or(poly_candidate_sweeping, ptln_candidate_sweeping)
     cv2.imwrite(os.path.join(path_to_intermediate, target_map_name.replace('.tif', '_integrated_raster.tif')), integrated_raster_legend_item)
 
     integrated_raster_legend_item_bounding_box = np.copy(integrated_raster_legend_item)

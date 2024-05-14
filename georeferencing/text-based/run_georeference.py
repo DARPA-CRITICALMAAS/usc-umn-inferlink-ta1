@@ -7,6 +7,7 @@ from segmentation_sam import resize_img, run_sam
 import urllib.request
 import rasterio
 import json 
+import pdb
 import numpy as np
 import torch
 import base64
@@ -21,17 +22,13 @@ import os
 
 Image.MAX_IMAGE_PIXELS = None
 
-# torch.cuda.empty_cache()
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
 api_key = os.getenv("OPENAI_API_KEY")
 
 
-def run_segmentation(file, support_data_dir):
+def run_segmentation(file, support_data_dir, device):
     image = Image.open(file).convert('RGB') # read image with PIL library
 
     print('image_size',image.size)
-
     resized_img, scaling_factor = resize_img(np.array(image))
     seg_mask, bbox, rotated_bbox_points = run_sam(np.array(image), resized_img, scaling_factor, device, support_data_dir)
 
@@ -212,6 +209,23 @@ def to_camel(title):
 
 def run_georeferencing(args):
 
+    # Check if GPU is available
+    if torch.cuda.is_available():
+        # Get the number of available GPUs
+        num_gpus = torch.cuda.device_count()
+        print(f"Number of available GPUs: {num_gpus}")
+
+        # Assign GPU id (assuming you want to use the first GPU)
+        gpu_id = int(args.gpu_id)
+        print(f"Using GPU {gpu_id}")
+
+        # Set the device
+        device = torch.device(f'cuda:{gpu_id}')
+    else:
+        print("GPU is not available. Using CPU instead.")
+        # If GPU is not available, use CPU
+        device = torch.device('cpu')
+
     # input_path = '../input_data/CO_Frisco.png' # supported file format: png, jpg, jpeg, tif
     input_path = args.input_path
     support_data_dir = args.support_data_dir
@@ -221,7 +235,7 @@ def run_georeferencing(args):
     bm25, df_merged = load_data(topo_histo_meta_path = f'{support_data_dir}/historicaltopo.csv',
         topo_current_meta_path = f'{support_data_dir}/ustopo_current.csv')
     
-    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path, args.support_data_dir)
+    seg_mask, seg_bbox, image, image_width, image_height = run_segmentation(input_path, args.support_data_dir, device)
 
     # Set the opacity level (0.5 for 50% opacity)
     opacity = 0.5
@@ -474,6 +488,7 @@ def main():
     parser.add_argument('--support_data_dir', type=str, default='support_data')
     parser.add_argument('--reformat', action='store_true' )
     parser.add_argument('--more_info', action='store_true' )
+    parser.add_argument('--gpu_id', type=str, default='')
     args = parser.parse_args()
     print('\n')
     print(args)

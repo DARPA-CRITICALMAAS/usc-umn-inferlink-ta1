@@ -28,9 +28,9 @@ def write_geojson_cdr(output_geojson_path, all_lines, legend_text=None, feature_
                         "properties":{
                             "model": "umn-usc-inferlink",
                             "model_version": "0.0.1",
-                            "confidence": None,
+                            "confidence": 0.8,
                             "dash_pattern": line_cat,
-                            "symbol": None
+                            "symbol": ""
                         }
                     }
                     line_features.append(line_feat)
@@ -45,9 +45,9 @@ def write_geojson_cdr(output_geojson_path, all_lines, legend_text=None, feature_
                     "properties":{
                         "model": "umn-usc-inferlink",
                         "model_version": "0.0.1",
-                        "confidence": None,
+                        "confidence": 0.8,
                         "dash_pattern": line_cat,
-                        "symbol": None
+                        "symbol": ""
                     }
                 }
                 line_features.append(line_feat)
