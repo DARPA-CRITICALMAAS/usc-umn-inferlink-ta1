@@ -69,7 +69,7 @@ def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_
             if performance_evaluation == False:
                 continue
 
-        if 
+        
         img = cv2.imread(figure_info[this_img][0])
         try:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
