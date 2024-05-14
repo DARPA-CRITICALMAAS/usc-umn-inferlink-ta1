@@ -49,7 +49,7 @@ def predict_img_patches_strike(map_name,crop_dir_path,model_dir_root,selected_mo
                 res_per_crop['type']='strike'
                 res_per_crop['score']=str(conf)
                 res_per_crop['r_bbox'].append([int(x1), int(y1), int(x2), int(y2), int(x3), int(y3), int(x4), int(y4)])
-                res_per_crop['strike_angle'] = (int)(angle) + 90
+                res_per_crop['strike_angle'] = angle
                 entire_res.append(res_per_crop)                   
             out_file_path=os.path.join(output_path,val_img.split('.')[0]+'.json')
             with open(out_file_path, "w") as out:

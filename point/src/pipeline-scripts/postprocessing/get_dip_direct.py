@@ -29,7 +29,7 @@ def get_dip_direction(interm_output_dir_per_map,final_output_per_map):
                     st_circle = cnt_pt_st.buffer(radius)
                     min_dist = 10000
                     min_id = 0          
-                    # print(dd,cnt_pt_st)
+                    print(dd,cnt_pt_st)
 
                     for pt_feature in pnt_output["point_features"]:
                         cnt_pt = Point(pt_feature["features"][0]["geometry"]["coordinates"])  
