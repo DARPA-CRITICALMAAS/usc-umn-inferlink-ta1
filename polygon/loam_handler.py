@@ -13,6 +13,8 @@ from datetime import datetime
 import threading
 import time
 
+import logging
+import traceback
 
 #def impulse(global_runningtime_start):
     #threading.Timer(60.0, impulse, [global_runningtime_start]).start()
@@ -192,6 +194,20 @@ def main():
 
     sys.stdout = Logger()
 
+        
+    logging.basicConfig(level=logging.ERROR, 
+                        filename=args.log, 
+                        filemode='a', 
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        logger.critical("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
+    sys.excepthook = handle_exception
+
     argument_checker()
 
 
@@ -297,79 +313,18 @@ def main():
 
     this_testing = str_to_bool(args.testing)
     this_testing_section = args.testing_section
-    if this_testing == False:
-        metadata_preprocessing.metadata_preprocessing(
-            input_path_to_tif = input_tif,
-            input_path_to_json = input_json,
-            input_path_to_bound = input_bound,
-            input_dir_to_intermediate = dir_to_intermediate_preprocessing,
-            input_map_preprocessing = map_preprocessing,
-            input_thread = input_threads,
-            input_efficiency_trade_off = efficiency_trade_off
-        )
-
-        metadata_postprocessing.metadata_postprocessing(
-            input_path_to_tif = input_tif,
-            input_path_to_json = input_json,
-            input_dir_to_intermediate = dir_to_intermediate,
-            input_dir_to_groundtruth = dir_to_groundtruth,
-            input_performance_evaluation = performance_evaluation,
-            crop_size=1024,
-            input_thread = input_threads,
-            input_efficiency_trade_off = efficiency_trade_off
-        )
-        
-        loam_inference.loam_inference(
-            input_filtering_new_dataset = True,
-            input_filtering_threshold = 0.33,
-            input_k_fold_testing = 1,
-            input_crop_size = 1024,
-            input_separate_validating_set = False,
-            input_reading_predefined_testing = True,
-            input_training_needed = False,
-            input_dir_to_intermediate = dir_to_intermediate,
-            input_targeted_map_file = 'targeted_map.csv',
-            input_path_to_tif = input_tif,
-            input_groundtruth_dir = dir_to_groundtruth,
-            input_performance_evaluation = performance_evaluation,
-            input_thread = input_threads,
-            input_path_to_model = input_path_to_model
-        )
-
-        polygon_output_handler.output_handler(
-            input_path_to_tif = input_tif,
-            input_path_to_legend_solution = path_to_legend_solution,
-            input_path_to_legend_description = path_to_legend_description,
-            input_path_to_json = input_json,
-            input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
-            input_dir_to_integrated_output = dir_to_integrated_output,
-            input_dir_to_raster_output = dir_to_raster_output,
-            input_set_schema = set_schema,
-            input_vectorization = True
-        )
-    else:
-        print('You are going to run only some components of the module with section(s): ' + str(this_testing_section))
-        print('In the process of making sure you have files for latter parts ready...')
-
-        if '0' not in this_testing_section and '1' in this_testing_section:
-            sub_file_checker(0, dir_to_intermediate_preprocessing, None)
-        if '1' not in this_testing_section and '2' in this_testing_section:
-            sub_file_checker(1, None, dir_to_intermediate)
-        if '2' not in this_testing_section and '3' in this_testing_section:
-            sub_file_checker(2, None, dir_to_intermediate)
-
-
-        if '0' in this_testing_section:
+    try:
+        if this_testing == False:
             metadata_preprocessing.metadata_preprocessing(
                 input_path_to_tif = input_tif,
                 input_path_to_json = input_json,
                 input_path_to_bound = input_bound,
                 input_dir_to_intermediate = dir_to_intermediate_preprocessing,
                 input_map_preprocessing = map_preprocessing,
-                input_thread = input_threads
+                input_thread = input_threads,
+                input_efficiency_trade_off = efficiency_trade_off
             )
 
-        if '1' in this_testing_section:
             metadata_postprocessing.metadata_postprocessing(
                 input_path_to_tif = input_tif,
                 input_path_to_json = input_json,
@@ -377,10 +332,10 @@ def main():
                 input_dir_to_groundtruth = dir_to_groundtruth,
                 input_performance_evaluation = performance_evaluation,
                 crop_size=1024,
-                input_thread = input_threads
+                input_thread = input_threads,
+                input_efficiency_trade_off = efficiency_trade_off
             )
-
-        if '2' in this_testing_section:
+            
             loam_inference.loam_inference(
                 input_filtering_new_dataset = True,
                 input_filtering_threshold = 0.33,
@@ -398,7 +353,6 @@ def main():
                 input_path_to_model = input_path_to_model
             )
 
-        if '3' in this_testing_section:
             polygon_output_handler.output_handler(
                 input_path_to_tif = input_tif,
                 input_path_to_legend_solution = path_to_legend_solution,
@@ -410,7 +364,73 @@ def main():
                 input_set_schema = set_schema,
                 input_vectorization = True
             )
+        else:
+            print('You are going to run only some components of the module with section(s): ' + str(this_testing_section))
+            print('In the process of making sure you have files for latter parts ready...')
 
+            if '0' not in this_testing_section and '1' in this_testing_section:
+                sub_file_checker(0, dir_to_intermediate_preprocessing, None)
+            if '1' not in this_testing_section and '2' in this_testing_section:
+                sub_file_checker(1, None, dir_to_intermediate)
+            if '2' not in this_testing_section and '3' in this_testing_section:
+                sub_file_checker(2, None, dir_to_intermediate)
+
+
+            if '0' in this_testing_section:
+                metadata_preprocessing.metadata_preprocessing(
+                    input_path_to_tif = input_tif,
+                    input_path_to_json = input_json,
+                    input_path_to_bound = input_bound,
+                    input_dir_to_intermediate = dir_to_intermediate_preprocessing,
+                    input_map_preprocessing = map_preprocessing,
+                    input_thread = input_threads
+                )
+
+            if '1' in this_testing_section:
+                metadata_postprocessing.metadata_postprocessing(
+                    input_path_to_tif = input_tif,
+                    input_path_to_json = input_json,
+                    input_dir_to_intermediate = dir_to_intermediate,
+                    input_dir_to_groundtruth = dir_to_groundtruth,
+                    input_performance_evaluation = performance_evaluation,
+                    crop_size=1024,
+                    input_thread = input_threads
+                )
+
+            if '2' in this_testing_section:
+                loam_inference.loam_inference(
+                    input_filtering_new_dataset = True,
+                    input_filtering_threshold = 0.33,
+                    input_k_fold_testing = 1,
+                    input_crop_size = 1024,
+                    input_separate_validating_set = False,
+                    input_reading_predefined_testing = True,
+                    input_training_needed = False,
+                    input_dir_to_intermediate = dir_to_intermediate,
+                    input_targeted_map_file = 'targeted_map.csv',
+                    input_path_to_tif = input_tif,
+                    input_groundtruth_dir = dir_to_groundtruth,
+                    input_performance_evaluation = performance_evaluation,
+                    input_thread = input_threads,
+                    input_path_to_model = input_path_to_model
+                )
+
+            if '3' in this_testing_section:
+                polygon_output_handler.output_handler(
+                    input_path_to_tif = input_tif,
+                    input_path_to_legend_solution = path_to_legend_solution,
+                    input_path_to_legend_description = path_to_legend_description,
+                    input_path_to_json = input_json,
+                    input_dir_to_raster_polygon = os.path.join(dir_to_intermediate, 'LOAM_Intermediate/predict/cma/'),
+                    input_dir_to_integrated_output = dir_to_integrated_output,
+                    input_dir_to_raster_output = dir_to_raster_output,
+                    input_set_schema = set_schema,
+                    input_vectorization = True
+                )
+    except Exception as e:
+        logger.error("An error occurred", exc_info=True)
+        print(e)
+        sys.exit(1)
     
     print('Overall processing time: '+str(datetime.now()-global_runningtime_start))
     #timer.cancel()
