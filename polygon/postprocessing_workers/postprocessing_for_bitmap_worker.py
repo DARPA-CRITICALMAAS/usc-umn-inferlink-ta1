@@ -69,8 +69,39 @@ def postprocessing_for_bitmap_worker_multiple_image(map_id, legend_id, this_map_
             if performance_evaluation == False:
                 continue
 
+        
         img = cv2.imread(figure_info[this_img][0])
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        try:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        except:
+            print('cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) Failed...')
+            try:
+                print(img.shape)
+            except:
+                print('Getting shape Failed...')
+                try:
+                    if os.path.isfile(figure_info[0][0]) == True:
+                        img = cv2.imread(figure_info[0][0])
+                        try:
+                            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                        except:
+                            print('cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) Failed...')
+                        print(img.shape)
+                    elif os.path.isfile(figure_info[2][0]) == True:
+                        img = cv2.imread(figure_info[2][0])
+                        try:
+                            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                        except:
+                            print('cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) Failed...')
+                        print(img.shape)
+                    else:
+                        print('All recovery approach Failed since no backup preliminary output available...')
+                        exit(1)
+                except:
+                    print('All recovery approach Failed since no backup preliminary output readable...')
+                    exit(1)
+            
+                
         empty_grid = np.zeros((crop_size, crop_size), dtype='uint8').astype(float)
 
 

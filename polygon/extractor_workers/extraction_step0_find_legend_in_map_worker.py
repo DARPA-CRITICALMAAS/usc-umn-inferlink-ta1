@@ -27,8 +27,10 @@ def extraction_step0_find_legend_in_map_worker(legend, map_name, names, img_lege
     
 
     img_legend_v0 = cv2.imread(os.path.join(solutiona_dir+'intermediate5', 'Extraction', map_name, map_name+'_'+names+'_legend_2.tif'))
-    img_legend_v1 = img_legend_v0[int(img_legend_v0.shape[0]*5.0/16.0):int(img_legend_v0.shape[0]*11.0/16.0), int(img_legend_v0.shape[1]*5.0/16.0):int(img_legend_v0.shape[1]*11.0/16.0)]
-
+    if img_legend_v0.shape[0]>=16 and img_legend_v0.shape[1]>=16:
+        img_legend_v1 = img_legend_v0[int(img_legend_v0.shape[0]*5.0/16.0):int(img_legend_v0.shape[0]*11.0/16.0), int(img_legend_v0.shape[1]*5.0/16.0):int(img_legend_v0.shape[1]*11.0/16.0)]
+    else:
+        img_legend_v1 = img_legend_v0
 
     lower_black_text = np.array([0,0,0])
     upper_black_text = np.array([80,80,80])

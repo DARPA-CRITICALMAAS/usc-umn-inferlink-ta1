@@ -276,136 +276,254 @@ def polygon_schema_worker(this_abbr, info_for_this_poly, linking_ids, candidate_
 
 
 
+    try:
+        polygon_extraction = gpd.read_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '.geojson')), driver='GeoJSON')
+        mirrored_polygon = polygon_extraction.copy()
 
-    polygon_extraction = gpd.read_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '.geojson')), driver='GeoJSON')
-    mirrored_polygon = polygon_extraction.copy()
+        debugging_for_unreproducible_error = False
 
-    debugging_for_unreproducible_error = False
+        # Simplify the vectorization results
+        mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
+        mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
 
-    # Simplify the vectorization results
-    mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
-    mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
+        if debugging_for_unreproducible_error:
+            mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+            mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
 
-    if debugging_for_unreproducible_error:
-        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
-
-    for index, poi in mirrored_polygon.iterrows():
-        this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
-        this_reduced_polygon = this_reduced_polygon.buffer(2).buffer(-4).buffer(2)
-        this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
-        #this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
-
-        mirrored_polygon.loc[index, 'geometry'] = this_reduced_polygon
-
-        if debugging_for_unreproducible_error and index == 0:
-            f = open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature_breakdown.txt')), 'w')
-            f.write(fname.replace('_predict.png', ''))
-            f.write('\n\npoi["geometry"]: \n' + str(poi['geometry']))
+        for index, poi in mirrored_polygon.iterrows():
             this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
-            f.write('\n\nthis_reduced_polygon_v1: \n' + str(this_reduced_polygon))
             this_reduced_polygon = this_reduced_polygon.buffer(2).buffer(-4).buffer(2)
-            f.write('\n\nthis_reduced_polygon_v2: \n' + str(this_reduced_polygon))
             this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
-            f.write('\n\nthis_reduced_polygon_v3: \n' + str(this_reduced_polygon))
             #this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
-            #f.write('\n\nthis_reduced_polygon_v4: \n' + str(this_reduced_polygon))
-            f.close()
 
-    
-    if debugging_for_unreproducible_error:
-        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_1', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
+            mirrored_polygon.loc[index, 'geometry'] = this_reduced_polygon
 
-    mirrored_polygon = mirrored_polygon.explode()
-    mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
-    mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
-    
-    if debugging_for_unreproducible_error:
-        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
+            if debugging_for_unreproducible_error and index == 0:
+                f = open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_0', fname.replace('_predict.png', '_PolygonFeature_breakdown.txt')), 'w')
+                f.write(fname.replace('_predict.png', ''))
+                f.write('\n\npoi["geometry"]: \n' + str(poi['geometry']))
+                this_reduced_polygon = poi['geometry'].simplify(0.9, preserve_topology=True)
+                f.write('\n\nthis_reduced_polygon_v1: \n' + str(this_reduced_polygon))
+                this_reduced_polygon = this_reduced_polygon.buffer(2).buffer(-4).buffer(2)
+                f.write('\n\nthis_reduced_polygon_v2: \n' + str(this_reduced_polygon))
+                this_reduced_polygon = this_reduced_polygon.simplify(0.9, preserve_topology=True)
+                f.write('\n\nthis_reduced_polygon_v3: \n' + str(this_reduced_polygon))
+                #this_reduced_polygon = shapely.wkt.loads(shapely.wkt.dumps(this_reduced_polygon, trim=True, rounding_precision=0))
+                #f.write('\n\nthis_reduced_polygon_v4: \n' + str(this_reduced_polygon))
+                f.close()
 
-    #mirrored_polygon = mirrored_polygon.drop('level_0', axis=1)
-    #mirrored_polygon = mirrored_polygon.drop('level_1', axis=1)
-    mirrored_polygon.reset_index(inplace=True)
-    mirrored_polygon = mirrored_polygon.drop('level_0', axis=1)
-    mirrored_polygon = mirrored_polygon.drop('level_1', axis=1)
-    #print(mirrored_polygon.keys()) 
-
-    # add information
-    mirrored_polygon['model'] = ['UMN_USC_Inferlink_Polygon_Extract' for _ in range(mirrored_polygon.shape[0])]
-    mirrored_polygon['model_version'] = ['v0.1' for _ in range(mirrored_polygon.shape[0])]
-    mirrored_polygon['confidence'] = [0.809 for _ in range(mirrored_polygon.shape[0])]
-    mirrored_polygon['model_config'] = [None for _ in range(mirrored_polygon.shape[0])]
-
-    mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
-    mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v2.geojson')), driver='GeoJSON')
-
-
-
-
-
-    mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'name', 'geometry', 
-                                                    'PolygonType', #: {'id', 'name', 'color', 'pattern', 'abbreviation', 'description', 'category'},  
-                                                    'GeologicUnit'#: {'name', 'description', 'comments', 'age_text', 't_interval', 'b_interval', 't_age', 'b_age', 'lithology'}
-                                                    ], crs=targeted_crs)
-    polygon_extraction = gpd.read_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v2.geojson')), driver='GeoJSON')
-    
-    keys = ["id", "crs", "cdr_projection_id", "map_unit", "abbreviation", "legend_bbox", "description",  "pattern", "color", "category", "polygon_features"]
-
-    mirrored_polygon = pd.DataFrame(columns=keys)
-    mirrored_polygon = polygon_extraction.copy()
-    mirrored_polygon['id'] = range(0, polygon_extraction.shape[0])
-    #mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
-    mirrored_polygon['crs'] = ['CRITICALMAAS:pixel, EPSG:3857' for _ in range(polygon_extraction.shape[0])]
-    mirrored_polygon['cdr_projection_id'] = [None for _ in range(polygon_extraction.shape[0])]
-    mirrored_polygon['legend_bbox'] = [str(info_for_this_poly['geometry'].values[0]) for _ in range(polygon_extraction.shape[0])]
-    
-    if info_for_this_poly.shape[0] != 1:
-        mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['abbreviation'] = [None for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['description'] = [None for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['pattern'] = [None for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['color'] = [None for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['category'] = [None for _ in range(polygon_extraction.shape[0])]
-    else:
-        mirrored_polygon['pattern'] = [str(info_for_this_poly['pattern'].values[0]) for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['color'] = [str(info_for_this_poly['color'].values[0]) for _ in range(polygon_extraction.shape[0])]
-        mirrored_polygon['category'] = [str(info_for_this_poly['category'].values[0]) for _ in range(polygon_extraction.shape[0])]
         
-        if b_epoch != chronology_period.shape[0]:
-            mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':str(b_interval)+' - '+str(t_interval), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':float(t_age), 'b_age':float(b_age), 'lithology':None} for _ in range(polygon_extraction.shape[0])]
+        if debugging_for_unreproducible_error:
+            mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+            mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_1', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
 
-            if get_referenced_text == True:
-                mirrored_polygon['abbreviation'] = [str(candidate_info[linking_ids[int(this_abbr)]][1]) for _ in range(polygon_extraction.shape[0])]
-                mirrored_polygon['description'] = [str(candidate_info[linking_ids[int(this_abbr)]][0]) for _ in range(polygon_extraction.shape[0])]
-            else:
-                mirrored_polygon['abbreviation'] = [str(info_for_this_poly['abbreviation'].values[0]) for _ in range(polygon_extraction.shape[0])]
-                mirrored_polygon['description'] = [str(info_for_this_poly['description'].values[0]) for _ in range(polygon_extraction.shape[0])]
-        else:
+        mirrored_polygon = mirrored_polygon.explode()
+        mirrored_polygon = mirrored_polygon[mirrored_polygon['geometry'].area/ 10**6 > 0.001]
+        mirrored_polygon['id'] = range(0, mirrored_polygon.shape[0])
+        
+        if debugging_for_unreproducible_error:
+            mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+            mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, 'temp_2', fname.replace('_predict.png', '_PolygonFeature.geojson')), driver='GeoJSON')
+
+        #mirrored_polygon = mirrored_polygon.drop('level_0', axis=1)
+        #mirrored_polygon = mirrored_polygon.drop('level_1', axis=1)
+        mirrored_polygon.reset_index(inplace=True)
+        mirrored_polygon = mirrored_polygon.drop('level_0', axis=1)
+        mirrored_polygon = mirrored_polygon.drop('level_1', axis=1)
+        #print(mirrored_polygon.keys()) 
+
+        # add information
+        mirrored_polygon['model'] = ['UMN_USC_Inferlink_Polygon_Extract' for _ in range(mirrored_polygon.shape[0])]
+        mirrored_polygon['model_version'] = ['v0.1' for _ in range(mirrored_polygon.shape[0])]
+        mirrored_polygon['confidence'] = [0.809 for _ in range(mirrored_polygon.shape[0])]
+        mirrored_polygon['model_config'] = [None for _ in range(mirrored_polygon.shape[0])]
+
+        mirrored_polygon = mirrored_polygon.set_crs('epsg:3857', allow_override=True)
+        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v2.geojson')), driver='GeoJSON')
+
+
+
+
+
+        mirrored_polygon = gpd.GeoDataFrame(columns=['id', 'name', 'geometry', 
+                                                        'PolygonType', #: {'id', 'name', 'color', 'pattern', 'abbreviation', 'description', 'category'},  
+                                                        'GeologicUnit'#: {'name', 'description', 'comments', 'age_text', 't_interval', 'b_interval', 't_age', 'b_age', 'lithology'}
+                                                        ], crs=targeted_crs)
+        polygon_extraction = gpd.read_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v2.geojson')), driver='GeoJSON')
+        
+        keys = ["id", "crs", "cdr_projection_id", "map_unit", "abbreviation", "legend_bbox", "description",  "pattern", "color", "category", "polygon_features"]
+
+        mirrored_polygon = pd.DataFrame(columns=keys)
+        mirrored_polygon = polygon_extraction.copy()
+        mirrored_polygon['id'] = range(0, polygon_extraction.shape[0])
+        #mirrored_polygon.drop(mirrored_polygon[mirrored_polygon['id'] == (mirrored_polygon.shape[0]-1)].index, inplace = True)
+        mirrored_polygon['crs'] = ['CRITICALMAAS:pixel, EPSG:3857' for _ in range(polygon_extraction.shape[0])]
+        mirrored_polygon['cdr_projection_id'] = [None for _ in range(polygon_extraction.shape[0])]
+        mirrored_polygon['legend_bbox'] = [str(info_for_this_poly['geometry'].values[0]) for _ in range(polygon_extraction.shape[0])]
+        
+        if info_for_this_poly.shape[0] != 1:
             mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['abbreviation'] = [None for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['description'] = [None for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['pattern'] = [None for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['color'] = [None for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['category'] = [None for _ in range(polygon_extraction.shape[0])]
+        else:
+            mirrored_polygon['pattern'] = [str(info_for_this_poly['pattern'].values[0]) for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['color'] = [str(info_for_this_poly['color'].values[0]) for _ in range(polygon_extraction.shape[0])]
+            mirrored_polygon['category'] = [str(info_for_this_poly['category'].values[0]) for _ in range(polygon_extraction.shape[0])]
+            
+            if b_epoch != chronology_period.shape[0]:
+                mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':str(b_interval)+' - '+str(t_interval), 't_interval':str(t_interval), 'b_interval':str(b_interval), 't_age':float(t_age), 'b_age':float(b_age), 'lithology':None} for _ in range(polygon_extraction.shape[0])]
 
-            if get_referenced_text == True:
-                mirrored_polygon['abbreviation'] = [str(candidate_info[linking_ids[int(this_abbr)]][1]) for _ in range(polygon_extraction.shape[0])]
-                mirrored_polygon['description'] = [str(candidate_info[linking_ids[int(this_abbr)]][0]) for _ in range(polygon_extraction.shape[0])]
+                if get_referenced_text == True:
+                    mirrored_polygon['abbreviation'] = [str(candidate_info[linking_ids[int(this_abbr)]][1]) for _ in range(polygon_extraction.shape[0])]
+                    mirrored_polygon['description'] = [str(candidate_info[linking_ids[int(this_abbr)]][0]) for _ in range(polygon_extraction.shape[0])]
+                else:
+                    mirrored_polygon['abbreviation'] = [str(info_for_this_poly['abbreviation'].values[0]) for _ in range(polygon_extraction.shape[0])]
+                    mirrored_polygon['description'] = [str(info_for_this_poly['description'].values[0]) for _ in range(polygon_extraction.shape[0])]
             else:
-                mirrored_polygon['abbreviation'] = [str(info_for_this_poly['abbreviation'].values[0]) for _ in range(polygon_extraction.shape[0])]
-                mirrored_polygon['description'] = [str(info_for_this_poly['description'].values[0]) for _ in range(polygon_extraction.shape[0])]
+                mirrored_polygon['map_unit'] = [{'name':None, 'comments':None, 'age_text':None, 't_interval':None, 'b_interval':None, 't_age':None, 'b_age':None, 'lithology':None} for _ in range(polygon_extraction.shape[0])]
+
+                if get_referenced_text == True:
+                    mirrored_polygon['abbreviation'] = [str(candidate_info[linking_ids[int(this_abbr)]][1]) for _ in range(polygon_extraction.shape[0])]
+                    mirrored_polygon['description'] = [str(candidate_info[linking_ids[int(this_abbr)]][0]) for _ in range(polygon_extraction.shape[0])]
+                else:
+                    mirrored_polygon['abbreviation'] = [str(info_for_this_poly['abbreviation'].values[0]) for _ in range(polygon_extraction.shape[0])]
+                    mirrored_polygon['description'] = [str(info_for_this_poly['description'].values[0]) for _ in range(polygon_extraction.shape[0])]
 
 
-    mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')), driver='GeoJSON')
+        mirrored_polygon.to_file(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')), driver='GeoJSON')
 
 
 
-    with open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')),) as f:
-        gj = json.load(f)
-    combined_features = rebuilding_json(gj, this_abbr, rounding_off=False)
-    combined_features = recursive_updating_none(combined_features)
+        with open(os.path.join(dir_to_integrated_output, 'LOAM_LINK_Intermediate', map_name, fname.replace('_predict.png', '_v3.geojson')),) as f:
+            gj = json.load(f)
+        combined_features = rebuilding_json(gj, this_abbr, rounding_off=False)
+        combined_features = recursive_updating_none(combined_features)
 
-    #empty_geojson = polygon_extraction.set_index('id').T.to_dict('dict')
-    with open(os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson')), 'w') as outfile: 
-        json.dump(combined_features, outfile)
+        #empty_geojson = polygon_extraction.set_index('id').T.to_dict('dict')
+        with open(os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson')), 'w') as outfile: 
+            json.dump(combined_features, outfile)
+    except:
+        print('Error happended due to a large file size...')
+        print('The following is to handle fiona.errors.DriverError: Failed to read or write GeoJSON data...')
 
+        if info_for_this_poly.shape[0] > 0:
+            if info_for_this_poly.shape[0] == 1:
+                empty_geojson = {
+                    "id": "polygon_feature_empty",
+                    "crs": "CRITICALMAAS:pixel, EPSG:3857",
+                    "cdr_projection_id": None,
+                    "legend_bbox": str(info_for_this_poly['geometry'].values[0]),
+                    "pattern": str(info_for_this_poly['pattern'].values[0]),
+                    "color": str(info_for_this_poly['color'].values[0]),
+                    "category": str(info_for_this_poly['category'].values[0]),
+                    "map_unit": {
+                        "name": None,
+                        "comments": None,
+                        "age_text": None,
+                        "t_interval": None,
+                        "b_interval": None,
+                        "t_age": None,
+                        "b_age": None,
+                        "lithology": None
+                    },
+                    "abbreviation": None,
+                    "description": None,
+                    "polygon_features": {
+                        "features": [{
+                                "id": "polygon_feature_empty",
+                                "geometry": {
+                                    "coordinates": []
+                                },
+                                "properties": {
+                                    "model": "UMN_USC_Inferlink_Polygon_Extract",
+                                    "model_version": "v0.1",
+                                    "confidence": 0.0,
+                                    "model_config": None
+                                }
+                            }
+                        ]
+                    }
+                }
+            else:
+                empty_geojson = {
+                    "id": "polygon_feature_empty",
+                    "crs": "CRITICALMAAS:pixel, EPSG:3857",
+                    "cdr_projection_id": None,
+                    "legend_bbox": str(info_for_this_poly['geometry'].values[0]),
+                    "pattern": None,
+                    "color": None,
+                    "category": None,
+                    "map_unit": {
+                        "name": None,
+                        "comments": None,
+                        "age_text": None,
+                        "t_interval": None,
+                        "b_interval": None,
+                        "t_age": None,
+                        "b_age": None,
+                        "lithology": None
+                    },
+                    "abbreviation": None,
+                    "description": None,
+                    "polygon_features": {
+                        "features": [{
+                                "id": "polygon_feature_empty",
+                                "geometry": {
+                                    "coordinates": []
+                                },
+                                "properties": {
+                                    "model": "UMN_USC_Inferlink_Polygon_Extract",
+                                    "model_version": "v0.1",
+                                    "confidence": 0.0,
+                                    "model_config": None
+                                }
+                            }
+                        ]
+                    }
+                }
+        else:
+            empty_geojson = {
+                "id": "polygon_feature_empty",
+                "crs": "CRITICALMAAS:pixel, EPSG:3857",
+                "cdr_projection_id": None,
+                "legend_bbox": None,
+                "pattern": None,
+                "color": None,
+                "category": None,
+                "map_unit": {
+                    "name": None,
+                    "comments": None,
+                    "age_text": None,
+                    "t_interval": None,
+                    "b_interval": None,
+                    "t_age": None,
+                    "b_age": None,
+                    "lithology": None
+                },
+                "abbreviation": None,
+                "description": None,
+                "polygon_features": {
+                    "features": [{
+                            "id": "polygon_feature_empty",
+                            "geometry": {
+                                "coordinates": []
+                            },
+                            "properties": {
+                                "model": "UMN_USC_Inferlink_Polygon_Extract",
+                                "model_version": "v0.1",
+                                "confidence": 0.0,
+                                "model_config": None
+                            }
+                        }
+                    ]
+                }
+            }
+
+        with open(os.path.join(dir_to_integrated_output, map_name, fname.replace('_predict.png', '_PolygonFeature.geojson')), 'w') as outfile:
+            json.dump(empty_geojson, outfile)
 
 
 

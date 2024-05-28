@@ -9,12 +9,14 @@ import collections
 from shapely.ops import *
 from shapely import geometry
 from shapely.strtree import STRtree
-from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema
+from shapely.geometry import LineString, MultiLineString
+from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema, conflate_lines, geometry_to_coordinates, remove_small_gaps
 from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
 from helper.write_cdr_geojson import write_geojson_cdr
 import torch
+import geojson
 
 parser = ArgumentParser()
 parser.add_argument('--config',
@@ -156,7 +158,7 @@ def construct_graph(args, map_content_mask, brightness=1.0):
     config.DATA.TEST_DATA_PATH = args.cropped_image_dir
     config.DATA.PRED_MAP_NAME = args.map_name + f'_{args.line_feature_name}'
     if 'thrust_fault_line_model.pt' in args.checkpoint:
-        config.MODEL.DECODER.OBJ_TOKEN = 100
+        config.MODEL.DECODER.OBJ_TOKEN = 110
     elif 'fault_line_model.pt' in args.checkpoint:
         config.MODEL.DECODER.OBJ_TOKEN = 150
     
@@ -229,13 +231,13 @@ def construct_graph(args, map_content_mask, brightness=1.0):
                 indices = img_names[batch_cnt*config.DATA.TEST_BATCH_SIZE+cnt][:-4].split('_')
                 x_id, y_id = int(indices[-2]), int(indices[-1])
                 patch_content_mask = map_content_mask[x_id:x_id+img_size, y_id:y_id+img_size]
-                if np.sum(patch_content_mask) < 50:
+                if np.sum(patch_content_mask) < 50: # filter out map legend areas
                     continue
                 
                 edges_, nodes_ = val
                 nodes_ = nodes_.cpu().numpy()
                 
-                if edges_.shape[0] < 5:
+                if edges_.shape[0] < 1:
                     continue
 #                 print('positive  prediction')
                 for i_idx, j_idx in edges_:                 
@@ -248,7 +250,6 @@ def construct_graph(args, map_content_mask, brightness=1.0):
                     
                     line = geometry.LineString([[n1_in_map[1],n1_in_map[0]], [n2_in_map[1],n2_in_map[0]]])
                     lines = add_lines_sindex(line, lines, args)
-                    
             batch_cnt += 1
     return lines
 
@@ -318,20 +319,43 @@ def predict_shp(args, brightness=1.0, description=None):
     
     shp_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.shp'
     if len(nodup_lines) > 0:
-        merged_lines = integrate_lines(nodup_lines)
-        write_shp_in_imgcoord_output_schema(shp_path, merged_lines)
-        print('*** save the predicted shapefile in {} ***'.format(shp_path))
+        merged_lines = conflate_lines(nodup_lines)
     else:
-        write_shp_in_imgcoord_output_schema(shp_path, nodup_lines)
+        merged_lines = conflate_lines(lines)
     
-    dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
-                                                      patch_path=args.cropped_image_dir, roi_buffer=30)
-
+    # dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
+    #                                                   patch_path=args.cropped_image_dir, roi_buffer=30)
+    
     geojson_output_dir = f'{args.prediction_dir}/{args.map_name}'
     if not os.path.exists(geojson_output_dir):
         os.mkdir(geojson_output_dir)
-    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
     
+    interm_geojson_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.geojson'
+    geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
+
+    refined_lines = remove_small_gaps(merged_lines)
+    geometries = []
+    for line in refined_lines:
+        if isinstance(line, MultiLineString):
+            temp_dict = {
+                 "type": "MultiLineString",
+                "coordinates": geometry_to_coordinates(line)
+            }
+        else:
+            temp_dict = {
+                "type": "LineString",
+                "coordinates": geometry_to_coordinates(line)
+            }
+        geometries.append(temp_dict)
+    # Create a GeoJSON feature collection
+    feature_collection = geojson.FeatureCollection([
+        geojson.Feature(geometry=geometry, properties={}) for geometry in geometries
+    ])
+
+    with open(interm_geojson_path, "w") as f:
+        geojson.dump(feature_collection, f)
+    dash_pattern_dict = {}
+    dash_pattern_dict['solid'] = refined_lines
     write_geojson_cdr(geojson_path, dash_pattern_dict, legend_text=description)
     print('*** save the predicted geojson in {} ***'.format(geojson_path))
     return geojson_path
@@ -352,11 +376,11 @@ if __name__ == '__main__':
         if ('fault' in description.lower() or 'fault' in sym_name.lower())\
             and not extracted_fault:            
             extracted_fault = True
-            args.checkpoint = f'{args.trained_model_dir}/fault_line_model.pt'
+            args.checkpoint = f'{args.trained_model_dir}/checkpoint_epoch=180.pt'
             args.line_feature_name = 'fault_line'
-            bright_param = 1.0
+            bright_param = 1.1
             if args.predict_raster:
-                is_empty = predict_png(args)
+                is_empty = predict_png(args, brightness=bright_param)
             if is_empty:
                 print('increase brightness')
                 bright_param = 1.5
@@ -369,9 +393,9 @@ if __name__ == '__main__':
             extracted_thrust = True     
             args.checkpoint = f'{args.trained_model_dir}/thrust_fault_line_model.pt'
             args.line_feature_name = 'thrust_fault_line'
-            bright_param = 1.0
+            bright_param = 1.1
             if args.predict_raster:
-                is_empty = predict_png(args)
+                is_empty = predict_png(args, brightness=bright_param)
             if is_empty:
                 bright_param = 1.5
                 _ = predict_png(args, brightness=bright_param)
