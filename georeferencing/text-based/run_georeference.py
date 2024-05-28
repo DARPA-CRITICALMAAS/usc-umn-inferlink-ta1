@@ -398,6 +398,8 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
     reformatted_bbox = reformat_bbox(seg_bbox, row_first = False)
     px_points = [reformatted_bbox['top_left'],reformatted_bbox['top_right'], reformatted_bbox['bottom_right'],reformatted_bbox['bottom_left']]
 
+    px_points = [[a[1], a[0]] for a in px_points]
+
     geo_points = [[left,top],[right, top],[right, bottom],[left,bottom]]
 
     print(geo_points)
