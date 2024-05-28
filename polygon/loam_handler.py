@@ -142,8 +142,8 @@ def gpu_checker(input_allow_cpu):
 def sub_file_checker(this_section, dir_to_intermediate_preprocessing, dir_to_intermediate):
     file_integrity = True
     if this_section == 0:
-        if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate9/auxiliary_info.csv')) == False:
-            print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'LOAM_Intermediate/Metadata_Preprocessing', 'intermediate9/auxiliary_info.csv')))
+        if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'intermediate9', 'auxiliary_info.csv')) == False:
+            print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'intermediate9', 'auxiliary_info.csv')))
             file_integrity = False
         if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')) == False:
             print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')))
@@ -394,7 +394,8 @@ def main():
                     input_dir_to_groundtruth = dir_to_groundtruth,
                     input_performance_evaluation = performance_evaluation,
                     crop_size=1024,
-                    input_thread = input_threads
+                    input_thread = input_threads,
+                    input_efficiency_trade_off = efficiency_trade_off
                 )
 
             if '2' in this_testing_section:

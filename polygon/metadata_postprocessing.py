@@ -12,6 +12,7 @@ from datetime import datetime
 from scipy import sparse
 import pyvips
 import shutil
+import sys
 
 import postprocessing_workers.postprocessing_for_bitmap_worker as postprocessing_for_bitmap_worker
 
@@ -215,7 +216,7 @@ def run(crop_size, efficiency_trade_off):
     worker_postprocessing(crop_size, efficiency_trade_off)
 
 
-def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_efficiency_trade_off, input_performance_evaluation=False, crop_size=1024):
+def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_intermediate, input_dir_to_groundtruth, input_thread, input_efficiency_trade_off=-1, input_performance_evaluation=False, crop_size=1024):
     global solution_dir
     global path_to_tif
     global path_to_json
@@ -237,6 +238,9 @@ def metadata_postprocessing(input_path_to_tif, input_path_to_json, input_dir_to_
     performance_evaluation = input_performance_evaluation
 
     efficiency_trade_off = input_efficiency_trade_off
+    if efficiency_trade_off == -1:
+        print('Error entry for metadata_postprocessing...')
+        sys.exit(1)
 
     PROCESSES = input_thread
 
