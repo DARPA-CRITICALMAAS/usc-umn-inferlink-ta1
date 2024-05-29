@@ -23,7 +23,16 @@ def geojson_to_tif(info_id, info_subset):
     # Load JSON data
     with open(path_to_input_geojson, 'r') as f:
         json_data = json.load(f)
-        
+    
+    # Check if the geojson is an outcome of except cases (failed in writing files with a large size)
+    # Also handle cases where there is zero extracted polygon features
+    if isinstance(json_data, list) and len(json_data) > 0:
+        pass
+    else:
+        placeholder = np.ones((example_input_shape[0], example_input_shape[1]), dtype=np.uint8)*255
+        cv2.imwrite(path_to_output_tif, placeholder)
+        return False, path_to_output_tif
+
 
     # Define the dimensions of the image
     width = example_input_shape[1]
