@@ -383,7 +383,8 @@ def main():
                     input_path_to_bound = input_bound,
                     input_dir_to_intermediate = dir_to_intermediate_preprocessing,
                     input_map_preprocessing = map_preprocessing,
-                    input_thread = input_threads
+                    input_thread = input_threads,
+                    input_efficiency_trade_off = efficiency_trade_off
                 )
 
             if '1' in this_testing_section:
