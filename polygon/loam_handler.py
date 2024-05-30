@@ -145,9 +145,9 @@ def sub_file_checker(this_section, dir_to_intermediate_preprocessing, dir_to_int
         if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'intermediate9', 'auxiliary_info.csv')) == False:
             print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'intermediate9', 'auxiliary_info.csv')))
             file_integrity = False
-        if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')) == False:
-            print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')))
-            file_integrity = False
+        #if os.path.isfile(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')) == False:
+            #print('Missing file... ' + str(os.path.join(dir_to_intermediate_preprocessing, 'intermediate7_2', 'running_time_record_v3.csv')))
+            #file_integrity = False
     if this_section == 1:
         if os.path.isfile(os.path.join(dir_to_intermediate, 'LOAM_Intermediate', 'data', 'running_time_record_v1.csv')) == False:
             print('Missing file... ' + str(os.path.join(dir_to_intermediate, 'LOAM_Intermediate', 'data', 'running_time_record_v1.csv')))
