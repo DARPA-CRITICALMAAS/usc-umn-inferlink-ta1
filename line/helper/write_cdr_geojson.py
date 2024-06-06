@@ -17,7 +17,7 @@ def write_geojson_cdr(output_geojson_path, all_lines, legend_text=None, feature_
     for line_cat, lines in all_lines.items():
         for line_geom in lines:
             if isinstance(line_geom, MultiLineString):
-                for _line_geom in line_geom:
+                for _line_geom in line_geom.geoms:
                     cnt += 1
                     line_coords = geometry_to_coordinates(_line_geom)
                     line_feat = {

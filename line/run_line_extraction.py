@@ -10,7 +10,7 @@ from shapely.ops import *
 from shapely import geometry
 from shapely.strtree import STRtree
 from shapely.geometry import LineString, MultiLineString
-from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema, conflate_lines, geometry_to_coordinates, remove_small_gaps
+from helper.process_shp import write_shp_in_imgcoord, rm_dup_lines, integrate_lines, write_shp_in_imgcoord_output_schema, conflate_lines, geometry_to_coordinates, remove_small_gaps, group_lines_by_orientations, cal_orientations
 from write_shp_schema import write_shp_in_imgcoord_with_attr
 from line_ornament import extract_attributes_along_line
 import geopandas
@@ -320,8 +320,10 @@ def predict_shp(args, brightness=1.0, description=None):
     shp_path = f'{args.prediction_dir}/{config.DATA.PRED_MAP_NAME}.shp'
     if len(nodup_lines) > 0:
         merged_lines = conflate_lines(nodup_lines)
+        # merged_lines = group_lines_by_orientations(nodup_lines)
     else:
         merged_lines = conflate_lines(lines)
+        # merged_lines = group_lines_by_orientations(nodup_lines)
     
     # dash_pattern_dict = extract_attributes_along_line(args.map_name, shp_path, \
     #                                                   patch_path=args.cropped_image_dir, roi_buffer=30)
@@ -334,7 +336,9 @@ def predict_shp(args, brightness=1.0, description=None):
     geojson_path = f'{args.prediction_dir}/{args.map_name}/{config.DATA.PRED_MAP_NAME}.geojson'
 
     refined_lines = remove_small_gaps(merged_lines)
+    # refined_lines = merged_lines
     geometries = []
+    properties = []
     for line in refined_lines:
         if isinstance(line, MultiLineString):
             temp_dict = {
@@ -347,9 +351,10 @@ def predict_shp(args, brightness=1.0, description=None):
                 "coordinates": geometry_to_coordinates(line)
             }
         geometries.append(temp_dict)
+        properties.append({'orientation': cal_orientations(line)})
     # Create a GeoJSON feature collection
     feature_collection = geojson.FeatureCollection([
-        geojson.Feature(geometry=geometry, properties={}) for geometry in geometries
+        geojson.Feature(geometry=geometry, properties=properties[i]) for i, geometry in enumerate(geometries)
     ])
 
     with open(interm_geojson_path, "w") as f:
@@ -403,12 +408,23 @@ if __name__ == '__main__':
                 predict_shp(args, bright_param, description)
                                                                   
     if not (extracted_fault or extracted_thrust):
-        if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
-            os.mkdir(f'{args.prediction_dir}/{args.map_name}')
-        output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
-        empty_geojson = {
-            "type": "FeatureCollection",
-            "features": []
-        }
-        with open(output_geo_path, 'w') as f:
-            json.dump(empty_geojson, f)
+        args.checkpoint = f'{args.trained_model_dir}/checkpoint_epoch=180.pt'
+        args.line_feature_name = 'fault_line'
+        bright_param = 1.5
+        if args.predict_raster:
+            is_empty = predict_png(args, brightness=bright_param)
+        # if is_empty:
+        #     print('increase brightness')
+        #     bright_param = 1.5
+        #     _ = predict_png(args, brightness=bright_param)
+        if args.predict_vector:
+            output_shp_path = predict_shp(args, bright_param, None)
+        # if not os.path.exists(f'{args.prediction_dir}/{args.map_name}'):
+        #     os.mkdir(f'{args.prediction_dir}/{args.map_name}')
+        # output_geo_path = f'{args.prediction_dir}/{args.map_name}/{args.map_name}_empty.geojson'
+        # empty_geojson = {
+        #     "type": "FeatureCollection",
+        #     "features": []
+        # }
+        # with open(output_geo_path, 'w') as f:
+        #     json.dump(empty_geojson, f)

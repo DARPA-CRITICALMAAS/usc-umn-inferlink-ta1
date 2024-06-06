@@ -478,3 +478,87 @@ def remove_small_gaps(lines, buffer_dist=20):
 #         print(multi_line_string)
         refined_lines.append(multi_line_string)
     return refined_lines
+
+def cal_orientations(line, bin_size=45):
+    if isinstance(line, list):
+        line = LineString(line)
+    if isinstance(line, LineString):
+        coords = list(line.coords)
+    elif isinstance(line, MultiLineString):
+        for line_string in line:
+             coords = list(line_string.coords)
+    # Calculate the difference between the start and end points
+    p1 = [coords[-1][0], coords[-1][1]]
+    p2 = [coords[0][0], coords[0][1]]
+    temp_list = [p1[0], p2[0]]
+    start_pt_ind = min(range(len(temp_list)), key=temp_list.__getitem__)
+    if start_pt_ind == 0:
+        dx = p1[1] - p2[1]
+        dy = p1[0] - p2[0]
+    else:
+        dx = p2[1] - p1[1]
+        dy = p2[0] - p1[0]
+    # Calculate the angle using arctan
+    angle = math.atan2(dy, dx)
+    # Convert the angle from radians to degrees
+    orientation = math.degrees(angle)
+    # Ensure the orientation is between 0 and 360 degrees
+    if orientation < 0:
+        orientation += 360
+    orientation_bin = orientation//bin_size
+    return orientation_bin
+
+def create_subgraphs_by_attribute(G, attribute="orientation"):
+    # Get unique attribute values
+    unique_values = set(nx.get_node_attributes(G, attribute).values())    
+    # Create subgraphs for each unique attribute value
+    subgraphs = []
+    for value in unique_values:
+        # Filter nodes based on attribute value
+        nodes_with_attribute = [n for n, attrs in G.nodes(data=True) if attrs.get(attribute) == value]      
+        # Create subgraph
+        subgraph = G.subgraph(nodes_with_attribute)
+        subgraphs.append(subgraph)    
+    return subgraphs
+    
+def group_lines_by_orientations(lines, refine_connect=True, connect_thres=4):
+    refined_lines = []
+    # Create a graph
+    G = nx.Graph()
+    # Add LineStrings as nodes to the graph
+    for i, line in enumerate(lines):
+#         line_shp = LineString(line)
+        degree = cal_orientations(line)
+        G.add_node(i, line=line, orientation=degree)
+    # Add edges between LineStrings that share vertices
+    for i, line1 in enumerate(G.nodes(data='line')):
+        for j, line2 in enumerate(G.nodes(data='line')):
+            if i != j and is_overlapped(line1[1], line2[1]):
+                G.add_edge(i, j)
+
+    if refine_connect:# remove the edge which connected to more than connect_thres edges
+        for node in list(G.nodes()):
+            if G.degree(node) > connect_thres:
+                G.remove_node(node)
+    sub_graphs = create_subgraphs_by_attribute(G)
+    for _sub_G in sub_graphs:
+        sub_G = nx.Graph(_sub_G)
+        # Get connected components (groups of LineStrings with shared vertices)
+        connected_components = list(nx.connected_components(sub_G))
+        # Iterate over each connected component
+        for i, component in enumerate(connected_components):
+            # Create a subgraph for the component
+            subgraph = sub_G.subgraph(component)
+            # get vertices with degree > 2 (i.e., intersections) within the component
+            nodes_to_remove = [node for node in list(subgraph.nodes()) if subgraph.degree(node) > 2]
+            refined_lines.extend([MultiLineString([sub_G.nodes[ii]['line']]) for ii in nodes_to_remove])
+            sub_G.remove_nodes_from(nodes_to_remove)
+        
+        connected_components = list(nx.connected_components(sub_G))
+        for sub_component in connected_components:
+            indices = list(sub_component)
+            lines = [LineString(sub_G.nodes[ii]['line']) for ii in indices]
+            multi_line_string = MultiLineString(lines)
+    #         print(multi_line_string)
+            refined_lines.append(multi_line_string)
+    return refined_lines
