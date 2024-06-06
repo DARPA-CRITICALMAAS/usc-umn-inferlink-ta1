@@ -25,9 +25,10 @@ def get_symbol_names(map_image, all_symbol_bbox, width):
             next_row = all_symbol_bbox[i+1][1]
         else:
             next_row = y2+100
-        img4ocr = map_image[y1:min(y2+100, next_row, img_h), x2:x2+min(2000,width, img_w)]
-        ocr_res = ocr_bbox(img4ocr)
-        bbox_ocr[str(bbox)] = ocr_res
+        img4ocr = map_image[y1:min(y2+100, next_row, img_h), x2:min(x2+2000,x2+width, img_w)]
+        if img4ocr.shape[0] > 0 and img4ocr.shape[1] > 0:
+            ocr_res = ocr_bbox(img4ocr)
+            bbox_ocr[str(bbox)] = ocr_res
     return bbox_ocr
 
 def match_str(query_words, source_str):

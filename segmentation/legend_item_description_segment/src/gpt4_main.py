@@ -156,7 +156,7 @@ def run_item_description_extraction(legend_dir, legend_item_dir, map_name, map_d
 
 
                 logger.info(f'OCR processing in image')
-
+                print(f'map size: {map_tif.shape}, bbox: {refined_grouped_bbox[col_cent]}, {width}')
                 bbox_ocr_dict = get_symbol_names(map_tif, refined_grouped_bbox[col_cent], width) if refined_grouped_bbox!={} else {}
 
                 logger.info(f'Matching the results from OCR and GPT4')
