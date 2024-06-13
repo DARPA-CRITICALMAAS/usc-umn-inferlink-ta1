@@ -4,8 +4,9 @@ import cv2
 import os
 import json
 from scipy import ndimage
+import shutil
 
-def extraction_step3_worker(legend, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, rgb_ms, this_current_result, color_space_subset, iteration_relaxing, img_crop_black, img_crop_gray, global_solution_empty):
+def extraction_step3_worker(legend, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, rgb_ms, this_current_result, color_space_subset, iteration_relaxing, img_crop_black, img_crop_gray, global_solution_empty):
     # fetch current result for this legend
     #this_current_result = np.copy(ans_category[legend])
 
@@ -42,6 +43,7 @@ def extraction_step3_worker(legend, map_name, legend_name, solutiona_dir, print_
         if print_intermediate_image == True:
             out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v3.png'
             cv2.imwrite(out_file_path0, this_next_result)
+            shutil.copyfile(out_file_path0, os.path.join(dir_to_raster_output, map_name, map_name+'_'+legend_name[legend]+'_poly_PolygonFeature.tif'))
 
     return legend, this_next_result
     

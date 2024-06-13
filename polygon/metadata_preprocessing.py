@@ -2776,7 +2776,7 @@ def worker_main_component():
 
                         if split_multiprocessing == True:
                             with multiprocessing.Pool(int(PROCESSES*2)) as pool:
-                                callback = pool.starmap_async(extraction_step3_worker.extraction_step3_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, rgb_ms, ans_category[this_poly], color_space[this_poly], iteration_relaxing, img_crop_black, img_crop_gray, global_solution_empty, ) for this_poly in range(range_min, range_max)])
+                                callback = pool.starmap_async(extraction_step3_worker.extraction_step3_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, rgb_ms, ans_category[this_poly], color_space[this_poly], iteration_relaxing, img_crop_black, img_crop_gray, global_solution_empty, ) for this_poly in range(range_min, range_max)])
                                 multiprocessing_results = callback.get()
 
                                 for legend, this_next_result in multiprocessing_results:
@@ -2821,9 +2821,9 @@ def worker_main_component():
                             if split_multiprocessing == True:
                                 with multiprocessing.Pool(int(PROCESSES/2)) as pool:
                                     if iteration == 0:
-                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, rgb_ms, None, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
+                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, rgb_ms, None, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
                                     else:
-                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, None, hsv_ms, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
+                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, None, hsv_ms, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
                                     multiprocessing_results = callback.get()
                                     
                                     for legend, this_next_result, updated_for_relaxing, polygon_updated in multiprocessing_results:
@@ -2867,9 +2867,9 @@ def worker_main_component():
                             if split_multiprocessing == True:
                                 with multiprocessing.Pool(int(PROCESSES)) as pool:
                                     if iteration == 0:
-                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, rgb_ms, None, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
+                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, rgb_ms, None, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
                                     else:
-                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, None, hsv_ms, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
+                                        callback = pool.starmap_async(extraction_step4_worker.extraction_step4_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, None, hsv_ms, ans_category[this_poly], color_space[this_poly], iteration, global_solution_empty, img_crop_black_and_gray, ) for this_poly in range(range_min, range_max)])
                                     multiprocessing_results = callback.get()
                                     
                                     for legend, this_next_result, updated_for_relaxing, polygon_updated in multiprocessing_results:
@@ -2970,9 +2970,9 @@ def worker_main_component():
                         if split_multiprocessing == True:
                             with multiprocessing.Pool(int(PROCESSES)) as pool:
                                 if iteration == 0:
-                                    callback = pool.starmap_async(extraction_step5_worker.extraction_step5_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, None, ans_category[this_poly], iteration, global_solution_empty, None, conv_kernel_set, conv_kernel_threshold, masking, ) for this_poly in range(range_min, range_max)]) # img_crop_black_and_gray
+                                    callback = pool.starmap_async(extraction_step5_worker.extraction_step5_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, None, ans_category[this_poly], iteration, global_solution_empty, None, conv_kernel_set, conv_kernel_threshold, masking, ) for this_poly in range(range_min, range_max)]) # img_crop_black_and_gray
                                 else:
-                                    callback = pool.starmap_async(extraction_step5_worker.extraction_step5_worker, [(this_poly, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, hsv_ms, ans_category[this_poly], iteration, global_solution_empty, None, conv_kernel_set, conv_kernel_threshold, masking, ) for this_poly in range(range_min, range_max)])
+                                    callback = pool.starmap_async(extraction_step5_worker.extraction_step5_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, hsv_ms, ans_category[this_poly], iteration, global_solution_empty, None, conv_kernel_set, conv_kernel_threshold, masking, ) for this_poly in range(range_min, range_max)])
                                 multiprocessing_results = callback.get()
 
                                 for legend, this_next_result, updated_for_relaxing, polygon_updated in multiprocessing_results:
@@ -3318,7 +3318,7 @@ def worker_main_component():
                 finisher_counter = 0
                 if split_multiprocessing == True:
                     with multiprocessing.Pool(PROCESSES) as pool:
-                        callback = pool.starmap_async(extraction_step7_worker.extraction_step7_worker, [(this_poly, map_name, legend_name, solutiona_dir, file_path, ans_category[this_poly], img_bound, ) for this_poly in range(range_min, range_max)])
+                        callback = pool.starmap_async(extraction_step7_worker.extraction_step7_worker, [(this_poly, map_name, legend_name, solutiona_dir, dir_to_raster_output, file_path, ans_category[this_poly], img_bound, ) for this_poly in range(range_min, range_max)])
                         multiprocessing_results = callback.get()
 
                         for legend, pred_binary_raster in multiprocessing_results:
@@ -3389,11 +3389,12 @@ def str_to_bool(value):
 path_to_tif = 'input.tif'
 path_to_json = 'input.json'
 path_to_bound = 'bound.geojson'
+dir_to_raster_output = 'Raster_Output'
 
 target_map_name = 'intput'
 efficiency_trade_off = 3
 
-def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_thread, input_efficiency_trade_off=3):
+def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_bound, input_dir_to_intermediate, input_map_preprocessing, input_dir_to_raster_output, input_thread, input_efficiency_trade_off=3):
     global solutiona_dir
     global map_preprocessing
     global generate_boundary_extraction
@@ -3403,6 +3404,7 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     global path_to_tif
     global path_to_json
     global path_to_bound
+    global dir_to_raster_output
     global target_map_name
 
     global efficiency_trade_off
@@ -3426,7 +3428,8 @@ def metadata_preprocessing(input_path_to_tif, input_path_to_json, input_path_to_
     preprocessing_recoloring = True
 
     efficiency_trade_off = input_efficiency_trade_off
-
+    dir_to_raster_output = input_dir_to_raster_output
+    
     PROCESSES = input_thread
 
     print('Parameter Settings:', map_preprocessing, generate_boundary_extraction, printing_auxiliary_information, preprocessing_recoloring)

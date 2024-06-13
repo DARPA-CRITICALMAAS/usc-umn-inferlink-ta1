@@ -310,6 +310,13 @@ def main():
         with open(output_geo_path, 'w') as f:
             json.dump(empty_geojson, f)
         sys.exit(0)
+    else:
+        path_list = input_tif.replace('\\','/').split('/')
+        target_map_name = os.path.splitext(path_list[-1])[0]
+        if not os.path.exists(dir_to_raster_output):
+            os.makedirs(dir_to_raster_output)
+        if not os.path.exists(os.path.join(dir_to_raster_output, target_map_name)):
+            os.makedirs(os.path.join(dir_to_raster_output, target_map_name))
 
     this_testing = str_to_bool(args.testing)
     this_testing_section = args.testing_section
@@ -321,6 +328,7 @@ def main():
                 input_path_to_bound = input_bound,
                 input_dir_to_intermediate = dir_to_intermediate_preprocessing,
                 input_map_preprocessing = map_preprocessing,
+                input_dir_to_raster_output = dir_to_raster_output,
                 input_thread = input_threads,
                 input_efficiency_trade_off = efficiency_trade_off
             )
@@ -383,6 +391,7 @@ def main():
                     input_path_to_bound = input_bound,
                     input_dir_to_intermediate = dir_to_intermediate_preprocessing,
                     input_map_preprocessing = map_preprocessing,
+                    input_dir_to_raster_output = dir_to_raster_output,
                     input_thread = input_threads,
                     input_efficiency_trade_off = efficiency_trade_off
                 )

@@ -149,6 +149,13 @@ def polygon_output_handler():
                     info_set.append(this_info)
 
         #info_set = np.array(info_set)
+    
+
+
+    for fname in os.listdir(dir_to_raster_polygon):
+        if os.path.isfile(os.path.join(dir_to_raster_polygon, fname)):
+            if '_predict.png' in fname and map_name.replace('.tif', '_') in fname:
+                shutil.copyfile(os.path.join(dir_to_raster_polygon, fname), os.path.join(dir_to_raster_output, map_name, fname.replace('_predict.png', '_PolygonFeature.tif')))
 
 
     with multiprocessing.Pool(int(PROCESSES)) as pool:

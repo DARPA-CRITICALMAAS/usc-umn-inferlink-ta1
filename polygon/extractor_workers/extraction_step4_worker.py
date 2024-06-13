@@ -4,8 +4,9 @@ import cv2
 import os
 import json
 from scipy import ndimage
+import shutil
 
-def extraction_step4_worker(legend, map_name, legend_name, solutiona_dir, print_intermediate_image, rgb_rb, rgb_ms, hsv_ms, this_current_result, color_space_subset, iteration, global_solution_empty, img_crop_black_and_gray):
+def extraction_step4_worker(legend, map_name, legend_name, solutiona_dir, dir_to_raster_output, print_intermediate_image, rgb_rb, rgb_ms, hsv_ms, this_current_result, color_space_subset, iteration, global_solution_empty, img_crop_black_and_gray):
     # fetch current result for this legend
     #this_current_result = np.copy(ans_category[legend])
 
@@ -131,6 +132,7 @@ def extraction_step4_worker(legend, map_name, legend_name, solutiona_dir, print_
         if iteration == 0:
             out_file_path0=solutiona_dir+'intermediate7_2/'+map_name+'/'+map_name+'_'+legend_name[legend]+'_poly_v4.png'
             cv2.imwrite(out_file_path0, this_next_result)
+            shutil.copyfile(out_file_path0, os.path.join(dir_to_raster_output, map_name, map_name+'_'+legend_name[legend]+'_poly_PolygonFeature.tif'))
         elif iteration == 1:
             # remove noisy white pixel
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))

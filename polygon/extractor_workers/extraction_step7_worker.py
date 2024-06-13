@@ -5,8 +5,9 @@ import os
 import json
 from scipy import ndimage
 import rasterio
+import shutil
 
-def extraction_step7_worker(legend, map_name, legend_name, solutiona_dir, file_path, this_current_result, img_bound):
+def extraction_step7_worker(legend, map_name, legend_name, solutiona_dir, dir_to_raster_output, file_path, this_current_result, img_bound):
     '''
     # remove noisy white pixel
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
@@ -72,5 +73,6 @@ def extraction_step7_worker(legend, map_name, legend_name, solutiona_dir, file_p
 
         dst.write(array, indexes=1)
         dst.close()
-        
+    
+    shutil.copyfile(out_file_path, os.path.join(dir_to_raster_output, map_name, map_name+'_'+legend_name[legend]+'_poly_PolygonFeature.tif'))
     return legend, pred_binary_raster
