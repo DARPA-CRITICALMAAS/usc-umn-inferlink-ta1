@@ -1,5 +1,5 @@
 # Text Spotting Module
-## This module aims to extract all texts from maps. The module is built on MapKurator, a text sptting tool developed from the Spatial Computing Lab from UMN.
+## This module aims to extract all texts from maps. The module is built on MapKurator, a text spotting tool developed from the Spatial Computing Lab from UMN.
 
 ## Environment 
 Please refer to [MapKurator Doc](https://knowledge-computing.github.io/mapkurator-doc/#/docs/install1) to setup the enviroment to run the text spotting module. It provides the docker image, which is build on nvidia/cuda:11.3.0-devel-ubuntu18.04.
