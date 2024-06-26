@@ -104,7 +104,7 @@ def run_pipeline(args):
             else:           
                 assert os.path.exists(spotter_config), "Config file for spotter must exist!"
                 os.chdir(text_spotting_model_dir) 
-                execute_command(f'python setup.py build develop 1> /dev/null',if_print_command)
+                execute_command("python setup.py build develop 1> /dev/null", if_print_command)
                 
 #                 for index, record in sample_map_df.iterrows():
 
@@ -119,7 +119,7 @@ def run_pipeline(args):
 
                 if spotter_model in ['testr', 'spotter_v2']:
                     update_yaml(spotter_config, 'MODEL.WEIGHTS', args.model_weight_path)
-                    run_spotting_command = f'CUDA_VISIBLE_DEVICES={gpu_id} python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(args.input_dir_path)} --output {map_spotting_output_dir}'
+                    run_spotting_command = f"CUDA_VISIBLE_DEVICES={gpu_id} python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(args.input_dir_path)} --output {map_spotting_output_dir}"
 
                 else:
                     raise NotImplementedError

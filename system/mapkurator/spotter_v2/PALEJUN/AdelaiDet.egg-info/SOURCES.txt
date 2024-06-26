@@ -1,9 +1,9 @@
 LICENSE
 setup.py
-/data/weiweidu/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/cuda_version.cu
-/data/weiweidu/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/vision.cpp
-/data/weiweidu/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cpu.cpp
-/data/weiweidu/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cuda.cu
+/ta1/repos/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/cuda_version.cu
+/ta1/repos/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/vision.cpp
+/ta1/repos/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cpu.cpp
+/ta1/repos/usc-umn-inferlink-ta1/system/mapkurator/spotter_v2/PALEJUN/adet/layers/csrc/DeformAttn/ms_deform_attn_cuda.cu
 AdelaiDet.egg-info/PKG-INFO
 AdelaiDet.egg-info/SOURCES.txt
 AdelaiDet.egg-info/dependency_links.txt

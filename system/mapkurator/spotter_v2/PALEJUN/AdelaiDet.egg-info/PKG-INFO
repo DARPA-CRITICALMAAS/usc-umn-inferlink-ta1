@@ -5,7 +5,10 @@ Summary: AdelaiDet is AIM's research platform for instance-level detection tasks
 Home-page: https://github.com/stanstarks/AdelaiDet
 Author: Adelaide Intelligent Machines
 License: UNKNOWN
-Description: UNKNOWN
 Platform: UNKNOWN
 Requires-Python: >=3.6
 Provides-Extra: all
+License-File: LICENSE
+
+UNKNOWN
+
