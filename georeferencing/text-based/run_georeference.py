@@ -98,7 +98,8 @@ def getTitle(base64_image, max_trial = 10):
     }
 
     payload = {
-        "model": "gpt-4-vision-preview",
+        # "model": "gpt-4-vision-preview",
+        "model": "gpt-4o",
         "messages": [
           {
             "role": "user",
@@ -406,7 +407,42 @@ def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
     print(geo_points)
     print(px_points)
 
-    if args.reformat:
+    if args.more_info:
+        # following non reformat version
+        gcp_list = []
+        
+        for i in range(4):
+            cur_gcp_dict = {"gcp_id": i+1} 
+            cur_gcp_dict["map_geom"] = {"latitude":geo_points[i][1], "longitude":geo_points[i][0]}
+            cur_gcp_dict["px_geom"] = {"columns_from_left":px_points[i][1], "rows_from_top":px_points[i][0]} 
+            cur_gcp_dict["confidence"] = None
+            cur_gcp_dict["model"] = "umn"
+            cur_gcp_dict["model_version"] = "0.0.1"
+            cur_gcp_dict["crs"] = "EPSG:4326"
+            gcp_list.append(cur_gcp_dict)
+
+        
+        georef_output_dict = {
+            "cog_id": None,
+            # "map_name": os.path.basename(args.input_path).rsplit('.', 1)[0],
+            "gpt_title": title,
+            "toponyms": toponyms, 
+            "georeference_results":[
+                {
+                    "likely_CRSs":["EPSG:4326"],
+                    "map_area": None,
+                    "projections": None,
+                },
+            ],
+            "gcps": gcp_list,
+            "system":"umn",
+            "system_version":"0.0.1"
+        }
+
+        with open(args.output_path, 'w') as f:
+            json.dump(georef_output_dict, f, indent = 4)
+
+    elif args.reformat:
         # top10_dict = top10.to_dict(orient='records') 
 
         # Use increasing numbers as keys
