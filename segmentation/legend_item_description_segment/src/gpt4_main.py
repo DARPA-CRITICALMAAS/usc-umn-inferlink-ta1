@@ -10,6 +10,7 @@ from gpt4_input_generation import generate_gpt4_input
 from symbol_description_extraction_gpt4 import gpt_extract_symbol_description
 from symbol_bbox_ocr import get_symbol_names
 from symbol_bbox_ocr import match_orc_gpt_results
+from human_input_process import HumanInputProcess
 import logging
 import threading
 import time
@@ -38,6 +39,7 @@ parser.add_argument('--output_dir',
 parser.add_argument('--log_path',
                   type=str,
                   default='./item_description_logger.log')
+parser.add_argument('--human_input_path', default='', type=str, help='Use human input')
 
 args = parser.parse_args()
 logger = logging.getLogger('item_description_logger')
@@ -210,31 +212,41 @@ if __name__ == '__main__':
     temp_dir = args.temp_dir
     output_dir = args.output_dir
     map_name = args.map_name
-    
+    human_input_path = args.human_input_path
+
     if not os.path.exists(temp_dir):
             os.mkdir(temp_dir)
 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    for legend_type in ['polygon', 'line',  'point']:
-        # check the existence of input files
-        legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
-        legend_item_path = os.path.join(symbol_json_dir, \
-                                        map_name+('_PolygonType.geojson' if legend_type=='polygon' \
-                                                  else '_PointLineType.geojson'))
+    if human_input_path != '':
+        logger.info(f'Processing {map_name} with human input')
+        legend_json_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
         map_path = os.path.join(map_dir, map_name+'.tif')
-
-        if not os.path.exists(legend_path):
-            logger.error(f'No results from legend segment module.')
-            continue
+        human_input_process = HumanInputProcess(human_input_path, legend_json_path, map_path)       
+        output_path = human_input_process.generate_module_output(output_dir)
+        logger.info(f'Save the results in {output_path}')
         
-        if not os.path.exists(legend_item_path):
-            logger.warning(f'No results from legend item module.')
-        
-        if not os.path.exists(map_path):
-            logger.error(f'The map does not exist at {map_path}.')
-            continue
+    else:   
+        for legend_type in ['polygon', 'line',  'point']:
+            # check the existence of input files
+            legend_path = os.path.join(legend_json_dir, map_name+'_map_segmentation.json')
+            legend_item_path = os.path.join(symbol_json_dir, \
+                                            map_name+('_PolygonType.geojson' if legend_type=='polygon' \
+                                                    else '_PointLineType.geojson'))
+            map_path = os.path.join(map_dir, map_name+'.tif')
 
-        run_item_description_extraction(legend_json_dir, symbol_json_dir,map_name, map_dir, \
-                                        temp_dir, output_dir, legend_type=legend_type)
+            if not os.path.exists(legend_path):
+                logger.error(f'No results from legend segment module.')
+                continue
+            
+            if not os.path.exists(legend_item_path):
+                logger.warning(f'No results from legend item module.')
+            
+            if not os.path.exists(map_path):
+                logger.error(f'The map does not exist at {map_path}.')
+                continue
+
+            run_item_description_extraction(legend_json_dir, symbol_json_dir,map_name, map_dir, \
+                                            temp_dir, output_dir, legend_type=legend_type)
