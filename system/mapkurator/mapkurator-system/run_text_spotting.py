@@ -117,9 +117,9 @@ def run_pipeline(args):
                 if not os.path.isdir(map_spotting_output_dir):
                     os.makedirs(map_spotting_output_dir)
 
-                if spotter_model in ['testr', 'spotter_v2']:
+                if spotter_model in ['testr', 'spotter-v2']:
                     update_yaml(spotter_config, 'MODEL.WEIGHTS', args.model_weight_path)
-                    run_spotting_command = f"CUDA_VISIBLE_DEVICES={gpu_id} python tools/inference.py --config-file {spotter_config} --output_json --input {os.path.join(args.input_dir_path)} --output {map_spotting_output_dir}"
+                    run_spotting_command = f"CUDA_VISIBLE_DEVICES={gpu_id} python tools/inference.py --config-file {spotter_config} --output_json --input {args.input_dir_path} --output {map_spotting_output_dir}"
 
                 else:
                     raise NotImplementedError
@@ -185,7 +185,7 @@ def main():
     parser.add_argument('--module_entity_linking', default=False, action='store_true')
     parser.add_argument('--module_post_ocr', default=False, action='store_true')
 
-    parser.add_argument('--spotter_model', type=str, default='spotter_v2', choices=['abcnet', 'testr', 'spotter_v2','spotter_v3'], 
+    parser.add_argument('--spotter_model', type=str, default='spotter-v2', choices=['abcnet', 'testr', 'spotter-v2','spotter_v3'], 
         help='Select text spotting model option from ["abcnet","testr", "testr_v2"]') # select text spotting model
     parser.add_argument('--spotter_config', type=str, default='/home/maplord/rumsey/TESTR/configs/TESTR/SynMap/SynMap_Polygon.yaml',
         help='Path to the config file for text spotting model')
