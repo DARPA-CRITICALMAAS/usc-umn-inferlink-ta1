@@ -29,19 +29,22 @@ python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patch
 ```
 
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection/symbol_info.json```) 
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection_img_txt/data/symbol_info.json```) 
 
 
 ## Command Line Arguments:
 
 ```
 --map_dir : Directory containing entire map sheets
---map_metadata_dir: Directory to map metadata that contains the information about coordinate of legend and map dimension. 
---map_patches_dir: Directory for input map patches directory per single map 
---model_weights_dir: Directory to pretrained point feature detection model weights  
+--map_metadata_dir: Directory of map metadata that contains the information about coordinate of legend and map dimension. 
+--map_patches_dir: Directory of input map patches directory per single map 
+--model_weights_dir: Directory of pretrained point feature detection model weights  
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
 --output_dir_root: Root directory for output directory
 --gpu_id : Specifying GPU id for running the module
+--strike_model_dir : Directory of pretrained strike model weight 
+--cropped_legend_patches_dir : Directory of cropped patches from outside of map region including entire maps
+--image_based_model_weight : model weight path for image-based automated model selection module
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
 
 ```
