@@ -25,11 +25,11 @@ conda activate pnt_pipe
 To run the point symbol pipeline, use the following command:
 
 ``` 
-python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --text_spotting_dir /your/textspotter/output/directory --output_dir_root /your/output/root/directory --symbol_info_json_file automated_model_selection/symbol_info.json --gpu_id 0
+python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file utomated_model_selection_img_txt/data/symbol_info.json --gpu_id 0 --strike_model_dir strike_model_weights/ --cropped_legend_patches_dir /cropped/patches/outside-of-map-region/entire-maps-directory --image_based_model_weight automated_model_selection_img_txt/data/model.pt --text_spotting_dir /your/textspotter/output/directory  
 ```
 
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` )  and (2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection_img_txt/data/symbol_info.json```) 
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ),(2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection_img_txt/data/symbol_info.json```), (3) pretrained model dir for strike extraction (```--strike_model_dir strike_model_weights/``` ) and (4) pretrained model file path for image-based automated model selection module (```--image_based_model_weight automated_model_selection_img_txt/data/model.pt``` ) 
 
 
 ## Command Line Arguments:
