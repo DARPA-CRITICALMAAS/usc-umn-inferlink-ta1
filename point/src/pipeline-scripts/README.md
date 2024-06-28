@@ -25,7 +25,7 @@ conda activate pnt_pipe
 To run the point symbol pipeline, use the following command:
 
 ``` 
-python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file utomated_model_selection_img_txt/data/symbol_info.json --gpu_id 0 --strike_model_dir strike_model_weights/ --cropped_legend_patches_dir /cropped/patches/outside-of-map-region/entire-maps-directory --image_based_model_weight automated_model_selection_img_txt/data/model.pt --text_spotting_dir /your/textspotter/output/directory  
+python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file utomated_model_selection_img_txt/data/symbol_info.json --gpu_id 0 --strike_model_dir strike_model_weights/ --cropped_legend_patches_dir /cropped/patches/outside-of-map-region/entire-maps-directory --image_based_model_weight automated_model_selection_img_txt/data/model.pt
 ```
 
 
