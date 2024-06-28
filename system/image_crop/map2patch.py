@@ -176,7 +176,7 @@ def crop_map_main(args):
         logger.warning(f'Legend segmentation json does not exist in {legend_json_path}')
 
 
-    # crop_map_plot_and_legend_area(args, map_image, map_area_bbox, ptln_legend_area_bbox )
+    crop_map_plot_and_legend_area(args, map_image, map_area_bbox, ptln_legend_area_bbox )
 
     crop_patches_around_points(args, map_image, map_area_bbox, patch_size = (500, 500))
 
