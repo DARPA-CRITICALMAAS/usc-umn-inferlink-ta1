@@ -1,13 +1,13 @@
 import os
 from postprocessing.remove_pnts_from_text_legend import *
 from postprocessing.get_dip_direct import *
-from automated_model_selection.text_based_matching_tfidf import *
+# from automated_model_selection.text_based_matching_tfidf import *
+from automated_model_selection_img_txt.matching_main import *
 from prediction_stitch.pred_stitch_point import * 
 from prediction_stitch.pred_stitch_strike import * 
 import time
 import pickle
 import os
-import time
 import argparse
 import logging
 
@@ -33,13 +33,23 @@ def parse_arguments():
                         help="Directory to pretrained point feature detection model weights.")
     parser.add_argument("--text_spotting_dir", type=str, default="",
                         help="mapKurator output dir containing text spotting results.")
-    parser.add_argument("--symbol_info_json_file", type=str, default="automated_model_selection/symbol_info.json",
-                        help="Json file contains internal metadata for point symbols.")
+
     parser.add_argument("--output_dir_root", type=str, default="",
                         help="Root directory for output directory.")
     parser.add_argument('--gpu_id', type=int, default=0)
+
     parser.add_argument("--strike_model_dir", type=str, default="strike_model_weights/",
-                        help="Directory to pretrained point feature detection model weights.")    
+                        help="Directory to pretrained point feature detection model weights.")  
+
+    parser.add_argument("--symbol_info_json_file", type=str, default="automated_model_selection_img_txt/data/symbol_info.json",
+                        help="Json file contains internal metadata for point symbols.")
+    parser.add_argument("--cropped_legend_patches_dir", type=str, default="",
+                        help="")
+    parser.add_argument("--image_based_model_weight", type=str, default="automated_model_selection_img_txt/data/model.pt",
+                        help="pretrained model path for image based detection from map legend")
+    parser.add_argument("--metadata_type", type=str, default="layout",
+                        help="specifying metadata type :[gpt/layout]")
+
     return parser.parse_args()
 
 logger = logging.getLogger(__name__)
@@ -59,6 +69,10 @@ symbol_info_json_file = args.symbol_info_json_file
 crop_shift_size = args.crop_shift_size
 gpu_id = args.gpu_id
 strike_model_dir = args.strike_model_dir
+
+cropped_legend_patches_dir = args.cropped_legend_patches_dir
+image_based_model_weight = args.image_based_model_weight
+metadata_type = args.metadata_type
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
 # print('using gpu id :', torch.cuda.current_device())
@@ -93,7 +107,16 @@ map_selected_models =[]
 try:
     # map_selected_models = text_based_matching(input_map_name, metadata_path, symbol_info_json_file, 
     #                                     use_shape=True, use_keywords=True, use_long_description=False)
-    map_selected_models = entire_pt_models
+    map_selected_models = txt_img_main(input_map_name,
+                                True,
+                                True,
+                                symbol_info_json_file,
+                                metadata_path,
+                                metadata_type,
+                                cropped_legend_patches_dir,
+                                image_based_model_weight,
+                                0.4)
+    # map_selected_models = entire_pt_models
     print(map_selected_models)
     
 except Exception as Argument:
