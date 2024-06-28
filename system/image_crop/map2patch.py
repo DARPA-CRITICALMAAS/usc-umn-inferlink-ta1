@@ -20,7 +20,10 @@ def str2bool(v):
 
 def crop_patches_around_points(args, image, map_area_bbox, patch_size = (500, 500)):
 
-    output_folder = os.path.join(output_dir, 'georef')
+    output_folder = os.path.join(args.output_dir, 'georef')
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
     # x: height, y: width
     map_content_y, map_content_x,  map_content_w, map_content_h = map_area_bbox
@@ -30,10 +33,12 @@ def crop_patches_around_points(args, image, map_area_bbox, patch_size = (500, 50
         (map_content_y + map_content_w, map_content_x + map_content_h ),
         (map_content_y + map_content_w, map_content_x )]
 
+    image_h, image_w = image.shape[:2]
+
     
     # Iterate through each point in the bounding box
-    for idx in len(bounding_box):
-        point = bounding_box[idx]:
+    for idx in range(len(bounding_box)):
+        point = bounding_box[idx]
         # Convert the point coordinates to integers
         y, x = map(int, point)
         
@@ -42,11 +47,11 @@ def crop_patches_around_points(args, image, map_area_bbox, patch_size = (500, 50
         top_left_x = max(0, x - patch_size[1] // 2)
         
         # Calculate the bottom-right corner of the patch
-        bottom_right_y = min(image.width, y + patch_size[0] // 2)
-        bottom_right_x = min(image.height, x + patch_size[1] // 2)
+        bottom_right_y = min(image_w, y + patch_size[0] // 2)
+        bottom_right_x = min(image_h, x + patch_size[1] // 2)
         
         # Crop the patch from the image
-        patch = img[top_left_x:bottom_right_x, top_left_y:bottom_right_y]
+        patch = image[top_left_x:bottom_right_x, top_left_y:bottom_right_y]
         
         # Add the patch to the list
         
@@ -57,11 +62,14 @@ def crop_patches_around_points(args, image, map_area_bbox, patch_size = (500, 50
     
     logger.info(f'Saved the cropped images for {args.map_name} in {output_folder}')
     
-    return patches
+    return 
 
 
 
 def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir, only_crop_map_area=True):
+
+    if not os.path.exists(os.path.join(args.output_dir, 'feature-extraction')):
+        os.makedirs(os.path.join(args.output_dir, 'feature-extraction'))
     
     h, w = map_image.shape[:2]
     
@@ -174,7 +182,6 @@ def crop_map_main(args):
 
 
 
-    
 
 if __name__ == '__main__':
     parser = ArgumentParser()
