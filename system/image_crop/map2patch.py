@@ -5,6 +5,7 @@ import cv2
 import json
 import numpy as np
 import logging
+from PIL import Image
 from argparse import ArgumentParser
 
 def str2bool(v):
@@ -17,28 +18,48 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-parser = ArgumentParser()
-parser.add_argument('--input_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps', help='a folder has testing maps')
-parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs_', help='a output folder from the legend segment module')
-parser.add_argument('--map_name', default='10705_61989', help='testing map name')
-parser.add_argument('--patch_sizes', type=int, nargs='+', help='a list of patch size')
-parser.add_argument('--strides', type=int, nargs='+', \
-                    help='a list of stride, the length is the same as path_sizes')
-parser.add_argument('--only_crop_map_area', type=str2bool, nargs='+', \
-                    help='a list of T/F, the length is the same as path_sizes')
-parser.add_argument('--output_dir', default='/data/weiweidu', help='a folder to save cropped images')
-parser.add_argument('--log_path', type=str, default='./map_crop_logger.log')
+def crop_patches_around_points(args, image, map_area_bbox, patch_size = (500, 500)):
 
-args = parser.parse_args()
+    output_folder = os.path.join(output_dir, 'georef')
 
-logger = logging.getLogger('map_crop_logger')
-handler = logging.FileHandler(f'{args.log_path}', mode='a')
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+    # x: height, y: width
+    map_content_y, map_content_x,  map_content_w, map_content_h = map_area_bbox
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
+    bounding_box = [(map_content_y, map_content_x ),
+        (map_content_y, map_content_x + map_content_h ),
+        (map_content_y + map_content_w, map_content_x + map_content_h ),
+        (map_content_y + map_content_w, map_content_x )]
+
+    
+    # Iterate through each point in the bounding box
+    for idx in len(bounding_box):
+        point = bounding_box[idx]:
+        # Convert the point coordinates to integers
+        y, x = map(int, point)
+        
+        # Calculate the top-left corner of the patch
+        top_left_y = max(0, y - patch_size[0] // 2)
+        top_left_x = max(0, x - patch_size[1] // 2)
+        
+        # Calculate the bottom-right corner of the patch
+        bottom_right_y = min(image.width, y + patch_size[0] // 2)
+        bottom_right_x = min(image.height, x + patch_size[1] // 2)
+        
+        # Crop the patch from the image
+        patch = img[top_left_x:bottom_right_x, top_left_y:bottom_right_y]
+        
+        # Add the patch to the list
+        
+        output_path = os.path.join(output_folder, f'{args.map_name}_{str(idx)}.jpg' )
+
+        cv2.imwrite(output_path, patch)
+
+    
+    logger.info(f'Saved the cropped images for {args.map_name} in {output_folder}')
+    
+    return patches
+
+
 
 def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir, only_crop_map_area=True):
     
@@ -65,9 +86,9 @@ def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir,
     num_w = w // stride
     
     if map_area_bbox is not None and only_crop_map_area:
-        output_folder = os.path.join(output_dir, f'{map_name}_g{patch_size}_s{stride}_wo_legend')
+        output_folder = os.path.join(output_dir, 'feature-extraction', f'{map_name}_g{patch_size}_s{stride}_wo_legend')
     else:
-        output_folder = os.path.join(output_dir, f'{map_name}_g{patch_size}_s{stride}_wo_legend')
+        output_folder = os.path.join(output_dir, 'feature-extraction', f'{map_name}_g{patch_size}_s{stride}_wo_legend')
         
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -83,7 +104,7 @@ def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir,
             continue
         patch = map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :]
 
-        output_path = os.path.join(output_folder, f'{map_name}_{start[0]}_{start[1]}.png')
+        output_path = os.path.join(output_folder, 'feature-extraction', f'{map_name}_{start[0]}_{start[1]}.png')
             
         cv2.imwrite(output_path, patch)
     
@@ -105,22 +126,7 @@ def read_map_content_area_from_json(legend_json_path):# Use glob.glob() to find 
             ptln_legend_area_bbox = item['bbox']
     return map_area_bbox, ptln_legend_area_bbox
 
-def crop_map_main(args):    
-    input_path = os.path.join(args.input_dir, args.map_name+'.tif')
-    map_image = cv2.imread(input_path)
-    
-    legend_json_path = os.path.join(args.legend_dir, args.map_name+'_map_segmentation.json')
-
-    try:
-        map_area_bbox, ptln_legend_area_bbox = read_map_content_area_from_json(legend_json_path)
-        if map_area_bbox:
-            logger.info(f'Get the map content bounding box: {map_area_bbox}')
-        else:
-            logger.warning(f'Legend segmentation json does not extract the map content area')
-    except:
-        map_area_bbox, ptln_legend_area_bbox = None, None
-        logger.warning(f'Legend segmentation json does not exist in {legend_json_path}')
-        
+def crop_map_plot_and_legend_area(args, map_image, map_area_bbox, ptln_legend_area_bbox ):
     for i, patch_size in enumerate(args.patch_sizes[:-1]):
         logger.info(f'generating patch_size={patch_size} for {args.map_name}')
         s_time = time.time()
@@ -142,9 +148,59 @@ def crop_map_main(args):
         legend_crop_output_path = crop_map(map_image, args.map_name, map_area_bbox, \
                                    patch_size, stride_size, args.output_dir, False)
     logger.info(f'Saved the cropped images for {args.map_name} in {legend_crop_output_path}')
+
     return
 
+def crop_map_main(args):    
+    input_path = os.path.join(args.input_dir, args.map_name+'.tif')
+    map_image = cv2.imread(input_path)
+    
+    legend_json_path = os.path.join(args.legend_dir, args.map_name+'_map_segmentation.json')
+
+    try:
+        map_area_bbox, ptln_legend_area_bbox = read_map_content_area_from_json(legend_json_path)
+        if map_area_bbox:
+            logger.info(f'Get the map content bounding box: {map_area_bbox}')
+        else:
+            logger.warning(f'Legend segmentation json does not extract the map content area')
+    except:
+        map_area_bbox, ptln_legend_area_bbox = None, None
+        logger.warning(f'Legend segmentation json does not exist in {legend_json_path}')
+
+
+    # crop_map_plot_and_legend_area(args, map_image, map_area_bbox, ptln_legend_area_bbox )
+
+    crop_patches_around_points(args, map_image, map_area_bbox, patch_size = (500, 500))
+
+
+
+    
+
 if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--input_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps', help='a folder has testing maps')
+    parser.add_argument('--legend_dir', default='/data/weiweidu/criticalmaas_data/hackathon2/more_nickle_maps_legend_outputs_', help='a output folder from the legend segment module')
+    parser.add_argument('--map_name', default='10705_61989', help='testing map name')
+    parser.add_argument('--patch_sizes', type=int, nargs='+', help='a list of patch size')
+    parser.add_argument('--strides', type=int, nargs='+', \
+                        help='a list of stride, the length is the same as path_sizes')
+    parser.add_argument('--only_crop_map_area', type=str2bool, nargs='+', \
+                        help='a list of T/F, the length is the same as path_sizes')
+    parser.add_argument('--output_dir', default='/data/weiweidu', help='a folder to save cropped images')
+    parser.add_argument('--log_path', type=str, default='./map_crop_logger.log')
+
+    args = parser.parse_args()
+
+    logger = logging.getLogger('map_crop_logger')
+    handler = logging.FileHandler(f'{args.log_path}', mode='a')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
+
+
     args = parser.parse_args()
     
     #sanity check
