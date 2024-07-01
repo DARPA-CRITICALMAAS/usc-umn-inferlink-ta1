@@ -111,8 +111,7 @@ def crop_map(map_image, map_name, map_area_bbox, patch_size, stride, output_dir,
         if np.sum(patch_mask) < 200:
             continue
         patch = map_image[start[0]:start[0]+p_h, start[1]:start[1]+p_w, :]
-
-        output_path = os.path.join(output_folder, 'feature-extraction', f'{map_name}_{start[0]}_{start[1]}.png')
+        output_path = os.path.join(output_folder, f'{map_name}_{start[0]}_{start[1]}.png')
             
         cv2.imwrite(output_path, patch)
     
