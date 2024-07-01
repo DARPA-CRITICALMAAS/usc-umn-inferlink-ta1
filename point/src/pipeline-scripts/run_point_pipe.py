@@ -21,8 +21,8 @@ def parse_arguments():
                         help="Directory to the original map data ended with .tif.")
     parser.add_argument("--map_metadata_dir", type=str, default="",
                         help="Directory to map metadata that contains the information about coordinate of legend and map dimension.")
-    parser.add_argument("--cropped_legend_dir", type=str, default="",
-                        help="Directory to save the cropped legend per each map.")
+    # parser.add_argument("--cropped_legend_dir", type=str, default="",
+    #                     help="Directory to save the cropped legend per each map.")
     parser.add_argument("--template_dir", type=str, default="template/",
                         help="Directory to the legend template.")
     parser.add_argument("--processed_legend_dir", type=str, default="",

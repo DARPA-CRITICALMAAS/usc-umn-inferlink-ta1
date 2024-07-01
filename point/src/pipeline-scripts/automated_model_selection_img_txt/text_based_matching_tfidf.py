@@ -155,7 +155,7 @@ def text_based_matching(input_map_name,
     if metadata_type == 'gpt':
         metadata_file = os.path.join(metadata_path, input_map_name + '_gpt_point.json')
     elif  metadata_type == 'layout':
-        metadata_file = os.path.join(metadata_path, input_map_name + 'gpt_point.json')
+        metadata_file = os.path.join(metadata_path, input_map_name + '_point.json')
     
     if not os.path.exists(metadata_file):
         print('not exist')
