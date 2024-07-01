@@ -29,8 +29,9 @@ python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patch
 ```
 
 
-This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ),(2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection_img_txt/data/symbol_info.json```), (3) pretrained model dir for strike extraction (```--strike_model_dir strike_model_weights/``` ) and (4) pretrained model file path for image-based automated model selection module (```--image_based_model_weight automated_model_selection_img_txt/data/model.pt``` ) 
+This repository contains (1) pretrained models dir  (```--model_weights_dir model_weight/``` ),(2) a metadata used for selecting pretrained models per maps (```--symbol_info_json_file automated_model_selection_img_txt/data/symbol_info.json```) and (3) pretrained model file path for image-based automated model selection module (```--image_based_model_weight automated_model_selection_img_txt/data/model.pt``` ) 
 
+Regarding the (```--dip_direct_model_path``` ), [here](https://drive.google.com/file/d/1C6TS_bb8KsxPtwA6KiXrtqFHigh7BFsq/view?usp=drive_link) is a URL to download the dip direction classification model weight file. 
 
 ## Command Line Arguments:
 
@@ -42,9 +43,10 @@ This repository contains (1) pretrained models dir  (```--model_weights_dir mode
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
 --output_dir_root: Root directory for output directory
 --gpu_id : Specifying GPU id for running the module
---strike_model_dir : Directory of pretrained strike model weight 
+<!-- --strike_model_dir : Directory of pretrained strike model weight -->
 --cropped_legend_patches_dir : Directory of cropped patches from outside of map region including entire maps
 --image_based_model_weight : model weight path for image-based automated model selection module
+--dip_direct_model_path : model weight file path for dip direction classification model 
 --text_spotting_dir (Optional) : Directory of mapKurator outputs. This is optional, which is used for postprocessing point symbol module outputs
 
 ```
