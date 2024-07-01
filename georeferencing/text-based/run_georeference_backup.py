@@ -208,7 +208,7 @@ def to_camel(title):
     return ' '.join(word.capitalize() for word in words)
 
 
-def run_georeferencing_gpt(args):
+def run_georeferencing(args):
 
     # Check if GPU is available
     if torch.cuda.is_available():
@@ -276,6 +276,89 @@ def run_georeferencing_gpt(args):
     return seg_bbox, top10, image_width, image_height, title, toponyms 
 
 
+# def download_geotiff(geotiff_url, temp_dir):
+#     filename = os.path.basename(geotiff_url)
+#     try:
+#         print(f'Downloading {filename}')
+#         urllib.request.urlretrieve(geotiff_url, os.path.join(temp_dir,filename))
+#         return os.path.join(temp_dir,filename)
+#     except URLError as e:
+#         print(f'Error during download: {e}')
+#         return -1
+
+# def img2geo_georef(row_col_list, geotiff_file):
+#     # Open the GeoTIFF file
+#     topo_target_gcps = []
+#     with rasterio.open(geotiff_file) as dataset:
+#         # Use the dataset's transform attribute and the `xy` method
+#         # to convert pixel coordinates to geographic coordinates.
+#         # The `xy` method returns the coordinates of the center of the given pixel.
+#         # geotransform = dataset.transform
+
+#         for row, col in row_col_list:
+#             geo_coords = dataset.xy(col, row, offset='center')
+#             topo_target_gcps.append(geo_coords)
+
+
+#         # transform = dataset.transform
+#         # for row, col in row_col_list:
+#         #     lon, lat = transform * (col, row)
+#         #     topo_target_gcps.append((lat, lon))
+
+#     # print(dataset.crs.wkt)
+
+#     return topo_target_gcps, dataset.crs.wkt 
+    
+# def get_gcps(args, geologic_seg_bbox, top10):
+#     top1 = top10.iloc[0]
+
+#     # left, right, top, bottom = top1['westbc'], top1['eastbc'], top1['northbc'], top1['southbc']
+#     left, right, top, bottom = geologic_seg_bbox[0], geologic_seg_bbox[0]+geologic_seg_bbox[2], geologic_seg_bbox[1], geologic_seg_bbox[1]+geologic_seg_bbox[3]
+
+#     geologic_src_gcps = [(top, left),(top, right),(bottom, right), (bottom, left)]
+
+#     geotiff_url = top1['geotiff_url']
+
+#     geotiff_path = download_geotiff(geotiff_url, args.temp_dir) 
+
+#     if geotiff_path == -1: #failure if -1
+#         return -1 
+
+#     seg_mask, topo_seg_bbox, image, image_width, image_height = run_segmentation(geotiff_path, args.support_data_dir)
+#     topo_left, topo_right, topo_top, topo_bottom = topo_seg_bbox[0], topo_seg_bbox[0]+topo_seg_bbox[2], topo_seg_bbox[1], topo_seg_bbox[1]+topo_seg_bbox[3]
+
+#     topo_src_gcps = [(topo_top, topo_left),(topo_top, topo_right),(topo_bottom, topo_right), (topo_bottom, topo_left)]
+#     topo_target_gcps, dataset_crs = img2geo_georef(topo_src_gcps, geotiff_path)
+    
+#     return geologic_src_gcps, topo_target_gcps, dataset_crs
+
+
+# def generate_geotiff(args, geologic_seg_bbox, top10, width, height,):
+
+#     input_tiff = args.input_path
+#     temp_tiff = os.path.join(args.temp_dir,os.path.basename(args.input_path))
+
+#     topo_src_gcps, topo_target_gcps, dataset_crs = get_gcps(args, geologic_seg_bbox, top10) 
+
+#     command = 'gdal_translate -of GTiff' 
+#     for src_gcp, target_gcp in zip(topo_src_gcps, topo_target_gcps):
+#         command +=  ' -gcp ' + str(src_gcp[0]) + ' ' + str(src_gcp[1]) + ' '
+#         command += str(target_gcp[0]) + ' ' + str(target_gcp[1]) + ' '
+
+#     command = command + input_tiff + ' ' + temp_tiff 
+
+#     print(command)
+#     if os.path.exists(temp_tiff):
+#         os.remove(temp_tiff)
+#     os.system(command)
+    
+#     output_tiff = os.path.join(args.temp_dir, os.path.basename(args.input_path).split('.')[0] + '_geo' + '.tif') 
+#     command1 = "gdalwarp -r near -t_srs '" + dataset_crs + "' -of GTiff " + temp_tiff + " " + output_tiff # extra single quote before and after dataset crs
+
+#     print(command1)
+#     if os.path.exists(output_tiff):
+#         os.remove(output_tiff)
+#     os.system(command1)
 """
 min_bbox_point: list of points, containing the rotated bounding box for map segmentation area, in the format of [row,col]
 row_first: output reformated bbox in [row,col] format, otherwise [col,row]
@@ -305,21 +388,9 @@ def reformat_bbox(min_bbox_points, row_first = True):
 
     return ret_bbox 
 
-def construct_gcp_dict(geo_points, px_points):
-    gcp_list = []
-    for i in range(4):
-        cur_gcp_dict = {"gcp_id": i+1} 
-        cur_gcp_dict["map_geom"] = {"latitude":geo_points[i][0], "longitude":geo_points[i][1]}
-        cur_gcp_dict["px_geom"] = {"columns_from_left":px_points[i][0], "rows_from_top":px_points[i][1]} 
-        cur_gcp_dict["confidence"] = None
-        cur_gcp_dict["model"] = "umn"
-        cur_gcp_dict["model_version"] = "0.0.1"
-        cur_gcp_dict["crs"] = "EPSG:4326"
-        gcp_list.append(cur_gcp_dict)
 
-    return gcp_list 
 
-def write_to_json_gpt(args, seg_bbox, top10, width, height, title, toponyms):
+def write_to_json(args, seg_bbox, top10, width, height, title, toponyms):
 
     top1 = top10.iloc[0]
     # print(top1['product_url'])
@@ -329,17 +400,31 @@ def write_to_json_gpt(args, seg_bbox, top10, width, height, title, toponyms):
     reformatted_bbox = reformat_bbox(seg_bbox, row_first = False)
     px_points = [reformatted_bbox['top_left'],reformatted_bbox['top_right'], reformatted_bbox['bottom_right'],reformatted_bbox['bottom_left']]
 
-    # px_points = [[a[1], a[0]] for a in px_points]
+    px_points = [[a[1], a[0]] for a in px_points]
 
-    # geo_points = [[left,top],[right, top],[right, bottom],[left,bottom]]
-    geo_points = [[top,left],[top, right],[bottom, right],[bottom,left]]
+    geo_points = [[left,top],[right, top],[right, bottom],[left,bottom]]
 
-    gcp_list = construct_gcp_dict(geo_points, px_points)
+    # print(geo_points)
+    # print(px_points)
 
     if args.more_info:
+        # following non reformat version
+        gcp_list = []
+        
+        for i in range(4):
+            cur_gcp_dict = {"gcp_id": i+1} 
+            cur_gcp_dict["map_geom"] = {"latitude":geo_points[i][1], "longitude":geo_points[i][0]}
+            cur_gcp_dict["px_geom"] = {"columns_from_left":px_points[i][1], "rows_from_top":px_points[i][0]} 
+            cur_gcp_dict["confidence"] = None
+            cur_gcp_dict["model"] = "umn"
+            cur_gcp_dict["model_version"] = "0.0.1"
+            cur_gcp_dict["crs"] = "EPSG:4326"
+            gcp_list.append(cur_gcp_dict)
+
         
         georef_output_dict = {
             "cog_id": None,
+            # "map_name": os.path.basename(args.input_path).rsplit('.', 1)[0],
             "gpt_title": title,
             "toponyms": toponyms, 
             "georeference_results":[
@@ -357,34 +442,63 @@ def write_to_json_gpt(args, seg_bbox, top10, width, height, title, toponyms):
         with open(args.output_path, 'w') as f:
             json.dump(georef_output_dict, f, indent = 4)
 
-    # elif args.reformat:
+    elif args.reformat:
+        # top10_dict = top10.to_dict(orient='records') 
 
-    #     gcp_list = []
+        # Use increasing numbers as keys
+        # top10_dict = {i + 1: row for i, row in enumerate(top10_dict)}
+        # georef_output_dict =   { 
+        #              "width": width, 
+        #              "height": height, 
+        #              "title": title, 
+        #              "toponyms": toponyms, 
+        #              "seg_bbox": seg_bbox, 
+        #             "geo":
+        #                 {"left":left, "right":right, "top":top, "bottom":bottom},
+        #             "img":
+        #                 {"img_left":img_left, "img_right":img_right, "img_top":img_top, "img_bottom":img_bottom},
+        #             "top10": top10_dict,
+        #         }
+
+        gcp_list = []
         
-    #     for i in range(4):
-    #         cur_gcp_dict = {"id": i+1} 
-    #         cur_gcp_dict["map_geom"] = geo_points[i]
-    #         cur_gcp_dict["px_geom"] = px_points[i]
-    #         cur_gcp_dict["confidence"] = None
-    #         cur_gcp_dict["provenance"] = "modelled"
-    #         gcp_list.append(cur_gcp_dict)
+        for i in range(4):
+            cur_gcp_dict = {"id": i+1} 
+            cur_gcp_dict["map_geom"] = geo_points[i]
+            cur_gcp_dict["px_geom"] = px_points[i]
+            cur_gcp_dict["confidence"] = None
+            cur_gcp_dict["provenance"] = "modelled"
+            gcp_list.append(cur_gcp_dict)
 
 
-    #     georef_output_dict = {
-    #         "map":{
-    #             "name": os.path.basename(args.input_path).rsplit('.', 1)[0],
-    #             "projection_info": {"projection": "EPSG:4326", "provenance":"modelled",
-    #             "gcps": gcp_list}
-    #         }
-    #     }
+        georef_output_dict = {
+            "map":{
+                "name": os.path.basename(args.input_path).rsplit('.', 1)[0],
+                "projection_info": {"projection": "EPSG:4326", "provenance":"modelled",
+                "gcps": gcp_list}
+            }
+        }
 
-    #     with open(args.output_path, 'w') as f:
-    #         json.dump([georef_output_dict], f)
+        with open(args.output_path, 'w') as f:
+            json.dump([georef_output_dict], f)
 
     else:
+        gcp_list = []
+        
+        for i in range(4):
+            cur_gcp_dict = {"gcp_id": i+1} 
+            cur_gcp_dict["map_geom"] = {"latitude":geo_points[i][1], "longitude":geo_points[i][0]}
+            cur_gcp_dict["px_geom"] = {"columns_from_left":px_points[i][1], "rows_from_top":px_points[i][0]} 
+            cur_gcp_dict["confidence"] = None
+            cur_gcp_dict["model"] = "umn"
+            cur_gcp_dict["model_version"] = "0.0.1"
+            cur_gcp_dict["crs"] = "EPSG:4326"
+            gcp_list.append(cur_gcp_dict)
+
         
         georef_output_dict = {
             "cog_id": None,
+            # "map_name": os.path.basename(args.input_path).rsplit('.', 1)[0],
             "georeference_results":[
                 {
                     "likely_CRSs":["EPSG:4326"],
@@ -400,149 +514,6 @@ def write_to_json_gpt(args, seg_bbox, top10, width, height, title, toponyms):
         with open(args.output_path, 'w') as f:
             json.dump(georef_output_dict, f, indent = 4)
 
-def write_to_json_geocoords(map_id, gcp_list):
-
-    
-    georef_output_dict = {
-        "cog_id": map_id,
-        "georeference_results":[
-            {
-                "likely_CRSs":["EPSG:4326"],
-                "map_area": None,
-                "projections": None,
-            },
-        ],
-        "gcps": gcp_list,
-        "system":"umn",
-        "system_version":"0.0.1"
-    }
-
-    return georef_output_dict
-
-def read_map_content_area_from_json(legend_json_path):#
-    map_area_bbox = None
-    
-    try:   
-        with open(legend_json_path, 'r', encoding='utf-8') as file:
-            legend_dict = json.load(file)
-    except:
-        return FileNotFoundError(f'{legend_json_path} does not exist')
-
-    for item in legend_dict['segments']:
-        if 'map' == item['class_label']:
-            map_area_bbox = item['bbox'] 
-        
-    return map_area_bbox
-
-def dms_to_decimal(dms):
-    # Handle cases with degrees, minutes, and seconds
-    parts = dms.split('°')
-    degrees = int(parts[0])
-    
-    if "'" in parts[1]:
-        minutes_part = parts[1].split("'")
-        minutes = float(minutes_part[0])
-        seconds = 0.0
-        if '"' in minutes_part[1]:
-            seconds = float(minutes_part[1].strip('"'))
-    else:
-        minutes = 0.0
-        seconds = 0.0
-    
-    decimal = degrees + minutes / 60 + seconds / 3600
-    return decimal
-
-
-def run_georeferencing_mapkurator_coords(args):
-
-    if args.segmentation_json_path is  None :
-        return -1
-    if  args.mapkurator_coords_dir is None :
-        return -1 
-
-    segmentation_json_path = args.segmentation_json_path 
-    mapkurator_coords_dir = args.mapkurator_coords_dir
-    
-    map_area_bbox = read_map_content_area_from_json(segmentation_json_path)
-
-    if map_area_bbox is None:
-        return -2 # segmentation file does not exist 
-
-    # x: height, y: width
-    map_content_y, map_content_x,  map_content_w, map_content_h = map_area_bbox
-
-    bounding_box = [(map_content_y, map_content_x ),
-        (map_content_y, map_content_x + map_content_h ),
-        (map_content_y + map_content_w, map_content_x + map_content_h ),
-        (map_content_y + map_content_w, map_content_x )] 
-
-
-    corner_texts_dict = dict()
-    json_file_paths = sorted(os.listdir(mapkurator_coords_dir))
-    map_id = os.path.basename(mapkurator_coords_dir)
-    for json_path in json_file_paths:
-        
-        crop_id = json_path.split('_')[1].split('.json')[0]
-        with open(os.path.join(mapkurator_coords_dir, json_path), 'r') as f:
-            mapkurator_json = json.load(f)
-        
-        text = mapkurator_json['text'] 
-        if len(text) == 0: continue 
-
-        corner_texts_dict[crop_id] = text 
-
-
-    success_flag = False 
-    # heuristics with a set of rules 
-
-    if len(corner_texts_dict) !=  4:
-        return -3 # missing corner values 
-
-    
-    lat_long_sets = set()
-    two_num_flag = True 
-    for crop_id, values in corner_texts_dict.items():
-        if len(values) != 2: 
-            two_num_flag = False # TODO: can be relaxed
-            continue 
-        for dummy_k, geocoord in values.items():
-            lat_long_sets.add(geocoord)
-
-    
-
-    if len(lat_long_sets) == 4 and two_num_flag == True: # heuristics, only 2 unique values for lat and 2 unique values for long 
-        print(corner_texts_dict)
-        success_flag = True 
-
-    if success_flag == True: 
-        
-        geo_points = []
-        px_points = []
-        for i in range(4):
-            texts = corner_texts_dict[str(i)]
-
-            point = bounding_box[i]
-            x, y = map(int, point) # TA4 Jataware's x y is fliped from ours 
-
-            decimals = [dms_to_decimal(t) for k, t in texts.items()]
-            lat, lon = min(decimals),max(decimals)
-
-            geo_points.append([lat, -lon])
-            px_points.append([x, y])
-
-        gcp_list = construct_gcp_dict(geo_points, px_points)
-
-        json_data = write_to_json_geocoords(map_id, gcp_list)
-
-        with open(args.output_path, 'w') as f:
-            json.dump(json_data, f, indent=4)
-            
-        return 0 
-    else:
-        return -3 # did not pass the heuristics
-
-
-# todo: convert to mitre format 
 
 
 
@@ -553,17 +524,7 @@ def main():
     parser.add_argument('--output_path', type=str, default=None) 
     parser.add_argument('--temp_dir', type=str, default='temp') 
     parser.add_argument('--support_data_dir', type=str, default='support_data')
-
-    # args for mapkurator-coords
-    parser.add_argument('--mapkurator_coords_dir', type=str, default=None)
-    parser.add_argument('--segmentation_json_path', type = str, default = None)
-
-
-    # args for converting to competition output format 
-    parser.add_argument('--competition_form', action='store_true' )
-    parser.add_argument('--clue_file', type = str, default = None)
-
-    # parser.add_argument('--reformat', action='store_true' )
+    parser.add_argument('--reformat', action='store_true' )
     parser.add_argument('--more_info', action='store_true' )
     parser.add_argument('--gpu_id', type=str, default='')
     args = parser.parse_args()
@@ -574,28 +535,19 @@ def main():
     assert args.input_path is not None
     assert args.output_path is not None 
 
+    ret = run_georeferencing(args)
+
+    if ret == -1:
+        return -1 
+    else:
+        seg_bbox, top10, image_width, image_height, title, toponyms = ret
     
+    print(ret)
 
-    json_path = '../mapkurator_coords/spotting_output_validation_corner_crops.json' 
-    uncharted_path = 'min_bbox_json/uncharted_min_bbox_validation.json'
+    # generate_geotiff(args, seg_bbox, top10, image_width, image_height)
 
-    ret_geocoords = run_georeferencing_mapkurator_coords(args)
-    print('mapkurator-coords return code:', ret_geocoords)
-
-    if ret_geocoords != 0: # failed to handle with mapkurator-coords approach 
-        logging.info('mapKurator-coords approach fails to handle map, switch to GPT-toponym')
-    
-        ret = run_georeferencing_gpt(args)
-
-        if ret == -1:
-            return -1 
-        else:
-            seg_bbox, top10, image_width, image_height, title, toponyms = ret
-        
-        print(ret)
-
-        write_to_json_gpt(args, seg_bbox, top10, image_width, image_height, title, toponyms)
-
+    # write_to_geopackage(args, seg_bbox, top1, image_width, image_height)
+    write_to_json(args, seg_bbox, top10, image_width, image_height, title, toponyms)
 
     return 0 
 
@@ -606,11 +558,11 @@ if __name__ == '__main__':
 
 '''
 Example command:
-python3 run_georeference.py \ 
---input_path='/home/yaoyi/shared/critical-maas/9month/raw_maps/330e339d3b0d335d26bd263d361d361d270d264e161e375e274e2f5e0b5e9198.cog.tif' \
---output_path='debug/debug.geojson' \ 
---temp_dir='temp' \ 
---support_data_dir='/home/yaoyi/li002666/critical_maas/support_data/' \ 
---mapkurator_coords_dir='coordinate_spotting/<COG_ID>/spotter/<COG_ID>' \ 
---segmentation_json_path='legend_segment/<COG_ID>_map_segmentation.json' 
+to json:
+python3 run_georeference.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='temp/debug.json' --support_data_dir='/home/zekun/ta1_georeferencing/geological-map-georeferencing/support_data'
+
+python3 run_georeference_moreinfo.py --input_path='/home/zekun/data/nickel_0209/raw_maps/169_34067.tif' --output_path='/home/zekun/data/nickel_output/0209/169_34067.json'
+
+to geopackage:
+python3 run_georeference_moreinfo.py  --input_path='../input_data/CO_Frisco.png' --output_path='../output_georef/CO_Frisco.gpkg'
 '''

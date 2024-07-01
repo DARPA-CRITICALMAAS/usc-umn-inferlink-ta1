@@ -5,6 +5,7 @@ import pdb
 import argparse
 import pandas as pd
 import geopandas as gpd
+import argparse
 import sys
 import re
 import os
@@ -360,10 +361,27 @@ def run_trie_GPT():
     df_matches.to_csv('outputs/MATCHES_trie_state-quad-county_100testset_gpt2.csv', index=False)
 
 if __name__ == "__main__":
-    geomap_metadata_pt = '/home/yaoyi/shared/critical-maas/testset_100map/100map_testset_metadata.csv'
-    ocr_root = '/home/yaoyi/shared/critical-maas/testset_100map/geomaps_ocr'
-    topo_geojson = '/home/yaoyi/chen7924/critical-maas/Data/usgs_topo_geoms.geojson'
-    cand_out_pt = 'outputs/trie_state-quad_100testset_ocr.csv'
-    trie_analysis_out_pt = 'outputs/MATCHES_trie_state-quad_100testset_ocr.csv'
-    # run_trie_GPT()
-    run_trie_ocr(geomap_metadata_pt, ocr_root, topo_geojson, cand_out_pt, trie_analysis_out_pt)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--geomap_metadata_pt', type=str, default='/home/yaoyi/shared/critical-maas/testset_100map/100map_testset_metadata.csv')
+    parser.add_argument('--topo_geojson', type=str, default='/home/yaoyi/shared/critical-maas/tree-crit-maas-code/Data/usgs_topo_geoms.geojson') 
+    parser.add_argument('--ocr_root', type=str, default='/home/yaoyi/li002666/critical_maas/notebooks/outputs/no_legend')
+    parser.add_argument('--cand_out_pt', type=str, default='outputs/trie_state-quad_100testset_ocr_no_legend.csv')
+    parser.add_argument('--trie_analysis_out_pt', type=str, default='outputs/MATCHES_trie_state-quad_100testset_ocr_no_legend.csv')
+
+
+    args = parser.parse_args()
+    print('\n')
+    print(args)
+    print('\n')
+    
+    # geomap_metadata_pt = '/home/yaoyi/shared/critical-maas/testset_100map/100map_testset_metadata.csv'
+    # # ocr_root = '/home/yaoyi/shared/critical-maas/testset_100map/geomaps_ocr'
+    # # ocr_root = '/home/yaoyi/li002666/critical_maas/notebooks/outputs/no_map_area'
+    # ocr_root = '/home/yaoyi/li002666/critical_maas/notebooks/outputs/no_legend_area'
+    # topo_geojson = '/home/yaoyi/shared/critical-maas/tree-crit-maas-code/Data/usgs_topo_geoms.geojson'
+    # cand_out_pt = 'outputs/trie_state-quad_100testset_ocr_no_maparea.csv'
+    # # trie_analysis_out_pt = 'outputs/MATCHES_trie_state-quad_100testset_ocr_no_maparea.csv'
+    # trie_analysis_out_pt = 'outputs/MATCHES_trie_state-quad_100testset_ocr_no_legend.csv'
+    # # run_trie_GPT()
+    run_trie_ocr(args.geomap_metadata_pt, args.ocr_root, args.topo_geojson, args.cand_out_pt, args.trie_analysis_out_pt)
