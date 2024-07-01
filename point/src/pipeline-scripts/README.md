@@ -25,7 +25,7 @@ conda activate pnt_pipe
 To run the point symbol pipeline, use the following command:
 
 ``` 
-python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file utomated_model_selection_img_txt/data/symbol_info.json --gpu_id 0 --strike_model_dir strike_model_weights/ --cropped_legend_patches_dir /cropped/patches/outside-of-map-region/entire-maps-directory --image_based_model_weight automated_model_selection_img_txt/data/model.pt
+python run_point_pipe.py --map_metadata_dir /your/metadata/directory --map_patches_dir /your/patches/directory/per/map --model_weights_dir model_weight/ --output_dir_root /your/output/root/directory --symbol_info_json_file utomated_model_selection_img_txt/data/symbol_info.json --gpu_id 0 --cropped_legend_patches_dir /cropped/patches/outside-of-map-region/entire-maps-directory --image_based_model_weight automated_model_selection_img_txt/data/model.pt --dip_direct_model_path path/of/pretrained-model-file/dip_direct_cls.pt --map_dir /map/sheet/directory 
 ```
 
 
@@ -43,7 +43,6 @@ Regarding the (```--dip_direct_model_path``` ), [here](https://drive.google.com/
 --symbol_info_json_file : Json file used for selecting pretrained models based on text description on a map legend 
 --output_dir_root: Root directory for output directory
 --gpu_id : Specifying GPU id for running the module
-<!-- --strike_model_dir : Directory of pretrained strike model weight -->
 --cropped_legend_patches_dir : Directory of cropped patches from outside of map region including entire maps
 --image_based_model_weight : model weight path for image-based automated model selection module
 --dip_direct_model_path : model weight file path for dip direction classification model 
