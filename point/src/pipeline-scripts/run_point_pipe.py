@@ -5,13 +5,14 @@ from postprocessing.get_dip_direct import *
 from automated_model_selection_img_txt.matching_main import *
 from prediction_stitch.pred_stitch_point import * 
 from prediction_stitch.pred_stitch_strike import * 
+from dip_direct_classification.pred_dip_direct import *
 import time
 import pickle
 import os
 import argparse
 import logging
-
-
+from pathlib import Path
+import torch
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Point Feature Pipeline Path.")
 
@@ -38,8 +39,8 @@ def parse_arguments():
                         help="Root directory for output directory.")
     parser.add_argument('--gpu_id', type=int, default=0)
 
-    parser.add_argument("--strike_model_dir", type=str, default="strike_model_weights/",
-                        help="Directory to pretrained point feature detection model weights.")  
+    # parser.add_argument("--strike_model_dir", type=str, default="strike_model_weights/",
+    #                     help="Directory to pretrained point feature detection model weights.")  
 
     parser.add_argument("--symbol_info_json_file", type=str, default="automated_model_selection_img_txt/data/symbol_info.json",
                         help="Json file contains internal metadata for point symbols.")
@@ -50,7 +51,10 @@ def parse_arguments():
     parser.add_argument("--metadata_type", type=str, default="layout",
                         help="specifying metadata type :[gpt/layout]")
 
+    parser.add_argument('--dip_direct_model_path', type=str, default="dip_direct_classification/dip_direct_cls.pt")
+
     return parser.parse_args()
+
 
 logger = logging.getLogger(__name__)
 FileOutputHandler = logging.FileHandler('logs_point.txt')
@@ -60,6 +64,7 @@ start_time = time.time()
 
 args = parse_arguments()
 
+map_dir = args.map_dir
 metadata_path = args.map_metadata_dir
 spotter_path = args.text_spotting_dir
 input_dir_root = args.map_patches_dir
@@ -68,11 +73,13 @@ output_dir_root = args.output_dir_root
 symbol_info_json_file = args.symbol_info_json_file
 crop_shift_size = args.crop_shift_size
 gpu_id = args.gpu_id
-strike_model_dir = args.strike_model_dir
+# strike_model_dir = args.strike_model_dir
 
 cropped_legend_patches_dir = args.cropped_legend_patches_dir
 image_based_model_weight = args.image_based_model_weight
 metadata_type = args.metadata_type
+
+dip_direct_model_path = args.dip_direct_model_path
 
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
 # print('using gpu id :', torch.cuda.current_device())
@@ -129,26 +136,27 @@ if os.path.exists(map_input_dir_root):
     try: 
         print("=== Running a model prediction module ===")
         predict_img_patches(input_map_name, map_input_dir_root, model_weights_dir, selected_model_weights, predict_output_dir)
-        predict_img_patches_strike(input_map_name, map_input_dir_root, strike_model_dir, os.listdir(strike_model_dir), predict_strike_output_dir)
+        # predict_img_patches_strike(input_map_name, map_input_dir_root, strike_model_dir, os.listdir(strike_model_dir), predict_strike_output_dir)
     except Exception as Argument:
         logger.warning("Problems in point symbol prediction module: {0}".format(map_input_dir_root))
     try:
         print("=== Running a stitching module ===")
         stitch_to_each_point_cdr(input_map_name, map_input_dir_root, predict_output_dir, stitch_output_dir, crop_shift_size)
-        stitch_to_each_strike(input_map_name, map_input_dir_root, predict_strike_output_dir, stitch_output_dir, )
+        # stitch_to_each_strike(input_map_name, map_input_dir_root, predict_strike_output_dir, stitch_output_dir, )
     except Exception as Argument:
         logger.warning("Problems in point symbol stitching module: {0}".format(map_input_dir_root))
 else:
     logger.warning("No cropped image patches exists : {0}".format(map_input_dir_root))    
 
 print(" === Running a dip direction saving module === ")
-
 try: 
     stitch_output_dir_per_map=os.path.join(stitch_output_dir,input_map_name)
     final_output_dir_per_map = os.path.join(final_output_dir,input_map_name)
     if not os.path.exists(final_output_dir_per_map):
         os.makedirs(final_output_dir_per_map)
-    get_dip_direction(stitch_output_dir_per_map,final_output_dir_per_map)
+    # get_dip_direction(stitch_output_dir_per_map,final_output_dir_per_map)
+    
+    pred_strike_per_pnt(input_map_name, map_dir, stitch_output_dir_per_map,final_output_dir_per_map, dip_direct_model_path)
     # remove_pnts_from_text_legend(stitch_output_dir_per_map, metadata_path, spotter_path, final_output_dir, if_filter_by_text_regions=False)
 except Exception as Argument:
     logger.warning("Problems in dip direction saving module :{0}".format(input_map_name))  
