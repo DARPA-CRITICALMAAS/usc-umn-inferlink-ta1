@@ -32,6 +32,7 @@ def execute_command(command, if_print_command):
         return {'time_usage':time_usage}
     except subprocess.CalledProcessError as err:
         error = err.stderr.decode('utf8')
+        print('****', error)
         # format error message to one line
         error  = error.replace('\n','\t')
         error = error.replace(',',';')
@@ -57,6 +58,7 @@ def main():
 
     input_map_path = os.path.join(map_input_dir, map_name+'.tif')
     input_legend_path = os.path.join(legend_input_dir, map_name+'_map_segmentation.json')
+
     # step 1. prepare inputs for layoutmlv3
     layoutlmv3_generator = GenerateInputs4LayoutLMv3(input_map_path, input_legend_path, output_dir)
     layoutlmv3_input_dir = layoutlmv3_generator.generate_inputs4layoutlmv3()
@@ -76,8 +78,12 @@ def main():
     exe_ret = execute_command(run_layoutlmv3_command, True)
     if 'error' in exe_ret:
         logging.info(f'Error in running layoutlmv3 for {map_name}')
+        print(f'=== Error in running layoutlmv3 for {map_name}')
+        print(exe_ret)
     else:
         logging.info(f'layoutlmv3 ran successfully for {map_name}')
+        print(f'=== layoutlmv3 ran successfully for {map_name}')
+        print(exe_ret)
 
     #step 3. convert layoutlmv3 output to the required format for ptln modules
     layoutlmv3_output_json_path = os.path.join(output_dir, "inference/coco_instances_results.json")
