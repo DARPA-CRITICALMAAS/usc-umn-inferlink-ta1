@@ -164,7 +164,7 @@ def identifying_peak_id(arr):
 
 
 def thresholding_with_conditions(path_to_source_image, path_to_source_roi, this_item_name, path_to_merged_predict, target_hsv, target_rgb, target_lab, summed_counter):
-    NUCLEATION = True
+    NUCLEATION = False
 
 
     source_roi = cv2.imread(path_to_source_roi)
