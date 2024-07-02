@@ -14,9 +14,9 @@ def refine_and_nucleation(mask_source, instance_source, summed_counter_source, t
 
     if resizing:
         size_source = mask.shape
-        mask = cv2.resize(mask, (size_source[1]//2, size_source[0]//2), interpolation=cv2.INTER_NEAREST)
-        instance = cv2.resize(instance, (size_source[1]//2, size_source[0]//2), interpolation=cv2.INTER_NEAREST)
-        summed_counter = cv2.resize(summed_counter, (size_source[1]//2, size_source[0]//2), interpolation=cv2.INTER_NEAREST)
+        mask = cv2.resize(mask, (size_source[1]//4, size_source[0]//4), interpolation=cv2.INTER_NEAREST)
+        instance = cv2.resize(instance, (size_source[1]//4, size_source[0]//4), interpolation=cv2.INTER_NEAREST)
+        summed_counter = cv2.resize(summed_counter, (size_source[1]//4, size_source[0]//4), interpolation=cv2.INTER_NEAREST)
 
     # Ensure mask is a binary numpy array (0 and 1 only)
     mask = (mask > 0).astype(np.uint8)
