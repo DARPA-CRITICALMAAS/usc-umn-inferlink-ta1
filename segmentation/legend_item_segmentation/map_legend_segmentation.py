@@ -11,7 +11,7 @@ import csv
 import sys
 
 from datetime import datetime
-
+from human_input_process import HumanInputProcess
 
 def str_to_bool(value):
     if value.lower() in {'false', 'f', '0', 'no', 'n'}:
@@ -302,67 +302,71 @@ def batch_main():
 
 def main():
     runningtime_start = datetime.now()
-    this_batch_processing = str_to_bool(args.batch_processing)
-    this_hackathon = str_to_bool(args.hackathon)
-    if this_hackathon == True:
-        batch_extract_main()
-        return True
-    if this_batch_processing == True:
-        batch_main()
-        return True
-
-    os.makedirs(os.path.dirname(args.log), exist_ok=True)
-    os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
-    os.makedirs(os.path.dirname(args.path_to_intermediate), exist_ok=True)
-
-    class Logger(object):
-        def __init__(self):
-            self.terminal = sys.stdout
-            self.log = open(args.log, "a")
-
-        def write(self, message):
-            self.terminal.write(message)
-            try:
-                self.log.write(message)
-            except:
-                self.log.write('\n  Unable to write to log file due to encoding issues...')
-                print('\n  Unable to write to log file due to encoding issues...')
-
-        def flush(self):
-            pass
-
-    sys.stdout = Logger()
-
-
-    input_image = args.input_image
-    path_list = input_image.replace('\\','/').split('/')
-    target_map_name_ext = path_list[-1]
-    target_map_name = os.path.splitext(path_list[-1])[0]
-
-    output_dir = args.output_dir
-    path_to_intermediate = args.path_to_intermediate
-    path_to_intermediate2 = os.path.join(args.path_to_intermediate, target_map_name)
-    input_area_segmentation = args.input_area_segmentation
-    input_legend_segmentation = args.input_legend_segmentation
-    path_to_mapkurator_output = args.path_to_mapkurator_output
-    preprocessing_for_cropping = str_to_bool(args.preprocessing_for_cropping)
-    postprocessing_for_crs = str_to_bool(args.postprocessing_for_crs)
-    competition_custom = str_to_bool(args.competition_custom)
-    only_poly = str_to_bool(args.only_poly)
-
-    this_version = args.version
-
-    
-    input_groundtruth_dir = 'None'
-    os.makedirs(os.path.dirname(path_to_intermediate2), exist_ok=True)
-
-
-    flagging = link_for_integrated_processing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, only_poly, this_version)
-    if flagging == True:
-        link_for_postprocessing.start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate2, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+    if args.human_input_path != '': # Human input
+        human_input_process = HumanInputProcess(human_input_path)       
+        output_path = human_input_process.generate_module_output(args.output_dir)
     else:
-        print('Disintegrity in map, please check the legend-area segmentation file. The targeted map may be missing from the json file if you have set "--competition_custom" to True...')
-    print('Overall processing time: '+str(datetime.now()-runningtime_start))
+        this_batch_processing = str_to_bool(args.batch_processing)
+        this_hackathon = str_to_bool(args.hackathon)
+        if this_hackathon == True:
+            batch_extract_main()
+            return True
+        if this_batch_processing == True:
+            batch_main()
+            return True
+
+        os.makedirs(os.path.dirname(args.log), exist_ok=True)
+        os.makedirs(os.path.dirname(args.output_dir), exist_ok=True)
+        os.makedirs(os.path.dirname(args.path_to_intermediate), exist_ok=True)
+
+        class Logger(object):
+            def __init__(self):
+                self.terminal = sys.stdout
+                self.log = open(args.log, "a")
+
+            def write(self, message):
+                self.terminal.write(message)
+                try:
+                    self.log.write(message)
+                except:
+                    self.log.write('\n  Unable to write to log file due to encoding issues...')
+                    print('\n  Unable to write to log file due to encoding issues...')
+
+            def flush(self):
+                pass
+
+        sys.stdout = Logger()
+
+
+        input_image = args.input_image
+        path_list = input_image.replace('\\','/').split('/')
+        target_map_name_ext = path_list[-1]
+        target_map_name = os.path.splitext(path_list[-1])[0]
+
+        output_dir = args.output_dir
+        path_to_intermediate = args.path_to_intermediate
+        path_to_intermediate2 = os.path.join(args.path_to_intermediate, target_map_name)
+        input_area_segmentation = args.input_area_segmentation
+        input_legend_segmentation = args.input_legend_segmentation
+        path_to_mapkurator_output = args.path_to_mapkurator_output
+        preprocessing_for_cropping = str_to_bool(args.preprocessing_for_cropping)
+        postprocessing_for_crs = str_to_bool(args.postprocessing_for_crs)
+        competition_custom = str_to_bool(args.competition_custom)
+        only_poly = str_to_bool(args.only_poly)
+
+        this_version = args.version
+
+        
+        input_groundtruth_dir = 'None'
+        os.makedirs(os.path.dirname(path_to_intermediate2), exist_ok=True)
+
+
+        flagging = link_for_integrated_processing.start_linking(target_map_name_ext, input_image, None, path_to_intermediate2, None, input_legend_segmentation, path_to_mapkurator_output, None, None, competition_custom, False, only_poly, this_version)
+        if flagging == True:
+            link_for_postprocessing.start_linking_postprocessing(target_map_name, input_image, output_dir, path_to_intermediate2, None, input_legend_segmentation, preprocessing_for_cropping, postprocessing_for_crs, competition_custom)
+        else:
+            print('Disintegrity in map, please check the legend-area segmentation file. The targeted map may be missing from the json file if you have set "--competition_custom" to True...')
+        print('Overall processing time: '+str(datetime.now()-runningtime_start))
     return True
     
 
@@ -383,9 +387,11 @@ if __name__ == '__main__':
     parser.add_argument('--hackathon', type=str, default='False')
 
     parser.add_argument('--only_poly', type=str, default='False')
-
+    
     parser.add_argument('--version', type=str, default='1.2')
     parser.add_argument('--log', type=str, default='log_file.txt')
+
+    parser.add_argument('--human_input_path', default='', type=str, help='Use human input')
 
 
 
